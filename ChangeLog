@@ -1,0 +1,13 @@
+2005-03-23  Daisuke Kawahara  <kawahara@kc.t.u-tokyo.ac.jp>
+
+	* JUMAN 5.0 released.
+
+2003-07-22  Daisuke Kawahara  <kawahara@kc.t.u-tokyo.ac.jp>
+
+	* dic/Makefile.am: Use CPP to make JUMAN.connect.
+
+	* juman/juman.c: Added '-v' option, which shows version information.
+
+2003-07-19  Daisuke Kawahara  <kawahara@kc.t.u-tokyo.ac.jp>
+
+	* JUMAN 4.0 released.

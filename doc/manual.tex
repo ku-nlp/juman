@@ -3,10 +3,10 @@
 \usepackage{ascmac}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\title{\bf 日本語形態素解析システム \\ JUMAN version 5.0}
+\title{\bf 日本語形態素解析システム \\ JUMAN version 5.1}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \author{黒橋 禎夫 \ \ 河原 大輔}
-\date{平成17年3月 \\
+\date{平成17年8月 \\
 \rule{0mm}{110mm}Copyright \copyright\ 2005\begin{tabular}[t]{l}
                                 東京大学大学院情報理工学系研究科 \\
                                 \end{tabular}
@@ -22,7 +22,7 @@
 
 \begin{small}
 \noindent
-Japanese Morphological Analysis System JUMAN 5.0 Users Manual
+Japanese Morphological Analysis System JUMAN 5.1 Users Manual
 
 \noindent
 Copyright (c) 2005 University of Tokyo \\
@@ -77,6 +77,7 @@ Version 3.6 & 2 December 1998 \\
 Version 3.61 & 26 May 1999 \\
 Version 4.0 & 19 July 2003 \\
 Version 5.0 & 23 March 2005 \\
+Version 5.1 & 15 August 2005 \\
 \end{tabular}
 \end{small}
 
@@ -145,7 +146,7 @@ JUMAN3.1以降では奈良先端大松本研究室で開発された茶筅のパトリシア木によ
 きました．御協力頂いた各位にお礼申し上げます．
 
 \begin{flushright}
-平成 17年 3月
+平成 17年 8月
 \end{flushright}
 
 \vfill
@@ -814,7 +815,7 @@ $C_{i,j}=\infty$ とする)．したがって，$Mf_j$に対するすべての連接コストは，
 \subsection{Unix系OSにおけるインストール方法}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\texttt{juman-5.0.tar.gz}を展開し，\texttt{juman-5.0}ディレクトリに移動
+\texttt{juman-5.1.tar.gz}を展開し，\texttt{juman-5.1}ディレクトリに移動
 して，次の手順を実行する．
 
 \begin{enumerate}
@@ -832,9 +833,9 @@ $C_{i,j}=\infty$ とする)．したがって，$Mf_j$に対するすべての連接コストは，
 
        \begin{tabular}{ll}
 	\texttt{\$PREFIX/bin/juman} & 実行ファイル \\
-	\texttt{\$PREFIX/share/dic/} & 辞書 \\
+	\texttt{\$PREFIX/share/juman/dic/} & 辞書 \\
 	\texttt{\$PREFIX/etc/jumanrc} & 設定ファイル \\
-	\texttt{\$PREFIX/share/doc/manual.pdf} & マニュアル \\
+	\texttt{\$PREFIX/share/juman/doc/manual.pdf} & マニュアル \\
 	\texttt{\$PREFIX/libexec/juman/} & 辞書作成プログラム \\
 	\texttt{\$PREFIX/lib/libjuman.*} & ライブラリ \\
 	\texttt{\$PREFIX/include/juman*.h} & ヘッダファイル \\
@@ -849,7 +850,7 @@ $C_{i,j}=\infty$ とする)．したがって，$Mf_j$に対するすべての連接コストは，
 \subsection{Windowsにおけるインストール方法}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\texttt{juman-5.0.exe}を実行し，表示される指示に従ってインストールを行う．
+\texttt{juman-5.1.exe}を実行し，表示される指示に従ってインストールを行う．
 以下のファイルがインストールされる．\texttt{\$PREFIX}は，デフォルトでは
 \texttt{C:\yen Program Files\yen juman}であるが，インストール途中で設定
 できる．
@@ -2251,4 +2252,3 @@ majorなので，一語とする．
 \end{itemize}
 
 \end{document}
-

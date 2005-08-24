@@ -1,4 +1,5 @@
-# $Id$
+# 	$Id$	
+
 package Juman;
 require 5.004_04; # For base pragma.
 use Carp;
@@ -151,7 +152,7 @@ TSUCHIYA Masatoshi <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 =cut
 
 # バージョン表示
-$VERSION = '0.5.0';
+$VERSION = '0.5.1';
 
 # カスタマイズ用変数
 %DEFAULT =
@@ -159,7 +160,7 @@ $VERSION = '0.5.0';
       server  => $ENV{JUMANSERVER} || '',	# Juman サーバーのホスト名
       port    => 32000,				# Juman サーバーのポート番号
       timeout => 30,				# Juman サーバーの応答の待ち時間
-      option  => '-e -B',
+      option  => '-e2 -B',
       rcfile  => $ENV{HOME}.'/.jumanrc',
       mclass  => $Juman::Result::DEFAULT{mclass},
       ignorepattern => '',

@@ -1,6 +1,12 @@
-2004-11-15  Tomohide Shibata  <shibata@kc.t.u-tokyo.ac.jp>
+2005-04-19  Tomohide Shibata  <shibata@kc.t.u-tokyo.ac.jp>
 
-	* Release 0.5.0.
+	* Juman.pm: change the default option from '-e -B' to '-e2 -B'
+
+2005-04-19  Tomohide Shibata  <shibata@kc.t.u-tokyo.ac.jp>
+
+	* Juman.pm: New file.
+
+2004-11-15  Tomohide Shibata  <shibata@kc.t.u-tokyo.ac.jp>
 
 	* Makefile.PL: Remove 'Check Assert.dic'.
 

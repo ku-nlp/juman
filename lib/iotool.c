@@ -21,8 +21,8 @@
 
 extern char	*ProgName;
 FILE		*Jumanrc_Fileptr;
-char            Jumangram_Dirname[FILENAME_MAX];  /*k.n*/
-int             LineNoForError, LineNo;
+extern char            Jumangram_Dirname[FILENAME_MAX];  /*k.n*/
+extern int             LineNoForError, LineNo;
 
 int Cha_errno = 0;
 FILE 		*Cha_stderr = NULL;

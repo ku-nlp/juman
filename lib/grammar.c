@@ -28,8 +28,8 @@ char		JumanPath[FILENAME_MAX];
 extern int      LineNo;
 extern int      LineNoForError;
 
-COST_OMOMI       cost_omomi;     /*k.n*/
-char             Jumangram_Dirname[FILENAME_MAX];  /*k.n*/
+extern COST_OMOMI       cost_omomi;     /*k.n*/
+extern char             Jumangram_Dirname[FILENAME_MAX];  /*k.n*/
 
 
 /*

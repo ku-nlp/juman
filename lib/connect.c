@@ -17,8 +17,8 @@
 ------------------------------------------------------------------------------
 */
 
-char		CurPath[FILENAME_MAX];
-char		JumanPath[FILENAME_MAX];
+extern char		CurPath[FILENAME_MAX];
+extern char		JumanPath[FILENAME_MAX];
 
 /*
 ------------------------------------------------------------------------------

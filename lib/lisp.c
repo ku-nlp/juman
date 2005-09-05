@@ -350,7 +350,7 @@ int ifnextchar(FILE *fp, int i)
      do {
 	  c = my_getc(fp);
 	  if (c == '\n') LineNo++;
-     } while (c == ' ' || c == '\t' || c == '\n');
+     } while (c == ' ' || c == '\t' || c == '\n' || c == '\r');
 
      if (c == EOF) return EOF;
 
@@ -430,13 +430,15 @@ int myscanf(FILE *fp, U_CHAR *cp)
 		*cp++ = code;
 		*cp++ = '\0';
 		return 1;
-	    } 
+	    }
+#ifndef _WIN32
 	    else if ( code == '\\' ) {
 		*cp++ = code;
 		if ( (code = my_getc(fp)) == EOF ) 
-		  error_in_lisp();
+		    error_in_lisp();
 		*cp++ = code;
-	    }	       
+	    }
+#endif
 	    else {
 		*cp++ = code;
 	    }
@@ -444,8 +446,10 @@ int myscanf(FILE *fp, U_CHAR *cp)
     }
     else {
 	*cp++ = code;
+#ifndef _WIN32
 	if (code == '\\') 
-	  *(cp-1) = my_getc(fp); /* kuro on 12/01/94 */
+	    *(cp-1) = my_getc(fp); /* kuro on 12/01/94 */
+#endif
 	while ( 1 ) {
 	    code = my_getc(fp);
 	    if ( dividing_code_p(code) || code == EOF ) {
@@ -455,8 +459,10 @@ int myscanf(FILE *fp, U_CHAR *cp)
 	    }
 	    else {
 		*cp++ = code;
+#ifndef _WIN32
 		if (code == '\\') 
-		  *(cp-1) = my_getc(fp); /* kuro on 12/01/94 */
+		    *(cp-1) = my_getc(fp); /* kuro on 12/01/94 */
+#endif
 	    }
 	}
     }
@@ -465,7 +471,7 @@ int myscanf(FILE *fp, U_CHAR *cp)
 int dividing_code_p(int code)
 {
     switch (code) {
-      case '\n': case '\t': case ';': case ' ':
+      case '\n': case '\r': case '\t': case ';': case ' ':
       case BPARENTHESIS:
       case EPARENTHESIS:
 	return 1;
@@ -479,6 +485,9 @@ CELL *s_read_atom(FILE *fp)
      CELL *cell;
      U_CHAR *c;
      int n;
+#ifdef _WIN32
+    char *eucstr;
+#endif
 
      comment(fp);
      
@@ -492,6 +501,12 @@ CELL *s_read_atom(FILE *fp)
      if (((n = myscanf(fp, Buffer)) == 0) || (n == EOF)) {
 	  error_in_lisp();
      }
+
+#ifdef _WIN32
+	eucstr = toStringEUC(Buffer);
+	strcpy(Buffer, eucstr);
+	free(eucstr);
+#endif       
 
      if (!strcmp(Buffer, NILSYMBOL)) {
 	  cell = NIL;

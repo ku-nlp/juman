@@ -24,181 +24,138 @@ static int stable[][2] = {
     {131,136},{131,137},{131,138},{131,139},{131,140},{131,141},
     {131,143},{131,147},{129,74},{129,75}};
 
-unsigned char *_to_jis(unsigned char *str) 
-{
-  *str = (unsigned char)ESC; str++;
-  *str = (unsigned char)'$'; str++;
-  *str = (unsigned char)'B'; str++;
-  return str;
+void _jis_shift(int *p1, int *p2) {
+    unsigned char c1 = *p1;
+    unsigned char c2 = *p2;
+    int rowOffset = c1 < 95 ? 112 : 176;
+    int cellOffset = c1 % 2 ? (c2 > 95 ? 32 : 31) : 126;
+
+    *p1 = ((c1 + 1) >> 1) + rowOffset;
+    *p2 += cellOffset;
 }
 
-void _jis_shift(int *p1, int *p2)
-{
-  unsigned char c1 = *p1;
-  unsigned char c2 = *p2;
-  int rowOffset = c1 < 95 ? 112 : 176;
-  int cellOffset = c1 % 2 ? (c2 > 95 ? 32 : 31) : 126;
+void _sjis_shift(int *p1, int *p2) {
+    unsigned char c1 = *p1;
+    unsigned char c2 = *p2;
+    int adjust = c2 < 159;
+    int rowOffset = c1 < 160 ? 112 : 176;
+    int cellOffset = adjust ? (c2 > 127 ? 32 : 31) : 126;
 
-  *p1 = ((c1 + 1) >> 1) + rowOffset;
-  *p2 += cellOffset;
+    *p1 = ((c1 - rowOffset) << 1) - adjust;
+    *p2 -= cellOffset;
 }
 
-void _sjis_shift(int *p1, int *p2)
-{
-  unsigned char c1 = *p1;
-  unsigned char c2 = *p2;
-  int adjust = c2 < 159;
-  int rowOffset = c1 < 160 ? 112 : 176;
-  int cellOffset = adjust ? (c2 > 127 ? 32 : 31) : 126;
+unsigned char *_sjis_han2zen(unsigned char *str, int *p1, int *p2) {
+    register int c1, c2;
 
-  *p1 = ((c1 - rowOffset) << 1) - adjust;
-  *p2 -= cellOffset;
+    c1 = (int)*str; str++;
+    *p1 = stable[c1 - 161][0];
+    *p2 = stable[c1 - 161][1];
+
+    c2 = (int)*str;
+    if (c2 == 222 && ISNIGORI(c1)) {
+	if ((*p2 >= 74 && *p2 <= 103) || (*p2 >= 110 && *p2 <= 122))
+	    (*p2)++;
+	else if (*p1 == 131 && *p2 == 69)
+	    *p2 = 148;
+	str++;
+    }
+
+    if (c2 == 223 && ISMARU(c1) && (*p2 >= 110 && *p2 <= 122) ) {
+	*p2 += 2;
+	str++;
+    }
+    return str++;
 }
 
-unsigned char *_sjis_han2zen(unsigned char *str, int *p1, int *p2)
-{
-  register int c1, c2;
-
-  c1 = (int)*str; str++;
-  *p1 = stable[c1 - 161][0];
-  *p2 = stable[c1 - 161][1];
-
-  c2 = (int)*str;
-  if (c2 == 222 && ISNIGORI(c1)) {
-    if ((*p2 >= 74 && *p2 <= 103) || (*p2 >= 110 && *p2 <= 122))
-      (*p2)++;
-    else if (*p1 == 131 && *p2 == 69)
-      *p2 = 148;
-    str++;
-  }
-
-  if (c2 == 223 && ISMARU(c1) && (*p2 >= 110 && *p2 <= 122) ) {
-    *p2 += 2;
-    str++;
-  }
-  return str++;
-}
-
-void _shift2euc(unsigned char *str, unsigned char *str2)
-{
-  int p1,p2;
+void _shift2euc(unsigned char *str, unsigned char *str2) {
+  int p1, p2;
   
   while ((p1 = (int)*str) != '\0') {
-    if (SJIS1(p1)) {
-      if((p2 = (int)*(++str)) == '\0') break;
-      if (SJIS2(p2)) {
-        _sjis_shift(&p1,&p2);
-        p1 += 128;
-        p2 += 128;
+      if (SJIS1(p1)) {
+	  if((p2 = (int)*(++str)) == '\0') break;
+	  if (SJIS2(p2)) {
+	      _sjis_shift(&p1, &p2);
+	      p1 += 128;
+	      p2 += 128;
+	  }
+	  CHAROUT(p1);
+	  CHAROUT(p2);
+	  str++;
+	  continue;
       }
-      CHAROUT(p1);
-      CHAROUT(p2);
-      str++;
-      continue;
-    }
 
 #ifdef NO_HANKAKU_SJIS
-    if (HANKATA(p1)) {
-      str = _sjis_han2zen(str,&p1,&p2);
-      _sjis_shift(&p1,&p2);
-      p1 += 128;
-      p2 += 128;
-      CHAROUT(p1);
-      CHAROUT(p2);
-      continue;
-    }
-#endif
-
-#ifdef CONV_RETURN_CODE
-    if (ISCR(p1)) {
-      if((p2 = (int)*(++str)) == '\0') {
-	CHAROUT(p1);
-	break;
+      if (HANKATA(p1)) {
+	  str = _sjis_han2zen(str,&p1,&p2);
+	  _sjis_shift(&p1,&p2);
+	  p1 += 128;
+	  p2 += 128;
+	  CHAROUT(p1);
+	  CHAROUT(p2);
+	  continue;
       }
-      if (ISLF(p2)) {
-	CHAROUT(LF);
-      } else {
-	CHAROUT(p1);
-	CHAROUT(p2);
-      }	
-      str++;
-      continue;
-    } 
 #endif
 
-    CHAROUT(p1);
-    str++;
+      CHAROUT(p1);
+      str++;
   }
   *str2='\0';
 }
 
-void _euc2shift(unsigned char *str, unsigned char *str2)
-{
-  int p1,p2;
+void _euc2shift(unsigned char *str, unsigned char *str2) {
+    int p1,p2;
 
-  while ((p1 = (int)*str) != '\0') {
-    if (ISEUC(p1)) {
-      if((p2 = (int)*(++str)) == '\0') break;
-      if (ISEUC(p2)) {
-	p1 -= 128;
-        p2 -= 128;
-        _jis_shift(&p1,&p2);
-      }
-      CHAROUT(p1);
-      CHAROUT(p2);
-      str++;
-      continue;
+    while ((p1 = (int)*str) != '\0') {
+	if (ISEUC(p1)) {
+	    if((p2 = (int)*(++str)) == '\0') break;
+	    if (ISEUC(p2)) {
+		p1 -= 128;
+		p2 -= 128;
+		_jis_shift(&p1,&p2);
+	    }
+	    CHAROUT(p1);
+	    CHAROUT(p2);
+	    str++;
+	    continue;
+	}
+
+	CHAROUT(p1);
+	str++;
     }
+    *str2='\0';
+}
 
-#ifdef CONV_RETURN_CODE
-    if (ISLF(p1)) {
-      CHAROUT(CR);
-      CHAROUT(LF);
-      str++;
-      continue;
+unsigned char *_set_buffer(char *str) {
+    static unsigned char *buf;
+    if((buf = (unsigned char *)malloc((strlen(str) + 1) * 4)) == NULL) {
+	fprintf(stderr, "Can't malloc buffer\n");
+	exit(2);
     }
-#endif
-
-    CHAROUT(p1);
-    str++;
-  }
-  *str2='\0';
+    return buf;
 }
 
-unsigned char *_set_buffer(char *str) 
-{
-  static unsigned char *buf;
-  if((buf = (unsigned char *)malloc((strlen(str) + 1) * 4)) == NULL) {
-    fprintf(stderr, "Can't malloc buffer\n");
-    exit(2);
-  }
-  return buf;
+char *_replace_buffer(unsigned char *buf)  {
+    char *str;
+
+    if ((str = strdup(buf)) == NULL) {
+	fprintf(stderr, "Can't malloc string buffer\n");
+	exit(2);
+    }
+    free(buf);
+    return str;
 }
 
-char *_replace_buffer(unsigned char *buf) 
-{
-  char *str;
-
-  if ((str = strdup(buf)) == NULL) {
-    fprintf(stderr, "Can't malloc string buffer\n");
-    exit(2);
-  }
-  free(buf);
-  return str;
+char *toStringEUC(char *str)  {
+    unsigned char *buf;
+    buf = _set_buffer(str);
+    _shift2euc((unsigned char *)str, buf);
+    return (char *)_replace_buffer(buf);
 }
 
-char *toStringEUC(char *str) 
-{
-  unsigned char *buf;
-  buf = _set_buffer(str);
-  _shift2euc((unsigned char *)str, buf);
-  return (char *)_replace_buffer(buf);
-}
-
-char *toStringSJIS(char *str) 
-{
-  unsigned char *buf;
-  buf = _set_buffer(str);
-  _euc2shift((unsigned char *)str, buf);
-  return _replace_buffer(buf);
+char *toStringSJIS(char *str)  {
+    unsigned char *buf;
+    buf = _set_buffer(str);
+    _euc2shift((unsigned char *)str, buf);
+    return _replace_buffer(buf);
 }

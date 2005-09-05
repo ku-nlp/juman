@@ -7,8 +7,6 @@
  * japanese.h
  */
 
-/* 改行コードは OS で変換済 */
-#undef  CONV_RETURN_CODE
 #define NO_HANKAKU_SJIS
 
 #define ESC           6

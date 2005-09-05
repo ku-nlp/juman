@@ -230,8 +230,8 @@ void option_proc(int argc, char **argv)
 {
     int 	i;
 
-    Show_Opt1 = Op_B;
-    Show_Opt2 = Op_F;
+    Show_Opt1 = Op_BB;
+    Show_Opt2 = Op_E2;
     Show_Opt_jumanrc = 0;
     Show_Opt_tag[0] = '\0';
     Show_Opt_debug = 0;

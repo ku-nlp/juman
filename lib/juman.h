@@ -57,7 +57,9 @@
  * Thu Oct 29 03:42:45 JST 1998
  */
 #ifdef _WIN32
-#include        "japanese.h"
+extern char *toStringEUC(char *str);
+extern char *toStringSJIS(char *str);
+
 #include        <stdarg.h>
 
 #ifdef HAVE_WINDOWS_H

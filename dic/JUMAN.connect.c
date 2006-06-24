@@ -132,7 +132,7 @@
 			NaAdjDesuBasicBasicForm \
 			NaAdjDesuTaBasicForm
 #define NaAdjAllBasicForm  NaAdjBasicForm \
-			     NaAdjDaBasicBasicForm
+			NaAdjDaBasicBasicForm
 
 #define NaAdjDaBasicRenyoForm (* * ナ形容詞 ダ列基本連用形) \
 			(* * ナ形容詞特殊 ダ列基本連用形) \
@@ -154,12 +154,21 @@
 			(* * ナノ形容詞 語幹) \
 			(* * 助動詞そうだ型 語幹)
 
-#define NaAdjGuessForm (* * * ダ列基本推量形) \
+#define AllNaAdjGuessForm (* * * ダ列基本推量形) \
 			(* * * ダ列タ系推量形) \
 			(* * * デアル列基本推量形) \
 			(* * * デアル列タ系推量形) \
 			(* * * デス列基本推量形) \
 			(* * * デス列タ系推量形)
+
+#define AllNaAdjClippedGuessForm (* * * ダ列基本省略推量形) \
+			(* * * ダ列タ系省略推量形) \
+			(* * * デアル列基本省略推量形) \
+			(* * * デアル列タ系省略推量形) \
+			(* * * デス列基本省略推量形) \
+			(* * * デス列タ系省略推量形)
+
+; AllNaAdjGuessForm AllNaAdjClippedGuessForm は助動詞なども含む
 
 #define BunsetsuTop     (動詞) \
                         (形容詞) \
@@ -190,9 +199,9 @@
                         (* * イ形容詞アウオ段 基本形) \
                         (* * イ形容詞イ段 基本形) \
                         (* * イ形容詞イ段特殊 基本形) \
-                        (* * 助動詞ぬ型 基本形) \
-                        (* * 助動詞ぬ型 音便基本形) \
-                        (* * 助動詞だろう型 基本形) \
+                        (助動詞 * 助動詞ぬ型 基本形) \
+                        (助動詞 * 助動詞ぬ型 音便基本形) \
+                        (助動詞 * 助動詞だろう型 基本形) \
                         (* * 動詞性接尾辞うる型 基本形) \
                         (* * 動詞性接尾辞得る型 基本形) \
                         (* * * タ形) \
@@ -460,12 +469,7 @@
 (((* * * 省略意志形)
   (* * * 基本省略推量形)
   (* * * タ系省略推量形)
-  (* * * ダ列基本省略推量形)
-  (* * * ダ列タ系省略推量形)
-  (* * * デアル列基本省略推量形)
-  (* * * デアル列タ系省略推量形)
-  (* * * デス列基本省略推量形)
-  (* * * デス列タ系省略推量形)
+  AllNaAdjClippedGuessForm
   (助動詞 * 助動詞ぬ型 音便省略推量形))
         ((助詞 格助詞 * * と)
          (助詞 格助詞 * * っと))
@@ -2680,7 +2684,7 @@
 
   (* * * 意志形)			; 「書こうと(も)」
   (* * * 基本推量形)			; 「美しかろうと(も)」
-  NaAdjGuessForm)			; 「静かであろうと(も)」
+  AllNaAdjGuessForm)			; 「静かであろうと(も)」
         ((助詞 接続助詞 * * と)))
 
 ; 上記以外に「も」が続く場合には
@@ -2709,6 +2713,7 @@
 
 ((BackwardAllNominal		;「太郎に花子に」
   VerbBasicForm	         	;「思うに」(語彙は制限されるはず),「書くには」
+  AllNaAdjGuessForm		;「よいだろうに」「任務であろうに」
   (助動詞 * 助動詞ぬ型 基本連用形))	; 「〜ずに」
         ((助詞 接続助詞 * * に))
 )
@@ -2779,13 +2784,15 @@
   IAdjBasicForm
   NaAdjAllBasicForm
   AuxBasicForm
-  NaAdjGuessForm
+  AllNaAdjGuessForm
   (* * * 意志形)                	; 「書こうが」
   (* * * 基本推量形)            	; 「美しかろうが」
   (助動詞 * 助動詞ぬ型 音便推量形)
   (* * * タ系推量形))           	; 「書いたろうが」
         ((助詞 接続助詞 * * し)
          (助詞 接続助詞 * * が)))
+
+; AAA
 
 ((VerbBasicForm
   IAdjBasicForm
@@ -2798,7 +2805,7 @@
   IAdjBasicForm
   NaAdjAllBasicForm
   AuxBasicForm
-  NaAdjGuessForm
+  AllNaAdjGuessForm
   (* * * タ系推量形))           ; 「書いたろうけど」
         ((助詞 接続助詞 * * けど)
          (助詞 接続助詞 * * けども)
@@ -2809,7 +2816,7 @@
   IAdjBasicForm
   NaAdjAllBasicForm
   AuxBasicForm
-  NaAdjGuessForm
+  AllNaAdjGuessForm
   (* * * タ系推量形)		; 「書いたろうから」
 
   (動詞 * * タ系連用テ形)	; 「書いてから」
@@ -2930,22 +2937,11 @@
   (* * イ形容詞イ段特殊 タ系省略推量形)
 
   NaAdjBasicForm
-
-  NaAdjGuessForm
-
-  (* * * ダ列基本省略推量形)
-  (* * * ダ列タ系省略推量形)
-  (* * * デアル列基本省略推量形)
-  (* * * デアル列タ系省略推量形)
-  (* * * デス列基本省略推量形)
-  (* * * デス列タ系省略推量形)
+  AllNaAdjGuessForm
+  AllNaAdjClippedGuessForm
 
   (助動詞 * 無活用型 基本形 です)
   (助動詞 * 助動詞だろう型 基本形)
-  (助動詞 * 助動詞だろう型 デアル列基本推量形)
-  (助動詞 * 助動詞だろう型 デアル列基本省略推量形)
-  (助動詞 * 助動詞だろう型 デス列基本推量形)
-  (助動詞 * 助動詞だろう型 デス列基本省略推量形)
 
   (助動詞 * 助動詞ぬ型 基本形)
   (助動詞 * 助動詞ぬ型 音便基本形)

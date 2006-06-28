@@ -64,7 +64,7 @@ main(int argc, char *argv[])
   /* ½ªÎ» */
 /*      th_show_hash(hash_array,HASH_SIZE);*/
   printf("QUIT\n");
-  return(0);
+  exit(0);
 }
 
 /****************************************************

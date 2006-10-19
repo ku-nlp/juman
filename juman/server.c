@@ -70,6 +70,7 @@ extern int              Show_Opt2;
 extern char		Show_Opt_tag[MIDASI_MAX];
 extern int		Show_Opt_jumanrc;
 extern int		Show_Opt_debug;
+extern int		Vocalize_Opt;
 
 extern U_CHAR	        String[LENMAX];
 
@@ -224,6 +225,7 @@ int option_proc_for_server(int argc, char **argv)
     Show_Opt_jumanrc = 0;
     Show_Opt_tag[0] = '\0';
     Show_Opt_debug = 0;
+    Vocalize_Opt = 1;
     
     for (i = 1; i < argc; i++ ) {
 	if (argv[i][0] != '-') {

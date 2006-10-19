@@ -278,6 +278,7 @@ typedef		struct		_CELLTABLE {
 	構造体 MORPHEME はなくなった */
 typedef         struct          _MRPH {
      U_CHAR             midasi[MIDASI_MAX];
+     U_CHAR             midasi2[MIDASI_MAX];
      U_CHAR             yomi[YOMI_MAX];
      U_CHAR             imis[IMI_MAX];
      CELL		*imi;
@@ -348,6 +349,7 @@ typedef struct _connect_cost {
     short p_no;     /* PROCESS_BUFFER のインデックス */
     short pos;
     int cost;     /* コスト */
+    int dakuon_flag;
 } CONNECT_COST;
 
 /*

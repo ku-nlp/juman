@@ -1279,7 +1279,7 @@ MRPH *prepare_path_mrph(int path_num , int para_flag)
     else
 	kigou[0] = '\0';
     strcpy(midasi1, mrph_p->midasi);
-    strcpy(midasi2, mrph_p->midasi2);
+    strcpy(midasi2, *mrph_p->midasi2 ? mrph_p->midasi2 : mrph_p->midasi);
     strcpy(yomi, mrph_p->yomi);
     if ( (mrph_p->katuyou1 > 0) && (mrph_p->katuyou2 > 0) ) {
 	strcat(midasi1, Form[mrph_p->katuyou1][mrph_p->katuyou2].gobi);

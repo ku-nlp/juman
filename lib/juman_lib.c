@@ -596,9 +596,10 @@ int take_data(int pos, char **pbuf, int dakuon_flag)
 	    
     while ((mrph.midasi[k++] = *(s++)) != '\t') {}
     mrph.midasi[k-1] = '\0';
-    strcpy(mrph.midasi2, mrph.midasi);
+    mrph.midasi2[0] = '\0';
 
     if (dakuon_flag) {
+	strcpy(mrph.midasi2, mrph.midasi);
 	strncpy(mrph.midasi, dakuon[dakuon_flag - 1], 2);
     }
 

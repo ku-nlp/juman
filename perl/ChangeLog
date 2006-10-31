@@ -1,3 +1,8 @@
+2006-10-31  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
+
+	* t/60-hinsi.t, t/70-katuyou.t:
+	deleted the tests about 'katuyou2' and 'katuyou2_id'
+
 2006-10-26  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* Morpheme.pm, MList.pm: 代表表記(列)を返すメソッドrepnameを追加

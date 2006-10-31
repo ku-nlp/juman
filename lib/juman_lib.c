@@ -187,9 +187,9 @@ U_CHAR		yomi[MIDASI_MAX];    /* 活用の読み */
 
 /* 濁音化している形態素を検索するために用いる */
 /* 奇数番目が平仮名、続く偶数番目が対応する片仮名である必要あり */
-U_CHAR          *dakuon[] = {"が", "ガ", "ぎ", "ギ", "ぐ", "グ", "け", "ゲ", "ご", "ゴ",
-			     "ざ", "ザ", "じ", "ジ", "ず", "ズ", "ぜ", "ゼ", "そ", "ゾ",
-			     "だ", "ダ", "ち", "ヂ", "づ", "ヅ", "で", "デ", "ど", "ド",
+U_CHAR          *dakuon[] = {"が", "ガ", "ぎ", "ギ", "ぐ", "グ", "げ", "ゲ", "ご", "ゴ",
+			     "ざ", "ザ", "じ", "ジ", "ず", "ズ", "ぜ", "ゼ", "ぞ", "ゾ",
+			     "だ", "ダ", "ぢ", "ヂ", "づ", "ヅ", "で", "デ", "ど", "ド",
 			     "ば", "バ", "び", "ビ", "ぶ", "ブ", "べ", "ベ", "ぼ", "ボ",
 			     /* "ぱ", "パ", "ぴ", "ピ", "ぷ", "プ", "ぺ", "ペ", "ぽ", "ポ", */
 			     "\0"};
@@ -553,7 +553,7 @@ int search_all(int position)
 	       take_data以下で直前が名詞、または動詞の連用形であるなどの制限や
 	       スコアにペナルティをかけている("dakuon_flag"で検索可能)
 	    */
-	    for (i = 0; dakuon[i]; i++) {
+	    for (i = 0; *dakuon[i]; i++) {
 		if (!strncmp(String + position, dakuon[i], 2)) {
 		    sprintf(buf, "%s%s", seion[i], String + position + 2);
 
@@ -817,7 +817,7 @@ int take_data(int pos, char **pbuf, int dakuon_flag)
 char *_take_data(char *s , MRPH *mrph, int dakuon_flag)
 {
     int		i, j, k = 0;
-    char	c;
+    char	c, *rep;
     
     mrph->hinsi    = numeral_decode(&s);
     mrph->bunrui   = numeral_decode(&s);
@@ -837,9 +837,23 @@ char *_take_data(char *s , MRPH *mrph, int dakuon_flag)
 
     if (dakuon_flag) {
 
+	/* ライマンの法則 */
+	/* もともと濁音を含む要素は濁音化しない */
+	for (i = 0; *dakuon[i]; i++) {
+	    if (strstr(mrph->midasi + 2, dakuon[i])) {
+		break;
+	    }
+	}
+
 	/* 連語情報だった場合、語幹のない語だった場合、形態素が1文字だった場合 */
 	/* 濁音化の処理はしない(=大きなペナルティを与える) */
-	if (*s == 0xff || mrph->katuyou2 || (mrph->length == 2)) {
+	if (*dakuon[i] || *s == 0xff || mrph->katuyou2 || (mrph->length == 2)) {
+	    mrph->weight = 255;
+	}
+	/* 連濁は和語のみ */
+	/* このため代表表記の最初の文字が漢字でないものは不可 */
+	else if ((rep = strstr(mrph->imis, "代表表記:")) &&
+		 check_code(rep, 9) == KATAKANA) {
 	    mrph->weight = 255;
 	}
 	else {
@@ -852,28 +866,33 @@ char *_take_data(char *s , MRPH *mrph, int dakuon_flag)
 		    /* 10以上だと、"ひっくりがえす"が正しく解析できない(060928) */
 		}
 		else {
-		    mrph->weight += 4;
-		    /* 3以下だと、"きりがない"が正しく解析できない(060928) */
+		    mrph->weight += 5;
+		    /* 4以下だと、"盛りだくさん。"が正しく解析できない(061031) */
 		    /* 5以上だと、"変わりばえが"の解釈に不要な曖昧性が生じる(060928) */
 		    /* 6以上だと、"きもだめし"が正しく解析できない(060928) */
 		}
 	    }
-
-	    /* 普通名詞、サ変名詞 */
-	    else if (mrph->hinsi == 6 && mrph->bunrui <= 2) {
+	    /* 名詞 */
+	    else if (mrph->hinsi == 6 && (mrph->bunrui < 3 || mrph->bunrui > 7)) {
 		mrph->weight += 8;
 		/* 6以下だと、"右下がりの状態"が正しく解析できない(060928) */
 		/* 7以下だと、"変わりばえが"の解釈に不要な曖昧性が生じる(060928) */
 		/* 9以上だと、"ものごころ"が正しく解析できない(060928) */
 	    }
-	    /* その他 */
+	    /* 形容詞 */
+	    else if (mrph->hinsi == 3) {
+		mrph->weight += 9;
+		/* 10以上だと、"盛りだくさん"が解析できない(061031) */
+	    }
+	    /* その他 */    
 	    else {
 		mrph->weight = 255;
 	    }
 	}
 
-	/* 読みの濁音化は片仮名の場合は平仮名にする */
+ 	/* 読みの濁音化は片仮名の場合は平仮名にする */
 	strncpy(mrph->yomi, dakuon[((dakuon_flag-1)/2)*2], 2);
+
 	if (k == 0) {
 	    strcpy(mrph->imis, "\"濁音化\"");
 	}
@@ -1779,16 +1798,16 @@ int check_connect(int pos, int m_num, int dakuon_flag)
 
 	c_score = check_matrix(left_con , right_con);
 
-	/* 濁音化するのは直前の形態素が名詞、または動詞の連用形の場合のみ */
-	/* 直前の形態素が平仮名、半濁音化した形態素が片仮名となるものは不可 */
+	/* 濁音化するのは直前の形態素が名詞、または動詞の連用形、
+	   名詞性接尾辞の場合のみ */
 	/* 直前の形態素が平仮名1文字となるものは不可 */
 	/* weight=255のときは不可 */
 	if (dakuon_flag &&
 	    (!(m_buffer[p_buffer[j].mrph_p].hinsi == 6 ||
+	       m_buffer[p_buffer[j].mrph_p].hinsi == 14 &&
+	       m_buffer[p_buffer[j].mrph_p].bunrui < 5 ||
 	       m_buffer[p_buffer[j].mrph_p].hinsi == 2 &&
 	       m_buffer[p_buffer[j].mrph_p].katuyou2 == 8) ||
-	     (check_code(m_buffer[p_buffer[j].mrph_p].midasi, 0) == HIRAGANA &&
-	      check_code(new_mrph->midasi, 0) == KATAKANA) ||
 	     (check_code(m_buffer[p_buffer[j].mrph_p].midasi, 0) == HIRAGANA &&
 	      m_buffer[p_buffer[j].mrph_p].length == 2) ||
 	     new_mrph->weight == 255))

@@ -3,7 +3,7 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 48 }
+BEGIN { plan tests => 38 }
 
 use Juman;
 use Juman::Hinsi ":all";
@@ -24,8 +24,8 @@ for( <DATA> ){
 	ok( $m->bunrui_id == &get_bunrui_id($m->hinsi,$m->bunrui) );
 	ok( $m->katuyou1 eq &get_type($m->katuyou1_id) );
 	ok( $m->katuyou1_id == &get_type_id($m->katuyou1) );
-	ok( $m->katuyou2 eq &get_form($m->katuyou1_id,$m->katuyou2_id) );
-	ok( $m->katuyou2_id == &get_form_id($m->katuyou1,$m->katuyou2) );
+#	ok( $m->katuyou2 eq &get_form($m->katuyou1_id,$m->katuyou2_id) );
+#	ok( $m->katuyou2_id == &get_form_id($m->katuyou1,$m->katuyou2) );
     }
 }
 

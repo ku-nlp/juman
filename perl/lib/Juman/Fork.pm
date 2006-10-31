@@ -126,8 +126,8 @@ sub new {
 	    # 親プロセス側の処理
 	    $read->reader;
 	    $write->writer;
-	    &set_encoding( $read );
-	    &set_encoding( $write );
+#	    &set_encoding( $read );
+#	    &set_encoding( $write );
 	    $this = {
 		     PID     => $pid,
 		     READ    => $read,

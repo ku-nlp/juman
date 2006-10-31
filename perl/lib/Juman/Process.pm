@@ -145,7 +145,7 @@ sub open_remote_socket {
 				     Proto => 'tcp' )
 	or die "Can't connect server: host=$host, port=$port\n";
     $sock->timeout( $this->{OPTION}->{timeout} );
-    &set_encoding( $sock );
+#    &set_encoding( $sock );
 
     # サーバーの greeting message を確認する
     my $res;

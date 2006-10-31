@@ -152,7 +152,7 @@ TSUCHIYA Masatoshi <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 =cut
 
 # バージョン表示
-$VERSION = '0.5.1';
+$VERSION = '0.5.7';
 
 # カスタマイズ用変数
 %DEFAULT =
@@ -202,11 +202,25 @@ sub juman_lines {
     my $socket  = $this->open();
     my $pattern = $this->pattern();
     my @buf;
+
+    # UTFフラグをチェックする
+    if (utf8::is_utf8($str)) {
+	require Encode;
+	$str = Encode::encode('euc-jp', $str);
+	$this->{input_is_utf8} = 1;
+    }
+    else {
+	$this->{input_is_utf8} = 0;
+    }
+
     # プロセスに文を送信する
     $str =~ s/[\r\n\f\t]*$/\n/s;
     $socket->print( $str );
     # 解析結果を読み出す
     while( defined( $str = $socket->getline ) ){
+	if ($this->{input_is_utf8}) {
+	    $str = Encode::decode('euc-jp', $str);
+	}
 	push( @buf, $str );
 	last if $str =~ /$pattern/;
     }

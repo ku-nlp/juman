@@ -1,3 +1,19 @@
+2006-10-26  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* Morpheme.pm, MList.pm: 代表表記(列)を返すメソッドrepnameを追加
+
+2006-06-16  Tomohide Shibata  <shibata@kc.t.u-tokyo.ac.jp>
+
+	* Encode.pm: set_encodingを修正
+
+2006-05-02  Tomohide Shibata  <shibata@kc.t.u-tokyo.ac.jp>
+
+	* Morpheme.pm: メソッドidにおいて、mrphのidが0の時にundefを返すバグを修正
+
+2006-04-19  Tomohide Shibata  <shibata@kc.t.u-tokyo.ac.jp>
+
+	* 60-hinsi.t: get_form, get_form_idのテストを削除
+
 2005-04-19  Tomohide Shibata  <shibata@kc.t.u-tokyo.ac.jp>
 
 	* Juman.pm: change the default option from '-e -B' to '-e2 -B'

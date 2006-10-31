@@ -3,6 +3,7 @@ package Juman::MList;
 require 5.003_07; # For UNIVERSAL->isa().
 use strict;
 use base qw/ Juman::KULM::MList /;
+use Encode;
 
 =head1 NAME
 
@@ -110,6 +111,63 @@ sub spec {
 	}
     }
     $str;
+}
+
+=item repname
+
+形態素列の代表表記を返す．
+
+=cut
+sub repname {
+    my( $this ) = @_;
+    my $imi_pat = '意味有';
+    my $pred_pat = '用言';
+    my $tokusyu_pat = '特殊';
+
+    if( utf8::is_utf8( $this->fstring ) ){
+	$imi_pat = decode('euc-jp', $imi_pat);
+	$pred_pat = decode('euc-jp', $pred_pat);
+	$tokusyu_pat = decode('euc-jp', $tokusyu_pat);
+    }
+
+    my ( @ret );
+    for my $mrph ( $this->mrph_list() ){
+	if ( $mrph->fstring =~ /<$imi_pat>/ or # 普段は意味有のみ
+	     ( $this->fstring =~ /<$pred_pat/ and # 用言のときは特殊以外すべて
+	       $mrph->hinsi ne $tokusyu_pat ) ){
+	    if ( @ret ) {
+		my ( @new_ret );
+		my $org_rep = $mrph->repname();
+		my $rep = $org_rep ? $org_rep : $mrph->make_repname(); # なければ作る
+		for my $old_ret ( @ret ) {
+		    push( @new_ret, $old_ret . '+' . $rep ) if $rep;
+		}
+		if ($org_rep) { # 作った場合は同形異義語についても同じになるのでスキップ
+		    for my $doukei ( $mrph->doukei() ) { # 同形異義語 (@)
+			my $rep = $doukei->repname();
+			$rep = $doukei->make_repname() unless $rep;
+			for my $old_ret ( @ret ) {
+			    push( @new_ret, $old_ret . '+' . $rep ) if $rep;
+			}
+		    }
+		}
+		@ret = @new_ret if @new_ret;
+	    }
+	    else { # 一つ目
+		my $org_rep = $mrph->repname();
+		my $rep = $org_rep ? $org_rep : $mrph->make_repname(); # なければ作る
+		push( @ret, $rep ) if $rep;
+		if ($org_rep) { # 作った場合は同形異義語についても同じになるのでスキップ
+		    for my $doukei ( $mrph->doukei() ) { # 同形異義語 (@)
+			my $rep = $doukei->repname();
+			$rep = $doukei->make_repname() unless $rep;
+			push( @ret, $rep ) if $rep;
+		    }
+		}
+	    }
+	}
+    }
+    join('?', @ret);
 }
 
 =back

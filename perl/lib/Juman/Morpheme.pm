@@ -5,7 +5,7 @@ use Carp;
 use strict;
 use base qw/ Juman::Katuyou Juman::KULM::Morpheme /;
 use vars qw/ @ATTRS /;
-
+use Encode;
 =head1 NAME
 
 Juman::Morpheme - 形態素オブジェクト in Juman
@@ -177,6 +177,56 @@ sub imis {
     shift->{imis};
 }
 
+=item repname
+
+形態素の代表表記を返す．
+
+=cut
+sub repname {
+    my ( $this ) = @_;
+    my $pat = '代表表記';
+    if( utf8::is_utf8( $this->midasi ) ){
+	$pat = decode('euc-jp', $pat);
+    }
+
+    if ( defined $this->{imis} ){
+	if ($this->{imis} =~ /$pat:([^\"\s]+)/){
+	    return $1;
+	}
+    }
+    return undef;
+}
+
+=item make_repname
+
+形態素の代表表記を作る．
+
+=cut
+sub make_repname {
+    my ( $this ) = @_;
+    return $this->genkei . '/' . $this->yomi;
+}
+
+=item kanou_dousi
+
+形態素の可能動詞を返す．
+
+=cut
+sub kanou_dousi {
+    my ( $this ) = @_;
+    my $pat = '可能動詞';
+    if( utf8::is_utf8( $this->midasi ) ) {
+	$pat = decode('euc-jp', $pat);
+    }
+
+    if ( defined $this->{imis} ) {
+	if ($this->{imis} =~ /$pat:([^\"\s]+)/) {
+	    return $1;
+ 	}
+    }
+    return undef;
+}
+
 =item push_doukei( DOUKEI )
 
 同形異義語 I<DOUKEI> を登録する．
@@ -209,7 +259,7 @@ sub doukei {
 =cut
 sub id {
     my( $this ) = @_;
-    $this->{id} || undef;
+    $this->{id};
 }
 
 =item spec

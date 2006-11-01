@@ -155,6 +155,7 @@ char		Show_Opt_tag[MIDASI_MAX];
 int		Show_Opt_jumanrc;
 int		Show_Opt_debug;
 int		Vocalize_Opt;
+int		Repetition_Opt;
 
 U_CHAR	        String[LENMAX];
 int             m_buffer_num;
@@ -186,18 +187,20 @@ U_CHAR		midasi2[MIDASI_MAX]; /* 原形 */
 U_CHAR		yomi[MIDASI_MAX];    /* 活用の読み */
 
 /* 濁音化している形態素を検索するために用いる */
+/* 半濁音は副詞の自動認識のみで用いる */
 /* 奇数番目が平仮名、続く偶数番目が対応する片仮名である必要あり */
-U_CHAR          *dakuon[] = {"が", "ガ", "ぎ", "ギ", "ぐ", "グ", "げ", "ゲ", "ご", "ゴ",
+U_CHAR          *dakuon[] = {"ぱ", "パ", "ぴ", "ピ", "ぷ", "プ", "ぺ", "ペ", "ぽ", "ポ",
+			     "が", "ガ", "ぎ", "ギ", "ぐ", "グ", "げ", "ゲ", "ご", "ゴ",
 			     "ざ", "ザ", "じ", "ジ", "ず", "ズ", "ぜ", "ゼ", "ぞ", "ゾ",
 			     "だ", "ダ", "ぢ", "ヂ", "づ", "ヅ", "で", "デ", "ど", "ド",
 			     "ば", "バ", "び", "ビ", "ぶ", "ブ", "べ", "ベ", "ぼ", "ボ",
-			     /* "ぱ", "パ", "ぴ", "ピ", "ぷ", "プ", "ぺ", "ペ", "ぽ", "ポ", */
+			     
 			     "\0"};
-U_CHAR          *seion[]  = {"か", "カ", "き", "キ", "く", "ク", "け", "ケ", "こ", "コ",
+U_CHAR          *seion[]  = {"は", "ハ", "ひ", "ヒ", "ふ", "フ", "へ", "ヘ", "ほ", "ホ",
+			     "か", "カ", "き", "キ", "く", "ク", "け", "ケ", "こ", "コ",
 			     "さ", "サ", "し", "シ", "す", "ス", "せ", "セ", "そ", "ソ",
 			     "た", "タ", "ち", "チ", "つ", "ツ", "て", "テ", "と", "ト",
 			     "は", "ハ", "ひ", "ヒ", "ふ", "フ", "へ", "ヘ", "ほ", "ホ",
-			     /* "は", "ハ", "ひ", "ヒ", "ふ", "フ", "へ", "ヘ", "ほ", "ホ", */
 			     "\0"};	     
 
 extern COST_OMOMI       cost_omomi;     /*k.n*/
@@ -259,7 +262,6 @@ int	juman_sent(void);
 
 void changeDictionary(int number)
 {
-
     db = DicFile.dic[number];
     DicFile.now = number;
 }
@@ -535,9 +537,18 @@ int search_all(int position)
 
     for(dic_no = 0 ; dic_no < DicFile.number ; dic_no++) {
 	changeDictionary(dic_no);
-	
-	/* パトリシア木から形態素を検索 */
+
 	pat_buffer[0] = '\0';
+
+	/* ひらがな、カタカナの繰り返し表現を副詞の候補とする */
+	if (Repetition_Opt) {
+	    if (check_code(String, position) == HIRAGANA ||
+		check_code(String, position) == KATAKANA) {
+		recognize_repetition(String + position, pat_buffer);
+	    }
+	}
+
+	/* パトリシア木から形態素を検索 */
 	pat_search(db, String + position, &DicFile.tree_top[dic_no],
 		   pat_buffer);
 	pbuf = pat_buffer;
@@ -553,18 +564,17 @@ int search_all(int position)
 	       take_data以下で直前が名詞、または動詞の連用形であるなどの制限や
 	       スコアにペナルティをかけている("dakuon_flag"で検索可能)
 	    */
-	    for (i = 0; *dakuon[i]; i++) {
+	    for (i = 10; *dakuon[i]; i++) {
 		if (!strncmp(String + position, dakuon[i], 2)) {
 		    sprintf(buf, "%s%s", seion[i], String + position + 2);
 
 		    /* パトリシア木から形態素を検索 */	
 		    pat_buffer[0] = '\0';
-		    pat_search(db, buf, &DicFile.tree_top[dic_no],
-			       pat_buffer);
+		    pat_search(db, buf, &DicFile.tree_top[dic_no], pat_buffer);
 		    pbuf = pat_buffer;
 
 		    while (*pbuf != '\0') {
-			if (take_data(position, &pbuf, i + 1) == FALSE) return FALSE;
+			if (take_data(position, &pbuf, i) == FALSE) return FALSE;
 		    }
 		    break;
 		}
@@ -572,6 +582,97 @@ int search_all(int position)
 	}
     }
     return TRUE;
+}
+
+/*
+------------------------------------------------------------------------------
+        PROCEDURE: <recognize_repetition>   >>> Added by Ryohei Sasano <<<
+------------------------------------------------------------------------------
+*/
+int recognize_repetition(char *key, char *rslt)
+{
+    int i, len, code, weight;
+    int key_length = strlen(key); /* キーの文字数を数えておく */
+    U_CHAR *buf, midasi[LENMAX];
+
+    U_CHAR *youon[] = {"っ", "ッ", "ゃ", "ャ", "ゅ", "ュ", "ょ", "ョ", "\0"};
+
+    for (len = 2; len < 5; len++) {
+
+	if (key_length < len * 4) return 0;
+	
+	/* 拗音から始まるものは不可 */
+	for (i = 0; *youon[i]; i++) {
+	    if (!strncmp(key, youon[i], 2)) return 0;
+	}
+
+	/* 平仮名、片仮名、"ー"以外を含むものは不可 */
+	if (strncmp(key + len * 2 - 2, "ー", 2) &&
+	    check_code(key, len * 2 - 2) != HIRAGANA &&
+	    check_code(key, len * 2 - 2) != KATAKANA) return 0;
+
+	if (!strncmp(key, key + len * 2, len * 2)) {
+	    
+	    strncpy(midasi, key, len * 4);
+ 	    midasi[len * 4] = '\0';
+	    buf = midasi;	    
+
+	    /* 基本的には語数に比例してペナルティを与える */
+	    weight = len*13+0x20;
+
+	    /* 拗音があった場合は1文字分マイナス+ボーナス */
+	    for (i = 2; *youon[i]; i++) {
+		if (strstr(buf, youon[i])) break;
+	    }
+	    if (*youon[i]) {
+		if (len == 2) return 0; /* 1音の繰り返しは禁止 */		
+		weight -= 13 + 4;
+	    }
+
+	    /* 濁音があった場合もボーナス */
+	    for (i = 0; *dakuon[i]; i++) {
+		if (strstr(buf, dakuon[i])) break;
+	    }
+	    if (*dakuon[i]) {
+		weight -= 2;
+		/* 先頭が濁音だった場合はさらにボーナス */
+		if (!strncmp(buf, dakuon[i], 2)) weight -= 2;
+	    }
+
+	    /* カタカナもボーナス */
+	    if (check_code(key, 0) == KATAKANA) weight -= 2;
+    
+	    /* 以上のweightで基本的に副詞と認識されるもの
+	       「ちょろりちょろり」、「ガンガン」、「すべすべ」、「ごうごう」、
+	       「スゴイスゴイ」、「しゃくしゃく」、「はいはい」、「たらたら」、
+	       「ぎゅうぎゅう」、「でんでん」、「ギューギュー」、「ガラガラ」、
+	       以上のweightで基本的に副詞と認識されないもの
+	       「むかしむかし」、「またかまたか」、「もりもり」、「ミニミニ」、
+	       「さくらさくら」、「おるおる」、「いるいる」、「あったあった」、
+	       「とべとべ」、「ごめんごめん」、「とぎれとぎれ」、「ジャジャ」 */
+
+	    sprintf(rslt, "%s\t%c%c%c%c%c%c%c", buf,
+		    8+0x20, /* hinsi = 8 */
+		    0+0x20, /* bunrui = 0 */
+		    0+0x20, /* katuyou1 = 0 */
+		    0+0x20, /* katuyou2 = 0 */
+		    weight, /* weight */
+		    (4734+1)/(0x100-0x20)+0x20, /* con_tbl = 4734 */
+		    (4734+1)%(0x100-0x20)+0x20);
+	    rslt += len * 4 + 8;
+
+	    while (*buf) {
+		code = *(buf)*256 + *(buf+1);
+		*(rslt++) = *buf;
+		*(rslt++) = *(buf+1);
+		buf += 2;
+	    }
+	    *(rslt++) = 0x20;
+	    *(rslt++) = 10+0x20;
+	    strcpy(rslt, "\"自動認識\"\n");
+	    return len;
+	}
+    }
 }
 
 /*
@@ -600,7 +701,7 @@ int take_data(int pos, char **pbuf, int dakuon_flag)
 
     if (dakuon_flag) {
 	strcpy(mrph.midasi2, mrph.midasi);
-	strncpy(mrph.midasi, dakuon[dakuon_flag - 1], 2);
+	strncpy(mrph.midasi, dakuon[dakuon_flag], 2);
     }
 
     if (*s == 0xff) { /* 連語情報だった場合 */
@@ -613,7 +714,7 @@ int take_data(int pos, char **pbuf, int dakuon_flag)
 	
 	pos_bak = pos;
 
-	s = _take_data(s , &mrph, dakuon_flag);
+	s = _take_data(s, &mrph, dakuon_flag);
 	rengo_con_tbl = mrph.con_tbl;
 	rengo_weight  = mrph.weight;
 	num = mrph.bunrui;
@@ -625,7 +726,7 @@ int take_data(int pos, char **pbuf, int dakuon_flag)
 	    while ((new_mrph->midasi[k++] = *(s++)) != ' ') {}
 	    new_mrph->midasi[k-1] = '\0';
 
-	    s = _take_data(s , new_mrph, dakuon_flag);
+	    s = _take_data(s, new_mrph, dakuon_flag);
 
 	    length = strlen(new_mrph->midasi);
 	    if (Class[new_mrph->hinsi][new_mrph->bunrui].kt) /* 活用する */
@@ -762,7 +863,7 @@ int take_data(int pos, char **pbuf, int dakuon_flag)
 	}
 
     } else {           /* 普通の形態素だった場合 */
-	s = _take_data(s , &mrph, dakuon_flag);
+	s = _take_data(s, &mrph, dakuon_flag);
 
 	if ( Class[mrph.hinsi][mrph.bunrui].kt ) { /* 活用する */
 	    if ( mrph.katuyou2 == 0 ) {   /* 語幹あり */
@@ -814,7 +915,7 @@ int take_data(int pos, char **pbuf, int dakuon_flag)
 ------------------------------------------------------------------------------
 */
 
-char *_take_data(char *s , MRPH *mrph, int dakuon_flag)
+char *_take_data(char *s, MRPH *mrph, int dakuon_flag)
 {
     int		i, j, k = 0;
     char	c, *rep;
@@ -839,10 +940,8 @@ char *_take_data(char *s , MRPH *mrph, int dakuon_flag)
 
 	/* ライマンの法則 */
 	/* もともと濁音を含む要素は濁音化しない */
-	for (i = 0; *dakuon[i]; i++) {
-	    if (strstr(mrph->midasi + 2, dakuon[i])) {
-		break;
-	    }
+	for (i = 10; *dakuon[i]; i++) {
+	    if (strstr(mrph->midasi + 2, dakuon[i])) break;
 	}
 
 	/* 連語情報だった場合、語幹のない語だった場合、形態素が1文字だった場合 */
@@ -891,7 +990,7 @@ char *_take_data(char *s , MRPH *mrph, int dakuon_flag)
 	}
 
  	/* 読みの濁音化は片仮名の場合は平仮名にする */
-	strncpy(mrph->yomi, dakuon[((dakuon_flag-1)/2)*2], 2);
+	strncpy(mrph->yomi, dakuon[(dakuon_flag/2)*2], 2);
 
 	if (k == 0) {
 	    strcpy(mrph->imis, "\"濁音化\"");
@@ -1775,7 +1874,8 @@ int check_connect(int pos, int m_num, int dakuon_flag)
     /* 連接キャッシュにヒットすれば，探索を行わない */
     c_cache = &connect_cache[rensetu_tbl[new_mrph->con_tbl].j_pos];
     if (Show_Opt_debug == 0) {
-	if (c_cache->pos == pos && c_cache->pos == dakuon_flag && c_cache->p_no > 0) {
+	if (c_cache->pos == pos && c_cache->dakuon_flag == dakuon_flag 
+	    && c_cache->p_no > 0) {
 	    p_buffer[p_buffer_num].score = c_cache->cost + class_score;
 	    p_buffer[p_buffer_num].mrph_p = m_num;
 	    p_buffer[p_buffer_num].start = pos;
@@ -1890,7 +1990,7 @@ int check_connect(int pos, int m_num, int dakuon_flag)
     c_cache->p_no = p_buffer_num;
     c_cache->cost = best_score;
     c_cache->pos = pos;
-    c_cache->pos = dakuon_flag;
+    c_cache->dakuon_flag = dakuon_flag;
 
     /* 取り敢えずベストパスの1つを0番に登録 */
     p_buffer[p_buffer_num].path[0] = chk_connect[best_score_num].pre_p;

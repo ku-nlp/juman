@@ -204,7 +204,20 @@ sub repname {
 =cut
 sub make_repname {
     my ( $this ) = @_;
-    return $this->genkei . '/' . $this->yomi;
+    my $basic_form_str = '基本形';
+    if( utf8::is_utf8( $this->midasi ) ){
+	$basic_form_str = decode( 'euc-jp', $basic_form_str );
+    }
+
+    # 活用語なら基本形に戻す
+
+    my $new_m = $this->change_katuyou2( $basic_form_str );
+    if ( $new_m ){ # 活用語
+	return $new_m->genkei . '/' . $new_m->yomi;
+    }
+    else {
+	return $this->genkei . '/' . $this->yomi;
+    }
 }
 
 =item kanou_dousi

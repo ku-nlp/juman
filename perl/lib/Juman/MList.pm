@@ -142,7 +142,7 @@ sub repname {
 		for my $old_ret ( @ret ) {
 		    push( @new_ret, $old_ret . '+' . $rep ) if $rep;
 		}
-		if ($org_rep) { # 作った場合は同形異義語についても同じになるのでスキップ
+		if ( $org_rep ) { # 作った場合は同形異義語についても同じになるのでスキップ
 		    for my $doukei ( $mrph->doukei() ) { # 同形異義語 (@)
 			my $rep = $doukei->repname();
 			$rep = $doukei->make_repname() unless $rep;
@@ -157,7 +157,7 @@ sub repname {
 		my $org_rep = $mrph->repname();
 		my $rep = $org_rep ? $org_rep : $mrph->make_repname(); # なければ作る
 		push( @ret, $rep ) if $rep;
-		if ($org_rep) { # 作った場合は同形異義語についても同じになるのでスキップ
+		if ( $org_rep ) { # 作った場合は同形異義語についても同じになるのでスキップ
 		    for my $doukei ( $mrph->doukei() ) { # 同形異義語 (@)
 			my $rep = $doukei->repname();
 			$rep = $doukei->make_repname() unless $rep;
@@ -167,7 +167,9 @@ sub repname {
 	    }
 	}
     }
-    join('?', @ret);
+
+    my ( %scan ); # 重複を削除
+    join( '?', grep(!$scan{$_}++, @ret) );
 }
 
 =back

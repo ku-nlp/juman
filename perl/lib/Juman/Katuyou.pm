@@ -3,6 +3,7 @@ package Juman::Katuyou;
 require 5.000;
 use Juman::Grammar qw/ $FORM /;
 use Juman::Hinsi qw/ get_form_id /;
+use Encode;
 use strict;
 
 =head1 NAME
@@ -46,20 +47,35 @@ sub kihonkei {
 
 =cut
 sub change_katuyou2 {
-    my( $this, $form ) = @_;
+    my( $this, $org_form ) = @_;
+    my $form;
+    if( utf8::is_utf8( $org_form ) ){
+	$form = encode( 'euc-jp', $org_form ); # euc-jpにもどす
+    }
+    else{
+	$form = $org_form;
+    }
 
     my $type = $this->katuyou1;
+    if( utf8::is_utf8( $type ) ){
+	$type = encode( 'euc-jp', $type ); # euc-jpにもどす
+    }
+
     my $id = &get_form_id( $type, $form );
     if( defined $id and $id > 0 ){
 	# 変更先活用形が存在する場合
 	my $new = &_dup( $this );
-	my @oldgobi = @{ $FORM->{$type}->[$this->katuyou2_id] };
+	my @oldgobi = @{ $FORM->{$type}->[$this->katuyou2_id] }; # euc-jpでやりとり
 	my @newgobi = @{ $FORM->{$type}->[$id] };
+	if ( utf8::is_utf8( $this->midasi ) ){
+	    map( { $_ = decode( 'euc-jp', $_ ) } @oldgobi ); # encodeされてるならencode
+	    map( { $_ = decode( 'euc-jp', $_ ) } @newgobi );
+	}
 	$new->{midasi} = &_change_gobi( $this->midasi, $oldgobi[1], $newgobi[1] );
 	$new->{yomi}   = &_change_gobi( $this->yomi,
 					( $oldgobi[2] || $oldgobi[1] ),
 					( $newgobi[2] || $newgobi[1] ) );
-	$new->{katuyou2} = $form;
+	$new->{katuyou2} = $org_form; # もとのencodingで格納
 	$new->{katuyou2_id} = $id;
 	$new;
     } else {

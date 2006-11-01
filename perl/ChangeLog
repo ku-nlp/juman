@@ -1,3 +1,8 @@
+2006-11-01  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* Katuyou.pm, MList.pm, Morpheme.pm:
+	代表表記がない活用語の代表表記を正しく生成できるように修正
+
 2006-10-31  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
 
 	* t/60-hinsi.t, t/70-katuyou.t:

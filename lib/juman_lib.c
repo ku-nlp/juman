@@ -946,7 +946,8 @@ char *_take_data(char *s, MRPH *mrph, int dakuon_flag)
 
 	/* ライマンの法則に該当、語幹のない語、形態素が1文字だった場合 */
 	/* 濁音化の処理はしない(=大きなペナルティを与える) */
-	if (*dakuon[i] || mrph->katuyou2 || (mrph->length == 2)) {
+	if (!strstr(mrph->imis, "濁音可") && *dakuon[i] || 
+	    mrph->katuyou2 || (mrph->length == 2)) {
 	    mrph->weight = 255;
 	}
 	/* 連濁は和語のみ */

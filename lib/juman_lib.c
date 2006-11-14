@@ -943,7 +943,6 @@ char *_take_data(char *s, MRPH *mrph, int dakuon_flag)
 	for (i = 10; *dakuon[i]; i++) {
 	    if (strstr(mrph->midasi + 2, dakuon[i])) break;
 	}
-
 	/* ライマンの法則に該当、語幹のない語、形態素が1文字だった場合 */
 	/* 濁音化の処理はしない(=大きなペナルティを与える) */
 	if (!strstr(mrph->imis, "濁音可") && *dakuon[i] || 
@@ -984,7 +983,10 @@ char *_take_data(char *s, MRPH *mrph, int dakuon_flag)
 		mrph->weight += 9;
 		/* 10以上だと、"盛りだくさん"が解析できない(061031) */
 	    }
-	    /* その他 */    
+	    /* その他 */
+	    else if (strstr(mrph->imis, "濁音可")) {
+	      mrph->weight += 5;
+	    }
 	    else {
 		mrph->weight = 255;
 	    }
@@ -1899,17 +1901,19 @@ int check_connect(int pos, int m_num, int dakuon_flag)
 
 	c_score = check_matrix(left_con , right_con);
 
-	/* 濁音化するのは直前の形態素が名詞、または動詞の連用形、
-	   名詞性接尾辞の場合のみ */
-	/* 直前の形態素が平仮名1文字となるものは不可 */
+	/* 濁音化するのは直前の形態素が名詞、または動詞の連用形、名詞性接尾辞の場合のみ */
+	/* 濁音可となっている場合は例外("ぐらい"への対応)
+	/* 直前の形態素が接尾辞の場合を除き平仮名1文字となるものは不可 */
 	/* weight=255のときは不可 */
 	if (dakuon_flag &&
-	    (!(m_buffer[p_buffer[j].mrph_p].hinsi == 6 ||
-	       m_buffer[p_buffer[j].mrph_p].hinsi == 14 &&
-	       m_buffer[p_buffer[j].mrph_p].bunrui < 5 ||
+	    (!(strstr(new_mrph->imis, "濁音可") ||
+	       m_buffer[p_buffer[j].mrph_p].hinsi == 6 ||
 	       m_buffer[p_buffer[j].mrph_p].hinsi == 2 &&
-	       m_buffer[p_buffer[j].mrph_p].katuyou2 == 8) ||
-	     (check_code(m_buffer[p_buffer[j].mrph_p].midasi, 0) == HIRAGANA &&
+	       m_buffer[p_buffer[j].mrph_p].katuyou2 == 8 ||
+	       m_buffer[p_buffer[j].mrph_p].hinsi == 14 &&
+	       m_buffer[p_buffer[j].mrph_p].bunrui < 5) ||
+	     (m_buffer[p_buffer[j].mrph_p].hinsi != 14 &&
+	      check_code(m_buffer[p_buffer[j].mrph_p].midasi, 0) == HIRAGANA &&
 	      m_buffer[p_buffer[j].mrph_p].length == 2) ||
 	     new_mrph->weight == 255))
 	    c_score = 0;

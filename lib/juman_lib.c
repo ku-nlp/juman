@@ -930,79 +930,82 @@ char *_take_data(char *s, MRPH *mrph, int dakuon_flag)
     mrph->length   = strlen(mrph->midasi);
 
     if (*s != ' ' && *s != '\n') { /* 意味情報あり */
-	j = numeral_decode(&s);
-	for (i = 0; i < j; i++) mrph->imis[k++] = *(s++);
-	mrph->imis[k] = '\0';
+      j = numeral_decode(&s);
+      for (i = 0; i < j; i++) mrph->imis[k++] = *(s++);
+      mrph->imis[k] = '\0';
     }
     s++;
 
     if (dakuon_flag) {
 
-	/* ライマンの法則 */
-	/* もともと濁音を含む要素は濁音化しない */
-	for (i = 10; *dakuon[i]; i++) {
-	    if (strstr(mrph->midasi + 2, dakuon[i])) break;
+      /* ライマンの法則 */
+      /* もともと濁音を含む要素は濁音化しない */
+      /* 例外となる"はしご"には、濁音可というfeatureを付与して対処している */
+      for (i = 10; *dakuon[i]; i++) {
+	if (strstr(mrph->midasi + 2, dakuon[i])) break;
+      }
+      /* ライマンの法則に該当、語幹のない語、形態素が1文字だった場合 */
+      /* 濁音化の処理はしない(=大きなペナルティを与える) */
+      if (!strstr(mrph->imis, "濁音可") && *dakuon[i] || 
+	  mrph->katuyou2 || (mrph->length == 2)) {
+	mrph->weight = 255;
+      }
+      /* 連濁は和語のみ */
+      /* このため代表表記の最初の文字が漢字でないものは不可 */
+      else if ((rep = strstr(mrph->imis, "代表表記:")) &&
+	       check_code(rep, 9) == KATAKANA) {
+	mrph->weight = 255;
+      }
+      else {
+	/* 動詞 */
+	if (mrph->hinsi == 2) {
+	  if (!strncmp(mrph->midasi, "が", 2)) {
+	    mrph->weight += 9;
+	    /*  7以下だと、"きりがない"が正しく解析できない(060928) */
+	    /*  8以下だと、"疲れがたまる"が正しく解析できない(060928) */
+	    /* 10以上だと、"ひっくりがえす"が正しく解析できない(060928) */
+	  }
+	  else {
+	    mrph->weight += 5;
+	    /* 4以下だと、"盛りだくさん"が正しく解析できない(061031) */
+	    /* 5以上だと、"変わりばえが"の解釈に不要な曖昧性が生じる(060928) */
+	    /* 6以上だと、"きもだめし"が正しく解析できない(060928) */
+	  }
 	}
-	/* ライマンの法則に該当、語幹のない語、形態素が1文字だった場合 */
-	/* 濁音化の処理はしない(=大きなペナルティを与える) */
-	if (!strstr(mrph->imis, "濁音可") && *dakuon[i] || 
-	    mrph->katuyou2 || (mrph->length == 2)) {
-	    mrph->weight = 255;
+	/* 名詞 */
+	else if (mrph->hinsi == 6 && (mrph->bunrui < 3 || mrph->bunrui > 7)) {
+	  mrph->weight += 8;
+	  /* 6以下だと、"右下がりの状態"が正しく解析できない(060928) */
+	  /* 7以下だと、"変わりばえが"の解釈に不要な曖昧性が生じる(060928) */
+	  /* 9以上だと、"ものごころ"が正しく解析できない(060928) */
 	}
-	/* 連濁は和語のみ */
-	/* このため代表表記の最初の文字が漢字でないものは不可 */
-	else if ((rep = strstr(mrph->imis, "代表表記:")) &&
-		 check_code(rep, 9) == KATAKANA) {
-	    mrph->weight = 255;
+	/* 形容詞 */
+	else if (mrph->hinsi == 3) {
+	  mrph->weight += 9;
+	  /* 10以上だと、"盛りだくさん"が解析できない(061031) */
 	}
-	else {
-	    /* 動詞 */
-	    if (mrph->hinsi == 2) {
-		if (!strncmp(mrph->midasi, "が", 2)) {
-		    mrph->weight += 9;
-		    /*  7以下だと、"きりがない"が正しく解析できない(060928) */
-		    /*  8以下だと、"疲れがたまる"が正しく解析できない(060928) */
-		    /* 10以上だと、"ひっくりがえす"が正しく解析できない(060928) */
-		}
-		else {
-		    mrph->weight += 5;
-		    /* 4以下だと、"盛りだくさん。"が正しく解析できない(061031) */
-		    /* 5以上だと、"変わりばえが"の解釈に不要な曖昧性が生じる(060928) */
-		    /* 6以上だと、"きもだめし"が正しく解析できない(060928) */
-		}
-	    }
-	    /* 名詞 */
-	    else if (mrph->hinsi == 6 && (mrph->bunrui < 3 || mrph->bunrui > 7)) {
-		mrph->weight += 8;
-		/* 6以下だと、"右下がりの状態"が正しく解析できない(060928) */
-		/* 7以下だと、"変わりばえが"の解釈に不要な曖昧性が生じる(060928) */
-		/* 9以上だと、"ものごころ"が正しく解析できない(060928) */
-	    }
-	    /* 形容詞 */
-	    else if (mrph->hinsi == 3) {
-		mrph->weight += 9;
-		/* 10以上だと、"盛りだくさん"が解析できない(061031) */
-	    }
-	    /* その他 */
-	    else if (strstr(mrph->imis, "濁音可")) {
-	      mrph->weight += 5;
-	    }
-	    else {
-		mrph->weight = 255;
-	    }
-	}
-
- 	/* 読みの濁音化は片仮名の場合は平仮名にする */
-	strncpy(mrph->yomi, dakuon[(dakuon_flag/2)*2], 2);
-
-	if (k == 0) {
-	    strcpy(mrph->imis, "\"濁音化\"");
+	/* その他 */
+	/* その他の品詞でも濁音可という意味素があれば解析できるようにするため */
+	/* 副助詞および副詞の"くらい"を想定しているが、とりあえずは使用せず */
+	else if (strstr(mrph->imis, "濁音可")) {
+	  mrph->weight += 5;
 	}
 	else {
-	    mrph->imis[k - 1] = '\0';
-	    strcat(mrph->imis, " 濁音化\"");
+	  mrph->weight = 255;
 	}
-	k++;
+      }
+
+      /* 読みの濁音化は片仮名の場合は平仮名にする */
+      strncpy(mrph->yomi, dakuon[(dakuon_flag/2)*2], 2);
+
+      if (k == 0) {
+	strcpy(mrph->imis, "\"濁音化\"");
+      }
+      else {
+	mrph->imis[k - 1] = '\0';
+	strcat(mrph->imis, " 濁音化\"");
+      }
+      k++;
     }
 
     if (k == 0) strcpy(mrph->imis, NILSYMBOL);
@@ -1012,7 +1015,7 @@ char *_take_data(char *s, MRPH *mrph, int dakuon_flag)
 
 int numeral_decode(char **str)
 {
-    unsigned char *s;
+  unsigned char *s;
 
     s = *str;
     if (*s < 0xf0) {
@@ -1902,12 +1905,10 @@ int check_connect(int pos, int m_num, int dakuon_flag)
 	c_score = check_matrix(left_con , right_con);
 
 	/* 濁音化するのは直前の形態素が名詞、または動詞の連用形、名詞性接尾辞の場合のみ */
-	/* 濁音可となっている場合は例外("ぐらい"への対応)
 	/* 直前の形態素が接尾辞の場合を除き平仮名1文字となるものは不可 */
 	/* weight=255のときは不可 */
 	if (dakuon_flag &&
-	    (!(strstr(new_mrph->imis, "濁音可") ||
-	       m_buffer[p_buffer[j].mrph_p].hinsi == 6 ||
+	    (!(m_buffer[p_buffer[j].mrph_p].hinsi == 6 ||
 	       m_buffer[p_buffer[j].mrph_p].hinsi == 2 &&
 	       m_buffer[p_buffer[j].mrph_p].katuyou2 == 8 ||
 	       m_buffer[p_buffer[j].mrph_p].hinsi == 14 &&

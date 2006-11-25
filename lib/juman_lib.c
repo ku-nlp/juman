@@ -540,14 +540,6 @@ int search_all(int position)
 
 	pat_buffer[0] = '\0';
 
-	/* ひらがな、カタカナの繰り返し表現を副詞の候補とする */
-	if (Repetition_Opt) {
-	    if (check_code(String, position) == HIRAGANA ||
-		check_code(String, position) == KATAKANA) {
-		recognize_repetition(String + position, pat_buffer);
-	    }
-	}
-
 	/* パトリシア木から形態素を検索 */
 	pat_search(db, String + position, &DicFile.tree_top[dic_no],
 		   pat_buffer);
@@ -581,6 +573,20 @@ int search_all(int position)
 	    }
 	}
     }
+    pat_buffer[0] = '\0';
+
+    /* ひらがな、カタカナの繰り返し表現を副詞の候補とする */
+    if (Repetition_Opt) {
+	if (check_code(String, position) == HIRAGANA ||
+	    check_code(String, position) == KATAKANA) {
+	    recognize_repetition(String + position, pat_buffer);
+	}
+    }   
+    pbuf = pat_buffer;
+    while (*pbuf != '\0') {
+	if (take_data(position, &pbuf, 0) == FALSE) return FALSE;
+    }
+
     return TRUE;
 }
 
@@ -591,7 +597,7 @@ int search_all(int position)
 */
 int recognize_repetition(char *key, char *rslt)
 {
-    int i, len, code, weight;
+    int i, len, code, weight, con_tbl;
     int key_length = strlen(key); /* キーの文字数を数えておく */
     U_CHAR *buf, midasi[LENMAX];
 
@@ -651,14 +657,15 @@ int recognize_repetition(char *key, char *rslt)
 	       「さくらさくら」、「おるおる」、「いるいる」、「あったあった」、
 	       「とべとべ」、「ごめんごめん」、「とぎれとぎれ」、「ジャジャ」 */
 
+	    con_tbl = check_table_for_undef(8, 0); /* hinsi = 8, bunrui = 0 */
 	    sprintf(rslt, "%s\t%c%c%c%c%c%c%c", buf,
 		    8+0x20, /* hinsi = 8 */
 		    0+0x20, /* bunrui = 0 */
 		    0+0x20, /* katuyou1 = 0 */
 		    0+0x20, /* katuyou2 = 0 */
 		    weight, /* weight */
-		    (4734+1)/(0x100-0x20)+0x20, /* con_tbl = 4734 */
-		    (4734+1)%(0x100-0x20)+0x20);
+		    con_tbl / (0x100-0x20)+0x20,
+		    con_tbl % (0x100-0x20)+0x20);
 	    rslt += len * 4 + 8;
 
 	    while (*buf) {

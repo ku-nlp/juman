@@ -601,7 +601,8 @@ int recognize_repetition(char *key, char *rslt)
     int key_length = strlen(key); /* キーの文字数を数えておく */
     U_CHAR *buf, midasi[LENMAX];
 
-    U_CHAR *youon[] = {"っ", "ッ", "ゃ", "ャ", "ゅ", "ュ", "ょ", "ョ", "\0"};
+    U_CHAR *youon[] = {"ぁ", "ぃ", "ぅ", "ぇ", "ぉ", "ァ", "ィ", "ゥ", "ェ", "ォ", 
+		       "っ", "ッ", "ゃ", "ャ", "ゅ", "ュ", "ょ", "ョ", "\0"};
 
     for (len = 2; len < 5; len++) {
 

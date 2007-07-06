@@ -183,7 +183,8 @@ sub new {
     if( @_ == 1 ){
 	# 旧バージョンの形式で呼び出された場合の処理
 	my( $argv ) = @_;
-	$this->setup( { 'option' => $argv }, \%DEFAULT );
+	$this->setup( $argv, \%DEFAULT );
+#	$this->setup( { 'option' => $argv }, \%DEFAULT );
     } else {
 	# 新しい形式で呼び出された場合の処理
 	my( %option ) = @_;

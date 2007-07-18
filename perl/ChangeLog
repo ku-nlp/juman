@@ -1,3 +1,7 @@
+2007-07-18  MURAWAKI Yugo  <murawaki@nlp.kuee.kyoto-u.ac.jp>
+
+	* lib/Juman/Process.pm: close 時にまだ生きている子プロセスを殺す
+
 2006-11-01  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* Katuyou.pm, MList.pm, Morpheme.pm:

@@ -207,8 +207,9 @@ sub close {
 	$fh->close;
     } elsif( $fh = $this->{SOCKET}->{LOCAL} ){
 	if( $fh->alive ){
-	    $fh->close;
-	    $fh->alive;			# Call waitpid() to avoid zombie.
+	    $fh->kill;
+	    # $fh->close;
+	    # $fh->alive;			# Call waitpid() to avoid zombie.
 	}
     }
     delete $this->{SOCKET};

@@ -169,7 +169,7 @@ sub repname {
     }
 
     my ( %scan ); # 重複を削除
-    join( '?', grep(!$scan{$_}++, @ret) );
+    join( '?', grep(!$scan{$_}++, sort @ret) );
 }
 
 =back

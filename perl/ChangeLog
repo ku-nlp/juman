@@ -1,3 +1,8 @@
+2007-08-13  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
+
+	* lib/Juman/MList.pm:
+	関数repnameで、「?」で連結する際にsortするように変更
+
 2007-07-18  MURAWAKI Yugo  <murawaki@nlp.kuee.kyoto-u.ac.jp>
 
 	* lib/Juman/Process.pm: close 時にまだ生きている子プロセスを殺す

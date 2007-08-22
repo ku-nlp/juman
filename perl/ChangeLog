@@ -1,3 +1,11 @@
+2007-08-22  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
+
+	* lib/Juman/MList.pm:
+	コードを整理
+	
+	* lib/Juman/Morpheme.pm:
+	メソッドrepnamesを追加
+
 2007-08-13  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
 
 	* lib/Juman/MList.pm:

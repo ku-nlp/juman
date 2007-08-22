@@ -200,16 +200,24 @@ sub repname {
 =item repnames
 
 形態素の代表表記（曖昧性がある場合は「?」で連結）を返す．
+引数(≠0)を与えると、音訓解消した場合の曖昧性は無視する.
 
 =cut
 sub repnames {
-    my ( $this ) = @_;
+    my ( $this, $flag ) = @_;
+
+    my $pat = '音訓解消';
+    if( utf8::is_utf8( $this->midasi ) ){
+	$pat = decode('euc-jp', $pat);
+    }
 
     my ( @ret );
     my $org_rep = $this->repname();
     my $rep = $org_rep ? $org_rep : $this->make_repname(); # なければ作る
     push( @ret, $rep ) if $rep;
-    if ( $org_rep ) { # 作った場合は同形異義語についても同じになるのでスキップ
+    if ( $org_rep && # 作った場合は同形異義語についても同じになるのでスキップ
+	 # $flagが立っている場合は音訓解消した場合の曖昧性は無視
+	 !( $flag && $this->spec =~ /<$pat>/ )) { 
 	push @ret, $this->get_doukei_reps;
     }
 

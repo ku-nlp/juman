@@ -197,6 +197,45 @@ sub repname {
     return undef;
 }
 
+=item repnames
+
+形態素の代表表記（曖昧性がある場合は「?」で連結）を返す．
+
+=cut
+sub repnames {
+    my ( $this ) = @_;
+
+    my ( @ret );
+    my $org_rep = $this->repname();
+    my $rep = $org_rep ? $org_rep : $this->make_repname(); # なければ作る
+    push( @ret, $rep ) if $rep;
+    if ( $org_rep ) { # 作った場合は同形異義語についても同じになるのでスキップ
+	push @ret, $this->get_doukei_reps;
+    }
+
+    my ( %scan ); # 重複を削除
+    join( '?', grep(!$scan{$_}++, sort @ret) );
+
+}
+
+=item get_doukei_reps
+
+形態素の同型異義語の代表表記を返す．
+
+=cut
+sub get_doukei_reps {
+    my ( $this ) = @_;
+
+    my ( @reps );
+    for my $doukei ( $this->doukei() ) { # 同形異義語 (@)
+	my $rep = $doukei->repname();
+	$rep = $doukei->make_repname() unless $rep;
+	push( @reps, $rep ) if $rep;
+    }
+
+    return @reps;
+}
+
 =item make_repname
 
 形態素の代表表記を作る．

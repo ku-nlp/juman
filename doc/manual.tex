@@ -3,12 +3,12 @@
 \usepackage{ascmac}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\title{\bf 日本語形態素解析システム \\ JUMAN version 5.1}
+\title{\bf 日本語形態素解析システム \\ JUMAN version 6.0}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \author{黒橋 禎夫 \ \ 河原 大輔}
-\date{平成17年9月 \\
-\rule{0mm}{110mm}Copyright \copyright\ 2005\begin{tabular}[t]{l}
-                                東京大学大学院情報理工学系研究科 \\
+\date{平成19年9月 \\
+\rule{0mm}{110mm}Copyright \copyright\ 2007\begin{tabular}[t]{l}
+                                京都大学大学院情報学研究科 \\
                                 \end{tabular}
 }
 
@@ -22,10 +22,10 @@
 
 \begin{small}
 \noindent
-Japanese Morphological Analysis System JUMAN 5.1 Users Manual
+Japanese Morphological Analysis System JUMAN 6.0 Users Manual
 
 \noindent
-Copyright (c) 2005 University of Tokyo \\
+Copyright (c) 2007 Kyoto University \\
 All rights reserved.
 
 \noindent
@@ -39,16 +39,16 @@ are met:
  \item Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
- \item The name University of Tokyo may not be used to endorse or promote
+ \item The name Kyoto University may not be used to endorse or promote
    products derived from this software without specific prior written
    permission.
 \end{enumerate}
 
 \noindent
-THIS SOFTWARE IS PROVIDED BY University of Tokyo ``AS IS'' AND ANY
+THIS SOFTWARE IS PROVIDED BY KYOTO UNIVERSITY ``AS IS'' AND ANY
 EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE University of Tokyo BE
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL KYOTO UNIVERSITY BE
 LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -78,6 +78,7 @@ Version 3.61 & 26 May 1999 \\
 Version 4.0 & 19 July 2003 \\
 Version 5.0 & 23 March 2005 \\
 Version 5.1 & 7 September 2005 \\
+Version 6.0 & 30 September 2007 \\
 \end{tabular}
 \end{small}
 
@@ -146,7 +147,7 @@ JUMAN3.1以降では奈良先端大松本研究室で開発された茶筅のパトリシア木によ
 きました．御協力頂いた各位にお礼申し上げます．
 
 \begin{flushright}
-平成 17年 8月
+平成 19年 9月
 \end{flushright}
 
 \vfill
@@ -155,12 +156,12 @@ JUMAN3.1以降では奈良先端大松本研究室で開発された茶筅のパトリシア木によ
 本システムに関するお問い合わせは以下にお願いします．
 
 \noindent
-〒113-8656 東京都文京区本郷 7-3-1 \\
-東京大学大学院 情報理工学系研究科 電子情報学専攻 \\
+〒606-8501 京都府京都市左京区吉田本町 \\
+京都大学大学院情報学研究科 知能情報学専攻 \\
 黒橋 禎夫 \\
-Tel: (03)5841-6672\\
-Fax: (03)5841-6689\\
-Email: {\sf nl-resource@kc.t.u-tokyo.ac.jp}
+Tel: (075)753-5344 \\
+Fax: (075)753-5962 \\
+Email: {\sf nl-resource@nlp.kuee.kyoto-u.ac.jp}
 
 \clearpage
 
@@ -815,7 +816,7 @@ $C_{i,j}=\infty$ とする)．したがって，$Mf_j$に対するすべての連接コストは，
 \subsection{Unix系OSにおけるインストール方法}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\texttt{juman-5.1.tar.gz}を展開し，\texttt{juman-5.1}ディレクトリに移動
+\texttt{juman-6.0.tar.gz}を展開し，\texttt{juman-6.0}ディレクトリに移動
 して，次の手順を実行する．
 
 \begin{enumerate}
@@ -850,7 +851,7 @@ $C_{i,j}=\infty$ とする)．したがって，$Mf_j$に対するすべての連接コストは，
 \subsection{Windowsにおけるインストール方法}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\texttt{juman-5.1.exe}を実行し，表示される指示に従ってインストールを行う．
+\texttt{juman-6.0.exe}を実行し，表示される指示に従ってインストールを行う．
 以下のファイルがインストールされる．\texttt{\$PREFIX}は，デフォルトでは
 \texttt{C:\yen Program Files\yen juman}であるが，インストール途中で設定
 できる．
@@ -2264,6 +2265,20 @@ majorなので，一語とする．
 \item プログラムでの変数定義の修正 (MacOS Xでの問題解消)
 
 \item 実行時のデフォルトのオプションを -B -e2 に変更
+
+\item 辞書・接続表の若干の修正
+\end{enumerate}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{JUMAN 5.1 からJUMAN 6.0への拡張点}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{subsec:6.0}
+
+\begin{enumerate}
+\item カテゴリ、ドメイン情報の付与
+
+\item 連濁、反復形オノマトペの自動認識
 
 \item 辞書・接続表の若干の修正
 \end{enumerate}

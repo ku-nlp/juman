@@ -1105,6 +1105,9 @@ int undef_word(int pos)
     } else {
 	end = pos;
 	while(1) {
+	    /* MIDASI_MAXを越える未定義語は作成しない */
+	    if (end - pos >= MIDASI_MAX - ((code == HANKAKU) ? 1 : 2)) break;
+
 	    end += (code == HANKAKU) ? 1 : 2;
 	    next_code = check_code(String, end);
 	    if (next_code == code ||

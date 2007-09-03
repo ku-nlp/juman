@@ -195,7 +195,6 @@ U_CHAR          *dakuon[] = {"ぱ", "パ", "ぴ", "ピ", "ぷ", "プ", "ぺ", "ペ", "ぽ
 			     "ざ", "ザ", "じ", "ジ", "ず", "ズ", "ぜ", "ゼ", "ぞ", "ゾ",
 			     "だ", "ダ", "ぢ", "ヂ", "づ", "ヅ", "で", "デ", "ど", "ド",
 			     "ば", "バ", "び", "ビ", "ぶ", "ブ", "べ", "ベ", "ぼ", "ボ",
-			     
 			     "\0"};
 U_CHAR          *seion[]  = {"は", "ハ", "ひ", "ヒ", "ふ", "フ", "へ", "ヘ", "ほ", "ホ",
 			     "か", "カ", "き", "キ", "く", "ク", "け", "ケ", "こ", "コ",
@@ -960,7 +959,7 @@ char *_take_data(char *s, MRPH *mrph, int dakuon_flag)
 	    /* 動詞 */
 	    if (mrph->hinsi == 2) {
 		if (!strncmp(mrph->midasi, "が", 2)) {
-		    mrph->weight += GA_VERB_VOICED_COST;
+		    mrph->weight += VERB_GA_VOICED_COST;
 		}
 		else {
 		    mrph->weight += VERB_VOICED_COST;
@@ -968,7 +967,12 @@ char *_take_data(char *s, MRPH *mrph, int dakuon_flag)
 	    }
 	    /* 名詞 */
 	    else if (mrph->hinsi == 6 && (mrph->bunrui < 3 || mrph->bunrui > 7)) {
-		mrph->weight += NOUN_VOICED_COST;
+		if (!strncmp(mrph->midasi, "が", 2)) {
+		    mrph->weight += NOUN_GA_VOICED_COST;
+		}
+		else {
+		    mrph->weight += NOUN_VOICED_COST;
+		}
 	    }
 	    /* 形容詞 */
 	    else if (mrph->hinsi == 3) {

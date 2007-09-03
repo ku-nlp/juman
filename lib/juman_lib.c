@@ -91,6 +91,7 @@
 #endif
 
 #include	<juman.h>
+#include	<const.h>
 
 /*
 ------------------------------------------------------------------------------
@@ -625,7 +626,7 @@ int recognize_repetition(char *key, char *rslt)
 	    buf = midasi;	    
 
 	    /* 基本的には語数に比例してペナルティを与える */
-	    weight = len*13+0x20;
+	    weight = REPETITION_COST*len+0x20;
 
 	    /* 拗音があった場合は1文字分マイナス+ボーナス */
 	    for (i = 2; *youon[i]; i++) {
@@ -633,7 +634,7 @@ int recognize_repetition(char *key, char *rslt)
 	    }
 	    if (*youon[i]) {
 		if (len == 2) return 0; /* 1音の繰り返しは禁止 */		
-		weight -= 13 + 4;
+		weight -= REPETITION_COST + YOUON_BONUS;
 	    }
 
 	    /* 濁音があった場合もボーナス */
@@ -641,23 +642,14 @@ int recognize_repetition(char *key, char *rslt)
 		if (strstr(buf, dakuon[i])) break;
 	    }
 	    if (*dakuon[i]) {
-		weight -= 2;
+		weight -= DAKUON_BONUS;
 		/* 先頭が濁音だった場合はさらにボーナス */
-		if (!strncmp(buf, dakuon[i], 2)) weight -= 2;
+		if (!strncmp(buf, dakuon[i], 2)) weight -= DAKUON_BONUS;
 	    }
 
 	    /* カタカナもボーナス */
-	    if (check_code(key, 0) == KATAKANA) weight -= 2;
+	    if (check_code(key, 0) == KATAKANA) weight -= KATAKANA_BONUS;
     
-	    /* 以上のweightで基本的に副詞と認識されるもの
-	       「ちょろりちょろり」、「ガンガン」、「すべすべ」、「ごうごう」、
-	       「スゴイスゴイ」、「しゃくしゃく」、「はいはい」、「たらたら」、
-	       「ぎゅうぎゅう」、「でんでん」、「ギューギュー」、「ガラガラ」、
-	       以上のweightで基本的に副詞と認識されないもの
-	       「むかしむかし」、「またかまたか」、「もりもり」、「ミニミニ」、
-	       「さくらさくら」、「おるおる」、「いるいる」、「あったあった」、
-	       「とべとべ」、「ごめんごめん」、「とぎれとぎれ」、「ジャジャ」 */
-
 	    con_tbl = check_table_for_undef(8, 0); /* hinsi = 8, bunrui = 0 */
 	    sprintf(rslt, "%s\t%c%c%c%c%c%c%c", buf,
 		    8+0x20, /* hinsi = 8 */
@@ -936,88 +928,78 @@ char *_take_data(char *s, MRPH *mrph, int dakuon_flag)
     mrph->con_tbl  = numeral_decode2(&s);
     hiragana_decode(&s, mrph->yomi);
     mrph->length   = strlen(mrph->midasi);
-
+    
     if (*s != ' ' && *s != '\n') { /* 意味情報あり */
-      j = numeral_decode(&s);
-      for (i = 0; i < j; i++) mrph->imis[k++] = *(s++);
-      mrph->imis[k] = '\0';
+	j = numeral_decode(&s);
+	for (i = 0; i < j; i++) mrph->imis[k++] = *(s++);
+	mrph->imis[k] = '\0';
     }
     s++;
-
+    
     if (dakuon_flag) {
-
-      /* ライマンの法則 */
-      /* もともと濁音を含む要素は濁音化しない */
-      /* 例外となる"はしご"には、濁音可というfeatureを付与して対処している */
-      for (i = 10; *dakuon[i]; i++) {
-	if (strstr(mrph->midasi + 2, dakuon[i])) break;
-      }
-      /* ライマンの法則に該当、語幹のない語、形態素が1文字だった場合 */
-      /* 濁音化の処理はしない(=大きなペナルティを与える) */
-      if (!strstr(mrph->imis, "濁音可") && *dakuon[i] || 
-	  mrph->katuyou2 || (mrph->length == 2)) {
-	mrph->weight = 255;
-      }
-      /* 連濁は和語のみ */
-      /* このため代表表記の最初の文字が漢字でないものは不可 */
-      else if ((rep = strstr(mrph->imis, "代表表記:")) &&
-	       check_code(rep, 9) == KATAKANA) {
-	mrph->weight = 255;
-      }
-      else {
-	/* 動詞 */
-	if (mrph->hinsi == 2) {
-	  if (!strncmp(mrph->midasi, "が", 2)) {
-	    mrph->weight += 9;
-	    /*  7以下だと、"きりがない"が正しく解析できない(060928) */
-	    /*  8以下だと、"疲れがたまる"が正しく解析できない(060928) */
-	    /* 10以上だと、"ひっくりがえす"が正しく解析できない(060928) */
-	  }
-	  else {
-	    mrph->weight += 5;
-	    /* 4以下だと、"盛りだくさん"が正しく解析できない(061031) */
-	    /* 5以上だと、"変わりばえが"の解釈に不要な曖昧性が生じる(060928) */
-	    /* 6以上だと、"きもだめし"が正しく解析できない(060928) */
-	  }
+	
+	/* ライマンの法則 */
+	/* もともと濁音を含む要素は濁音化しない */
+	/* 例外となる"はしご"には、濁音可というfeatureを付与して対処している */
+	for (i = 10; *dakuon[i]; i++) {
+	    if (strstr(mrph->midasi + 2, dakuon[i])) break;
 	}
-	/* 名詞 */
-	else if (mrph->hinsi == 6 && (mrph->bunrui < 3 || mrph->bunrui > 7)) {
-	  mrph->weight += 8;
-	  /* 6以下だと、"右下がりの状態"が正しく解析できない(060928) */
-	  /* 7以下だと、"変わりばえが"の解釈に不要な曖昧性が生じる(060928) */
-	  /* 9以上だと、"ものごころ"が正しく解析できない(060928) */
+	/* ライマンの法則に該当、語幹のない語、形態素が1文字だった場合 */
+	/* 濁音化の処理はしない(=大きなペナルティを与える) */
+	if (!strstr(mrph->imis, "濁音可") && *dakuon[i] || 
+	    mrph->katuyou2 || (mrph->length == 2)) {
+	    mrph->weight = 255;
 	}
-	/* 形容詞 */
-	else if (mrph->hinsi == 3) {
-	  mrph->weight += 9;
-	  /* 10以上だと、"盛りだくさん"が解析できない(061031) */
-	}
-	/* その他 */
-	/* その他の品詞でも濁音可という意味素があれば解析できるようにするため */
-	/* 副助詞および副詞の"くらい"を想定しているが、とりあえずは使用せず */
-	else if (strstr(mrph->imis, "濁音可")) {
-	  mrph->weight += 5;
+	/* 連濁は和語のみ */
+	/* このため代表表記の最初の文字が漢字でないものは不可 */
+	else if ((rep = strstr(mrph->imis, "代表表記:")) &&
+		 check_code(rep, 9) == KATAKANA) {
+	    mrph->weight = 255;
 	}
 	else {
-	  mrph->weight = 255;
+	    /* 動詞 */
+	    if (mrph->hinsi == 2) {
+		if (!strncmp(mrph->midasi, "が", 2)) {
+		    mrph->weight += GA_VERB_VOICED_COST;
+		}
+		else {
+		    mrph->weight += VERB_VOICED_COST;
+		}
+	    }
+	    /* 名詞 */
+	    else if (mrph->hinsi == 6 && (mrph->bunrui < 3 || mrph->bunrui > 7)) {
+		mrph->weight += NOUN_VOICED_COST;
+	    }
+	    /* 形容詞 */
+	    else if (mrph->hinsi == 3) {
+		mrph->weight += ADJECTIVE_VOICED_COST;
+	    }
+	    /* その他 */
+	    /* その他の品詞でも濁音可という意味素があれば解析できるようにするため */
+	    /* 副助詞および副詞の"くらい"を想定しているが、とりあえずは使用せず */
+	    else if (strstr(mrph->imis, "濁音可")) {
+		mrph->weight += OTHER_VOICED_COST;
+	    }
+	    else {
+		mrph->weight = 255;
+	    }
 	}
-      }
-
-      /* 読みの濁音化は片仮名の場合は平仮名にする */
-      strncpy(mrph->yomi, dakuon[(dakuon_flag/2)*2], 2);
-
-      if (k == 0) {
-	strcpy(mrph->imis, "\"濁音化\"");
-      }
-      else {
-	mrph->imis[k - 1] = '\0';
-	strcat(mrph->imis, " 濁音化\"");
-      }
-      k++;
+	
+	/* 読みの濁音化は片仮名の場合は平仮名にする */
+	strncpy(mrph->yomi, dakuon[(dakuon_flag/2)*2], 2);
+	
+	if (k == 0) {
+	    strcpy(mrph->imis, "\"濁音化\"");
+	}
+	else {
+	    mrph->imis[k - 1] = '\0';
+	    strcat(mrph->imis, " 濁音化\"");
+	}
+	k++;
     }
-
+    
     if (k == 0) strcpy(mrph->imis, NILSYMBOL);
-
+    
     return(s);
 }
 

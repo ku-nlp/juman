@@ -1,3 +1,8 @@
+2007-11-13  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* lib/Juman/Hinsi.pm:
+	Adapted get_hinsi_id, get_bunrui_id, get_type_id and get_form_id to utf8_flag.
+
 2007-08-22  Ryohei Sasano  <ryohei@nlp.kuee.kyoto-u.ac.jp>
 
 	* lib/Juman/Morpheme.pm:

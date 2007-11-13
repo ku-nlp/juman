@@ -71,6 +71,11 @@ sub get_hinsi_id {
         croak "get_hinsi_id(@_): requires an argument";
     }
     my( $x ) = @_;
+
+    if (utf8::is_utf8($x)) { # encode if the input has utf8_flag
+	$x = Encode::encode('euc-jp', $x);
+    }
+
     if( exists $HINSI->[0]->{$x} ){
 	$HINSI->[0]->{$x};
     } elsif( &_indexp($x) and defined $HINSI->[$x] ){
@@ -122,6 +127,11 @@ sub get_bunrui_id {
         croak "get_bunrui_id(@_): requires 2 arguments";
     }
     my( $hinsi, $x ) = @_;
+
+    if (utf8::is_utf8($x)) { # encode if the input has utf8_flag
+	$x = Encode::encode('euc-jp', $x);
+    }
+
     if( defined( $hinsi = &get_hinsi($hinsi) ) ){
 	if( exists $BUNRUI->{$hinsi} ){
 	    if( exists $BUNRUI->{$hinsi}->[0]->{$x} ){
@@ -175,6 +185,11 @@ sub get_type_id {
         croak "get_type_id(@_): requires an argument";
     }
     my( $x ) = @_;
+
+    if (utf8::is_utf8($x)) { # encode if the input has utf8_flag
+	$x = Encode::encode('euc-jp', $x);
+    }
+
     if( &_zerop($x) ){
 	0;
     } elsif( exists $TYPE->[0]->{$x} ){
@@ -230,6 +245,11 @@ sub get_form_id {
         croak "get_form_id(@_): requires 2 arguments";
     }
     my( $type, $x ) = @_;
+
+    if (utf8::is_utf8($x)) { # encode if the input has utf8_flag
+	$x = Encode::encode('euc-jp', $x);
+    }
+
     if( defined( $type = &get_type($type) ) ){
 	if( $type eq '*' ){
 	    if( &_zerop($x) ){

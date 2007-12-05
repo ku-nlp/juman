@@ -1349,11 +1349,12 @@ int 	through_word(int pos , int m_num)
     
 int 	is_through(MRPH *mrph_p)
 {
-    if ((mrph_p->hinsi == kakko_hinsi &&
-	 (mrph_p->bunrui == kakko_bunrui1 || 
-	  mrph_p->bunrui == kakko_bunrui2))||
-	(mrph_p->hinsi == kuuhaku_hinsi && 
-	 mrph_p->bunrui == kuuhaku_bunrui))
+    if (
+	/* 括弧始は透過処理をしない 2007/12/06
+	(mrph_p->hinsi == kakko_hinsi && mrph_p->bunrui == kakko_bunrui1) ||
+	*/
+	(mrph_p->hinsi == kakko_hinsi && mrph_p->bunrui == kakko_bunrui2) ||
+	(mrph_p->hinsi == kuuhaku_hinsi && mrph_p->bunrui == kuuhaku_bunrui))
 	return TRUE;
     else 
 	return FALSE;

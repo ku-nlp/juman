@@ -298,7 +298,7 @@ void pat_insert(FILE *f,char *line, long index, pat_node *x_ptr, char *kugiri)
   int in_hash;
   int buffer_length;
   int key_length;
-  char key[500];
+  char key[1000];
   char buffer[50000]; /* 汎用バッファ */
 
   OL(line:)OS(line);
@@ -413,7 +413,7 @@ int pat_bits(char *string, int cbit, int len)
 *         あったら文字列先頭ポインタ，なければ NULL ( 不要か? )
 ****************************************************/
 int hash_check_proc(FILE *f, long index, char *buf) {
-  char *data,key[20];
+  char *data,key[40];
   long num_of_deleted = 0; /* 消された数 */
   int i;
 
@@ -510,7 +510,7 @@ char *get_line(FILE *f, long pos){
 
 #else
     if(fseek(f, pos, 0) == 0){
-      static char buf[1000];
+      static char buf[2000];
       if(NULL == fgets(buf,sizeof(buf),f))
 	return NULL;
       return buf;
@@ -535,9 +535,9 @@ void show_pat(pat_node *top_ptr, FILE *out_to, char *prefix)
 #if 0
   long idx = -1;
   pat_index_list *t_ptr;
-  char word[100];
-  char pftmp[100];
-  char prefix_keep[100];
+  char word[200];
+  char pftmp[200];
+  char prefix_keep[200];
 
   word[0] = '\0';
 

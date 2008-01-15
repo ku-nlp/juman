@@ -1235,8 +1235,10 @@ int 	suusi_word(int pos , int m_num)
 
 	    if (strlen(pre_mrph->midasi)+strlen(new_mrph->midasi) >= MIDASI_MAX
 		|| strlen(pre_mrph->yomi)+strlen(new_mrph->yomi) >= YOMI_MAX) {
-		fprintf(stderr, "Too long suusi<%s>\n", String);
-		return FALSE;
+		/* MIDASI_MAX、YOMI_MAXを越える数詞は分割するように変更 08/01/15 */
+		/* fprintf(stderr, "Too long suusi<%s>\n", String);
+		   return FALSE; */
+		return TRUE;
 	    }
 	    m_buffer[m_buffer_num] = *pre_mrph;
 	    strcat(m_buffer[m_buffer_num].midasi , new_mrph->midasi);

@@ -1,3 +1,8 @@
+2008-01-22  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
+
+	* lib/Juman/Morpheme.pm:
+	意味情報を追加するメソッドpush_imisを追加
+
 2007-11-13  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* lib/Juman/Hinsi.pm:

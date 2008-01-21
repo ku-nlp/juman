@@ -177,6 +177,25 @@ sub imis {
     shift->{imis};
 }
 
+=item push_imis
+
+意味情報を追加する．
+
+=cut
+sub push_imis {
+    my ($this, @imis) = @_;
+
+    if ($this->{imis} eq 'NIL') {
+	$this->{imis} = '"' . join(' ', @imis) . '"';
+    }
+    else {
+	my $current_imis = $this->{imis};
+	$current_imis =~ s/\"$//;
+
+	$this->{imis} = $current_imis . ' ' . join(' ', @imis) . '"';
+    }
+}
+
 =item repname
 
 形態素の代表表記を返す．

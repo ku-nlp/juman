@@ -1,9 +1,10 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT(juman, 6.0, nl-resource@nlp.kuee.kyoto-u.ac.jp)
 AC_PREREQ(2.53)
-AM_INIT_AUTOMAKE
 # AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([juman/juman.c])
+DATE=`LANG=C date +%Y%m%d`
+AM_INIT_AUTOMAKE(juman, 6.0-${DATE})
 AM_CONFIG_HEADER([config.h])
 
 # Checks for programs.

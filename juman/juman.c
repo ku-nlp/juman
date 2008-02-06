@@ -371,6 +371,6 @@ void juman_help()
 
 void juman_version()
 {
-    fprintf(stderr, "%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
+    fprintf(stderr, "%s %s\n", PACKAGE_NAME, VERSION);
     exit(0);
 }

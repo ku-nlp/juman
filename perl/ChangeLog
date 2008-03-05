@@ -1,3 +1,8 @@
+2008-03-05  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* lib/Juman/MList.pm:
+	Modified repname() to extract repnames from KNP results.
+
 2008-01-22  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
 
 	* lib/Juman/Morpheme.pm:

@@ -119,53 +119,18 @@ sub spec {
 
 =cut
 sub repname {
-    my( $this ) = @_;
-    my $imi_pat = '意味有';
-    my $pred_pat = '用言';
-    my $tokusyu_pat = '特殊';
-
+    my ( $this ) = @_;
+    my $pat = '正規化代表表記';
     if( utf8::is_utf8( $this->fstring ) ){
-	$imi_pat = decode('euc-jp', $imi_pat);
-	$pred_pat = decode('euc-jp', $pred_pat);
-	$tokusyu_pat = decode('euc-jp', $tokusyu_pat);
+	$pat = decode('euc-jp', $pat);
     }
 
-    my ( @ret );
-    for my $mrph ( $this->mrph_list() ){
-	if ( $mrph->fstring =~ /<$imi_pat>/ or # 普段は意味有のみ
-	     ( $this->fstring =~ /<$pred_pat/ and # 用言のときは特殊以外すべて
-	       $mrph->hinsi ne $tokusyu_pat ) ){
-	    if ( @ret ) {
-		my ( @new_ret );
-		my $org_rep = $mrph->repname();
-		my $rep = $org_rep ? $org_rep : $mrph->make_repname(); # なければ作る
-		for my $old_ret ( @ret ) {
-		    push( @new_ret, $old_ret . '+' . $rep ) if $rep;
-		}
-		if ( $org_rep ) { # 作った場合は同形異義語についても同じになるのでスキップ
-		    for my $rep ($mrph->get_doukei_reps) {
-			for my $old_ret ( @ret ) {
-			    push( @new_ret, $old_ret . '+' . $rep );
-			}
-		    }
-		}
-		@ret = @new_ret if @new_ret;
-	    }
-	    else { # 一つ目
-		my $org_rep = $mrph->repname();
-		my $rep = $org_rep ? $org_rep : $mrph->make_repname(); # なければ作る
-		push( @ret, $rep ) if $rep;
-		if ( $org_rep ) { # 作った場合は同形異義語についても同じになるのでスキップ
-		    for my $rep ($mrph->get_doukei_reps) {
-			push( @ret, $rep );
-		    }
-		}
-	    }
+    if ( defined $this->{fstring} ){
+	if ($this->{fstring} =~ /<$pat:([^\>]+)>/){
+	    return $1;
 	}
     }
-
-    my ( %scan ); # 重複を削除
-    join( '?', grep(!$scan{$_}++, sort @ret) );
+    return undef;
 }
 
 =back

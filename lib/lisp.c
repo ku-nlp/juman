@@ -38,13 +38,13 @@ CELLTABLE	*CellTbl = NULL;
 CELLTABLE	CellTbl_save;
 
 /*
-  �ʲ��������chasen��lisp.c����ή��
-  chasen�Υ����С��⡼�ɤǤ�\n.\n��EOF�ȸ��ʤ���������б�����褦��chasen��
-  �����ɤ�ή��
-  ����ˤȤ�ʤ�fgetc�ؿ��򤹤٤�cha_fgetc�ؿ����ѹ�
-  �ޤ���juman�Ǥ�ʸˡ�ե�����ʤɤ�ե����뤫���ɤ߹��ि��EOF.\n��EOF��
-  ���ʤ��褦��is_bol��������ʬ���ѹ�
-  NACSIS �Ȳ�
+  以下の定義はchasenのlisp.cから流用
+  chasenのサーバーモードでは\n.\nをEOFと見なす。それに対応するようにchasenの
+  コードを流用
+  それにともないfgetc関数をすべてcha_fgetc関数に変更
+  また、jumanでは文法ファイルなどをファイルから読み込むためEOF.\nもEOFと
+  見なすようにis_bolの設定部分を変更
+  NACSIS 吉岡
 */
 extern int fgetc(FILE *fp);
 extern int ungetc(int c, FILE *fp);
@@ -76,7 +76,7 @@ static int cha_getc(fp)
 	  c = getc(fp);
 	if (c == '\n')
 	  c = EOF;
-	/* \n��³���ʤ�04�����ä����,04�ϥ����åפ���Ƥ��ޤ� */
+	/* \nの続かない04があった場合,04はスキップされてしまう */
     }
 
     if (c == '\n' || c == EOF)
@@ -485,9 +485,6 @@ CELL *s_read_atom(FILE *fp)
      CELL *cell;
      U_CHAR *c;
      int n;
-#ifdef _WIN32
-    char *eucstr;
-#endif
 
      comment(fp);
      
@@ -501,12 +498,6 @@ CELL *s_read_atom(FILE *fp)
      if (((n = myscanf(fp, Buffer)) == 0) || (n == EOF)) {
 	  error_in_lisp();
      }
-
-#ifdef _WIN32
-	eucstr = toStringEUC(Buffer);
-	strcpy(Buffer, eucstr);
-	free(eucstr);
-#endif       
 
      if (!strcmp(Buffer, NILSYMBOL)) {
 	  cell = NIL;
@@ -634,7 +625,7 @@ CELL *_s_print_cdr(FILE *fp, CELL *cell)
 /*
 ------------------------------------------------------------------------------
 	PROCEDURE			by yamaji
-	<lisp_alloc>: ���餫��������ΰ����ݤ��Ƥ����� malloc ��Ԥ�
+	<lisp_alloc>: あらかじめ一定領域を確保しておいて malloc を行う
 ------------------------------------------------------------------------------
 */
 
@@ -645,7 +636,7 @@ void *lisp_alloc(int n)
 
      if (n % sizeof(CELL)) n = n/sizeof(CELL)+1; else n /= sizeof(CELL);
      if (CellTbl == NULL || CellTbl != NULL && CellTbl->n+n > CellTbl->max) {
-	 /* �����˰����ΰ����� */
+	 /* 新たに一定領域を確保 */
 	 if (CellTbl != NULL && CellTbl->next != NULL) {
 	     CellTbl = CellTbl->next;
 	     CellTbl->n = 0;
@@ -670,7 +661,7 @@ void *lisp_alloc(int n)
 /*
 ------------------------------------------------------------------------------
 	PROCEDURE			by yamaji
-	<lisp_alloc_push>: ���ߤΥ��ꥢ�������Ⱦ��֤򵭲�����
+	<lisp_alloc_push>: 現在のメモリアロケート状態を記憶する
 ------------------------------------------------------------------------------
 */
 
@@ -682,7 +673,7 @@ void lisp_alloc_push(void)
 /*
 ------------------------------------------------------------------------------
 	PROCEDURE			by yamaji
-	<lisp_alloc_pop>: �����������ꥢ�������Ⱦ��֤��᤹
+	<lisp_alloc_pop>: 記憶したメモリアロケート状態に戻す
 ------------------------------------------------------------------------------
 */
 

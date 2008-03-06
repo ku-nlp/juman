@@ -38,7 +38,7 @@ int get_hinsi_id(U_CHAR *x)
 
      if ( strcmp(x, "*") == 0 ) return 0;
 
-     if ( strcmp(x, "Ï¢¸ì") == 0 ) return(atoi(RENGO_ID)); /* yamaji */
+     if ( strcmp(x, "é€£èªž") == 0 ) return(atoi(RENGO_ID)); /* yamaji */
 
      for (i = 1; strcmp(Class[i][0].id, x); )
        if ( !Class[++i][0].id ) 

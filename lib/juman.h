@@ -52,13 +52,11 @@
 #include	"juman_pat.h"
 
 /*
- * MS Windows ¤Î¾ì¹ç¤Ï SJISÆş½ĞÎÏ¤Ë¤Ê¤ë¤è¤¦ÊÑ¹¹
+ * MS Windows ã®å ´åˆã¯ SJISå…¥å‡ºåŠ›ã«ãªã‚‹ã‚ˆã†å¤‰æ›´
  * Added by Taku Kudoh (taku@pine.kuee.kyoto-u.ac.jp)
  * Thu Oct 29 03:42:45 JST 1998
  */
 #ifdef _WIN32
-extern char *toStringEUC(char *str);
-extern char *toStringSJIS(char *str);
 
 #include        <stdarg.h>
 
@@ -70,14 +68,12 @@ typedef char *	caddr_t;
 #endif
 #endif
 
-/* ¤¢¤È¤Ç ¶¥¹ç¤¹¤ë¤é¤·¤¤¤Î¤Ç undef (tricky?) */
+/* ã‚ã¨ã§ ç«¶åˆã™ã‚‹ã‚‰ã—ã„ã®ã§ undef (tricky?) */
 #undef          TRUE  
 #undef          FALSE
-#else
-#define my_fprintf fprintf
 #endif
 
-#define EOf		0x0b	/* ¥¯¥é¥¤¥¢¥ó¥È¥µ¡¼¥Ğ´ÖÄÌ¿®¤Ç¤ÎEOF */
+#define EOf		0x0b	/* ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã‚µãƒ¼ãƒé–“é€šä¿¡ã§ã®EOF */
 
 #define NDBM_KEY_MAX 	256
 #define NDBM_CON_MAX 	1024
@@ -153,6 +149,8 @@ typedef char *	caddr_t;
 #define		CELLALLOCSTEP	1024
 #define		BLOCKSIZE	16384
 
+#define		BYTES4CHAR	3
+
 #define		Consp(x)	(!Null(x) && (_Tag(x) == CONS))
 #define		Atomp(x)	(!Null(x) && (_Tag(x) == ATOM))
 #define		_Tag(cell)	(((CELL *)(cell))->tag)
@@ -164,7 +162,6 @@ typedef char *	caddr_t;
 #define		_Atom(cell)	(((CELL *)(cell))->value.atom)
 
 
-#define		EUC(c)		((c) | '\x80')
 #define 	endchar(str)	(str[strlen(str)-1])
 
 #define		M		30		/* order of B-tree         */
@@ -174,7 +171,7 @@ typedef char *	caddr_t;
 
 #define		KANJI_CODE	128*128
 
-#define 	BASIC_FORM 	"´ğËÜ·Á"
+#define 	BASIC_FORM 	"åŸºæœ¬å½¢"
 
 #define		TABLEFILE	"jumandic.tab"
 #define		MATRIXFILE	"jumandic.mat"
@@ -229,17 +226,16 @@ enum		_ExitCode 	{ NormalExit,
 
 #define		CONNECT_MATRIX_MAX	1000
 
-#define		KUUHAKU            	0x20
-#define		HANKAKU            	0x80
-#define		PRIOD            	0xa1a5
-#define		CHOON            	0xa1bc
-#define		KIGOU            	0xa3b0
-#define		SUJI           	        0xa3c0
-#define		ALPH            	0xa4a0
-#define		HIRAGANA                0xa5a0
-#define		KATAKANA                0xa6a0
-#define		GR                      0xb0a0
-#define		KANJI                   0xffff
+enum CharacterCodeBlock 	{ 
+	BLOCK_UNKNOWN = -1, 
+	BLOCK_NULL = 0,
+	HIRAGANA_BLOCK,
+	KATAKANA_BLOCK,
+	KANJI_BLOCK,
+	FULLWIDTH_NUMERAL_BLOCK,
+	FULLWIDTH_LATIN_BLOCK,
+	JAPANESE_HANKAKU_BLOCK
+};
 
 /*
 ------------------------------------------------------------------------------
@@ -247,13 +243,13 @@ enum		_ExitCode 	{ NormalExit,
 ------------------------------------------------------------------------------
 */
 
-/* <car> Éô¤È <cdr> Éô¤Ø¤Î¥İ¥¤¥ó¥¿¤ÇÉ½¸½¤µ¤ì¤¿¥»¥ë */
+/* <car> éƒ¨ã¨ <cdr> éƒ¨ã¸ã®ãƒã‚¤ãƒ³ã‚¿ã§è¡¨ç¾ã•ã‚ŒãŸã‚»ãƒ« */
 typedef		struct		_BIN {
      void		*car;			/* address of <car> */
      void		*cdr;			/* address of <cdr> */
 } BIN;
 
-/* <BIN> ¤Ş¤¿¤Ï Ê¸»úÎó ¤òÉ½¸½¤¹¤ë´°Á´¤Ê¹½Â¤ */
+/* <BIN> ã¾ãŸã¯ æ–‡å­—åˆ— ã‚’è¡¨ç¾ã™ã‚‹å®Œå…¨ãªæ§‹é€  */
 typedef		struct		_CELL {
      int		tag;			/* tag of <cell> */
                                                 /*   0: cons     */
@@ -264,7 +260,7 @@ typedef		struct		_CELL {
      } value;
 } CELL;
 
-/* "malloc" ¤Î²ó¿ô¤ò¸º¾¯¤µ¤»¤ë¤¿¤á¡¤°ìÄê¤Î¥á¥â¥êÎÎ°è¤ò³ÎÊİ¤¹¤ë¥Æ¡¼¥Ö¥ë */
+/* "malloc" ã®å›æ•°ã‚’æ¸›å°‘ã•ã›ã‚‹ãŸã‚ï¼Œä¸€å®šã®ãƒ¡ãƒ¢ãƒªé ˜åŸŸã‚’ç¢ºä¿ã™ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ« */
 typedef		struct		_CELLTABLE {
      void		*pre;
      void		*next;
@@ -274,8 +270,8 @@ typedef		struct		_CELLTABLE {
 } CELLTABLE;
 
 /* changed by T.Nakamura and S.Kurohashi 
-	¹½Â¤ÂÎ MRPH ¤¬¤¹¤Ù¤Æ¤Î¾ğÊó¤ò»ı¤Á¡¤ 
-	¹½Â¤ÂÎ MORPHEME ¤Ï¤Ê¤¯¤Ê¤Ã¤¿ */
+	æ§‹é€ ä½“ MRPH ãŒã™ã¹ã¦ã®æƒ…å ±ã‚’æŒã¡ï¼Œ 
+	æ§‹é€ ä½“ MORPHEME ã¯ãªããªã£ãŸ */
 typedef         struct          _MRPH {
      U_CHAR             midasi[MIDASI_MAX];
      U_CHAR             midasi2[MIDASI_MAX];
@@ -293,34 +289,34 @@ typedef         struct          _MRPH {
      int                length;
 } MRPH;
 
-/* ·ÁÂÖÉÊ»ì¤ÎÊ¬Îà¡¦ºÙÊ¬Îà */
+/* å½¢æ…‹å“è©ã®åˆ†é¡ãƒ»ç´°åˆ†é¡ */
 typedef		struct		_CLASS {
      U_CHAR	*id;
-     int        cost;     /*ÉÊ»ì¥³¥¹¥È by k.n*/
+     int        cost;     /*å“è©ã‚³ã‚¹ãƒˆ by k.n*/
      int	kt;
 } CLASS;
 
-/* ³èÍÑ·¿ */
+/* æ´»ç”¨å‹ */
 typedef		struct		_TYPE {
      U_CHAR	*name;
 } TYPE;
 
-/* ³èÍÑ·Á */
+/* æ´»ç”¨å½¢ */
 typedef		struct		_FORM {
      U_CHAR	*name;
      U_CHAR	*gobi;
-     U_CHAR	*gobi_yomi;	/* ¥«ÊÑÆ°»ìÍè ¤Ê¤É¤ÎÆÉ¤ß¤Î¤¿¤á */
+     U_CHAR	*gobi_yomi;	/* ã‚«å¤‰å‹•è©æ¥ ãªã©ã®èª­ã¿ã®ãŸã‚ */
 } FORM;
 
-/* ¼­½ñÅĞÏ¿¥ª¥×¥·¥ç¥ó */
+/* è¾æ›¸ç™»éŒ²ã‚ªãƒ—ã‚·ãƒ§ãƒ³ */
 typedef		struct		_DICOPT {
      int	toroku;
 } DICOPT;
 
-/* stat() ¥é¥¤¥Ö¥é¥ê´Ø¿ô¤Ç»ÈÍÑ */
+/* stat() ãƒ©ã‚¤ãƒ–ãƒ©ãƒªé–¢æ•°ã§ä½¿ç”¨ */
 typedef		struct stat	 STAT;
 
-/* Ï¢ÀÜÉ½ */
+/* é€£æ¥è¡¨ */
 typedef         struct          _RENSETU_PAIR {
      int   i_pos;
      int   j_pos;
@@ -336,19 +332,19 @@ typedef struct _process_buffer {
     int start;
     int end;
     int score;
-    int path[MAX_PATHES];     /* Á°¤Î PROCESS_BUFFER ¤Î¾ğÊó */
-    int connect;	      /* FALSE ¤Ê¤éÀÜÂ³¶Ø»ß(Ï¢¸ì¤ÎÅÓÃæ¤Ø¤Î³ä¹ş¶Ø»ß) */
+    int path[MAX_PATHES];     /* å‰ã® PROCESS_BUFFER ã®æƒ…å ± */
+    int connect;	      /* FALSE ãªã‚‰æ¥ç¶šç¦æ­¢(é€£èªã®é€”ä¸­ã¸ã®å‰²è¾¼ç¦æ­¢) */
 } PROCESS_BUFFER;
 
 typedef struct _chk_connect_wk {
-  int pre_p;     /* PROCESS_BUFFER ¤Î¥¤¥ó¥Ç¥Ã¥¯¥¹ */
-  int score;     /* ¤½¤ì¤Ş¤Ç¤Î¥¹¥³¥¢ */
+  int pre_p;     /* PROCESS_BUFFER ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ */
+  int score;     /* ãã‚Œã¾ã§ã®ã‚¹ã‚³ã‚¢ */
 } CHK_CONNECT_WK;
 
 typedef struct _connect_cost {
-    short p_no;     /* PROCESS_BUFFER ¤Î¥¤¥ó¥Ç¥Ã¥¯¥¹ */
+    short p_no;     /* PROCESS_BUFFER ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ */
     short pos;
-    int cost;     /* ¥³¥¹¥È */
+    int cost;     /* ã‚³ã‚¹ãƒˆ */
     int dakuon_flag;
 } CONNECT_COST;
 
@@ -455,10 +451,6 @@ void read_matrix(FILE *fp);
 int check_matrix(int postcon, int precon);
 int check_matrix_left(int precon);
 int check_matrix_right(int postcon);
-
-/* zentohan.c */
-unsigned char	*zentohan(unsigned char *str1);
-unsigned char	*hantozen(unsigned char *str1);
 
 /* for edr-dic */
 void check_edrtable(MRPH *mrph_p, CELL *x);

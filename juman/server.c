@@ -60,7 +60,7 @@ static int data_buff_cur = 0;
 
 
 /* Parameter Definition from juman.c
-   NACSIS µÈ²¬
+   NACSIS å‰å²¡
 */
 extern FILE	*Jumanrc_Fileptr;
 extern FILE	*Cha_stderr;
@@ -118,14 +118,14 @@ static char *chomp(s)
  * read_chasenrc_server()
  ***********************************************************************/
 /*
-  read_chasenrc_server()¤òjuman_init_rc_server()¤Ë²þÌ¾
-  rcfile¤Î½èÍý¼êË¡¤òJUMANÍÑ¤ËÊÑ¹¹
-  NACSIS µÈ²¬
+  read_chasenrc_server()ã‚’juman_init_rc_server()ã«æ”¹å
+  rcfileã®å‡¦ç†æ‰‹æ³•ã‚’JUMANç”¨ã«å¤‰æ›´
+  NACSIS å‰å²¡
 */
 static int juman_init_rc_server()
 {
     set_cha_getc();
-    if (juman_init_rc(client_ifp))	/* rcfile¤Î½èÍý */
+    if (juman_init_rc(client_ifp))	/* rcfileã®å‡¦ç† */
 	fputs("200 OK\n", client_ofp);
     else
 	fputs("500 Error in parsing .jumanrc\n", client_ofp);
@@ -139,16 +139,16 @@ static int juman_init_rc_server()
  * do_chasen()
  ***********************************************************************/
 /*
-  do_chasen()¤òdo_juman()¤Ë²þÌ¾
-  Æþ½ÐÎÏÉô¤Î´Ø¿ô¤òJUMANÍÑ¤ËÊÑ¹¹
-  NACSIS µÈ²¬
+  do_chasen()ã‚’do_juman()ã«æ”¹å
+  å…¥å‡ºåŠ›éƒ¨ã®é–¢æ•°ã‚’JUMANç”¨ã«å¤‰æ›´
+  NACSIS å‰å²¡
 */
 static int do_juman()
 {
     char *end_of_line;
     int ret;
 
-    /* fgets() ¤Î¥Á¥§¥Ã¥¯¤Î¤¿¤á¤ÎÈÖ¿Í */
+    /* fgets() ã®ãƒã‚§ãƒƒã‚¯ã®ãŸã‚ã®ç•ªäºº */
     end_of_line = String + sizeof(String) - 1;
     *end_of_line = '\n';
 
@@ -166,12 +166,12 @@ static int do_juman()
 	fflush(stdout);
 #endif
 
-	/* 04\r\n ¤Ê¤é½ªÎ» (telnet¤Ç¤Ï\n¤¬\r\n¤ËÊÑ´¹¤µ¤ì¤ë) */
+	/* 04\r\n ãªã‚‰çµ‚äº† (telnetã§ã¯\nãŒ\r\nã«å¤‰æ›ã•ã‚Œã‚‹) */
 	if (String[0] == EOf &&
 	    (String[1] == '\n' || (String[1] == '\r' && String[2] == '\n')))
 	    return 1;
 
-	/* -i ¥ª¥×¥·¥ç¥ó¤Ç»ØÄê¤·¤¿Ê¸»ú¤«¤é¤Î¹Ô¤Ï²òÀÏ¤·¤Ê¤¤ */
+	/* -i ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã§æŒ‡å®šã—ãŸæ–‡å­—ã‹ã‚‰ã®è¡Œã¯è§£æžã—ãªã„ */
 	if (Show_Opt_tag[0])
 	    if (!strncmp(String , Show_Opt_tag , strlen(Show_Opt_tag))) {
 		fprintf(client_ofp, "%s", String);
@@ -181,8 +181,8 @@ static int do_juman()
 
 	chomp(String);
 
-        /* juman_sent¤Ï²òÀÏ¼ºÇÔ¤Ë²Ã¤¨¡¢¶õ¹Ô¤Î»þ¤ËFALSE¤òÊÖ¤¹¡£
-           ¶õ¹Ô¤Î»þ¤Ï²òÀÏ¤ò¥¹¥­¥Ã¥×¤¹¤ëÉ¬Í×¤¬¤¢¤ë¡£ NACSIS µÈ²¬ */
+        /* juman_sentã¯è§£æžå¤±æ•—ã«åŠ ãˆã€ç©ºè¡Œã®æ™‚ã«FALSEã‚’è¿”ã™ã€‚
+           ç©ºè¡Œã®æ™‚ã¯è§£æžã‚’ã‚¹ã‚­ãƒƒãƒ—ã™ã‚‹å¿…è¦ãŒã‚ã‚‹ã€‚ NACSIS å‰å²¡ */
         if ((ret = juman_sent()) == FALSE && strlen(String) != 0)
           return 0;
         if (strlen(String) != 0)
@@ -212,9 +212,9 @@ static int do_juman()
  * chasen_run()
  ***********************************************************************/
 /*
-  juman.c¤Îoption_proc¤ò¥µ¡¼¥Ð¡¼ÍÑ¤Îoption_proc_for_server¤Ë½¤Àµ¡£
-  ¥µ¡¼¥Ð¡¼¥â¡¼¥ÉÍÑ¤Î¥ª¥×¥·¥ç¥ó¤Î¼è°·¤¤¤Îºï½ü¤È¥¨¥é¡¼¥Ï¥ó¥É¥ê¥ó¥°¤ÎÉôÊ¬¤ò½¤Àµ 
-  NACSIS µÈ²¬
+  juman.cã®option_procã‚’ã‚µãƒ¼ãƒãƒ¼ç”¨ã®option_proc_for_serverã«ä¿®æ­£ã€‚
+  ã‚µãƒ¼ãƒãƒ¼ãƒ¢ãƒ¼ãƒ‰ç”¨ã®ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®å–æ‰±ã„ã®å‰Šé™¤ã¨ã‚¨ãƒ©ãƒ¼ãƒãƒ³ãƒ‰ãƒªãƒ³ã‚°ã®éƒ¨åˆ†ã‚’ä¿®æ­£ 
+  NACSIS å‰å²¡
 */
 
 int option_proc_for_server(int argc, char **argv)
@@ -261,9 +261,9 @@ int option_proc_for_server(int argc, char **argv)
 }
 
 /*
-  chasen_run()¤òjuman_run()¤Ë²þÌ¾
-  ¥ª¥×¥·¥ç¥ó¤Î¼è°·¤¤¤ÎÊÑ¹¹¤ÈJUMANÍÑ¤ËÊÑ¹¹¤·¤¿´Ø¿ôÌ¾¤Ø¤ÎÂÐ±þ
-  NACSIS µÈ²¬
+  chasen_run()ã‚’juman_run()ã«æ”¹å
+  ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®å–æ‰±ã„ã®å¤‰æ›´ã¨JUMANç”¨ã«å¤‰æ›´ã—ãŸé–¢æ•°åã¸ã®å¯¾å¿œ
+  NACSIS å‰å²¡
 */
 static int juman_run(argc, argv)
      int argc;
@@ -383,8 +383,8 @@ static int split_args(argbuff, maxargc, argv)
  * 0 - connection closed
  */
 /*
-  HELP¥á¥Ã¥»¡¼¥¸¤ÎÊÑ¹¹¤ÈJUMANÍÑ¤ËÊÑ¹¹¤·¤¿´Ø¿ôÌ¾¤Ø¤ÎÂÐ±þ
-  NACSIS µÈ²¬
+  HELPãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã®å¤‰æ›´ã¨JUMANç”¨ã«å¤‰æ›´ã—ãŸé–¢æ•°åã¸ã®å¯¾å¿œ
+  NACSIS å‰å²¡
 */
 static int do_cmd(line)
     char *line;
@@ -530,10 +530,10 @@ static void sig_term()
  * return code: exit code
  ***********************************************************************/
 /*
-  ¥á¥Ã¥»¡¼¥¸¤òJUMANÍÑ¤Ø¤ÎÊÑ¹¹¤Èdummy sentense¤Ë¤è¤ë¥Á¥§¥Ã¥¯¤Î¾ÊÎ¬
-  NACSIS µÈ²¬
+  ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’JUMANç”¨ã¸ã®å¤‰æ›´ã¨dummy sentenseã«ã‚ˆã‚‹ãƒã‚§ãƒƒã‚¯ã®çœç•¥
+  NACSIS å‰å²¡
 
-  windows¤Çforeground¤ÇÁö¤é¤»¤ëÉ¬Í×¤¬¤¢¤ë¤Î¤Ç¡¤°ú¿ôforeground¤òÄÉ²Ã
+  windowsã§foregroundã§èµ°ã‚‰ã›ã‚‹å¿…è¦ãŒã‚ã‚‹ã®ã§ï¼Œå¼•æ•°foregroundã‚’è¿½åŠ 
   2002/06/24 Kiyota
 */
 int juman_server(argv, port, foreground)
@@ -543,18 +543,18 @@ int juman_server(argv, port, foreground)
 {
     int pid, i;
     
-    if (!juman_init_rc(Jumanrc_Fileptr)) {	/* rcfile´Ø·¸¤Î½é´ü²½ */
+    if (!juman_init_rc(Jumanrc_Fileptr)) {	/* rcfileé–¢ä¿‚ã®åˆæœŸåŒ– */
 	fprintf(stderr, "error in .jumanrc\n");
 	exit(0);
     }
-    juman_init_etc(); 	/* Ì¤ÄêµÁ¸ì½èÍý¡¤¿ô»ì½èÍý¡¤Æ©²á½èÍýÅù¤Î½é´ü²½ */
+    juman_init_etc(); 	/* æœªå®šç¾©èªžå‡¦ç†ï¼Œæ•°è©žå‡¦ç†ï¼Œé€éŽå‡¦ç†ç­‰ã®åˆæœŸåŒ– */
 
     /* daemon initialization */
     umask(0);
 
     /* 
-     * ¼«Ê¬¼«¿È¤òfork¤·¤Æ¥Ð¥Ã¥¯¥°¥é¥¦¥ó¥É¤Ë°Ü¹Ô¤¹¤ë
-     * (-F ¥ª¥×¥·¥ç¥ó¤Ä¤­¤Çµ¯Æ°¤·¤¿¾ì¹ç¤Ï°Ü¹Ô¤·¤Ê¤¤)
+     * è‡ªåˆ†è‡ªèº«ã‚’forkã—ã¦ãƒãƒƒã‚¯ã‚°ãƒ©ã‚¦ãƒ³ãƒ‰ã«ç§»è¡Œã™ã‚‹
+     * (-F ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã¤ãã§èµ·å‹•ã—ãŸå ´åˆã¯ç§»è¡Œã—ãªã„)
      */
     if (!foreground) {
       if((i = fork()) > 0)

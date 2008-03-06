@@ -103,7 +103,7 @@ void read_type_form(FILE *fp)
 		strcpy(Form[i][j].gobi, _Atom(car(cdr(cell2))));
 
 	    if (!Null(car(cdr(cdr(cell2))))) {
-		/* ╕ь╚°д╬╔╜╡нд╦┤┴╗·дм║од╢д├д╞ддды╛ь╣ч */
+		/* шкЮх░╛уБошбишиШуБлц╝вхнЧуБМц╖╖уБЦуБгуБжуБДуВЛха┤хРИ */
 		Form[i][j].gobi_yomi = (U_CHAR *)
 		    my_alloc((sizeof(U_CHAR) * 
 			      strlen(_Atom(car(cdr(cdr(cell2)))))) + 1);
@@ -130,7 +130,7 @@ void read_type_form(FILE *fp)
 	PROCEDURE:
 	<katuyou>: call <initialize_type_form> and <read_type_form>
 
-	juman_pathд╬┴░д╦елеьеєе╚е╟егеьепе╚еъдЄ╕лдыдшджд╦╩╤╣╣ (2002/11/08)
+	juman_pathуБохЙНуБлуВлуГмуГ│уГИуГЗуВгуГмуВпуГИуГкуВТшжЛуВЛуВИуБЖуБлхдЙцЫ┤ (2002/11/08)
 ------------------------------------------------------------------------------
 */
 

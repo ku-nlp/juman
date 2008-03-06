@@ -55,13 +55,13 @@
 /* max of the command line length */
 #define CHA_COMM_LINE_MAX 1024
 
-/* chalib.h¤«¤é¤ÎÄêµÁ
-   NACSIS µÈ²¬
+/* chalib.hã‹ã‚‰ã®å®šç¾©
+   NACSIS å‰å²¡
 */
 #define CHA_INPUT_SIZE      8192
 
-/* juman.c¤«¤é¤ÎÄêµÁ
-   NACSIS µÈ²¬
+/* juman.cã‹ã‚‰ã®å®šç¾©
+   NACSIS å‰å²¡
 */
 extern FILE	*Jumanrc_Fileptr;
 
@@ -93,8 +93,8 @@ static void check_status(ifp, mes)
  * do_chasen_client
  */
 /*
-  cha_fgets¤ò¥Ç¥Õ¥©¥ë¥È¤ÇÍÑ¤¤¤é¤ì¤ëfget_line¤ËÊÑ¹¹
-  NACSIS µÈ²¬
+  cha_fgetsã‚’ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã§ç”¨ã„ã‚‰ã‚Œã‚‹fget_lineã«å¤‰æ›´
+  NACSIS å‰å²¡
 */
 static void fp_copy(ofp, ifp)
     FILE *ofp, *ifp;
@@ -115,10 +115,10 @@ static void fp_copy(ofp, ifp)
  * send_chasenrc
  */
 /*
-  send_chasenrc¤òsend_jumanrc¤Ë²şÌ¾
-  rc¥Õ¥¡¥¤¥ë¤Ë´Ø¤¹¤ë¥Á¥§¥Ã¥¯¤Ïµ¯Æ°»ş¤Î¥ª¥×¥·¥ç¥ó¤Î¥Á¥§¥Ã¥¯¤Ç¹Ô¤Ã¤Æ¤¤¤ë¤Î¤Ç¡¢
-  ¤³¤³¤Ç¤Ï¾ÊÎ¬
-  NACSIS µÈ²¬
+  send_chasenrcã‚’send_jumanrcã«æ”¹å
+  rcãƒ•ã‚¡ã‚¤ãƒ«ã«é–¢ã™ã‚‹ãƒã‚§ãƒƒã‚¯ã¯èµ·å‹•æ™‚ã®ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®ãƒã‚§ãƒƒã‚¯ã§è¡Œã£ã¦ã„ã‚‹ã®ã§ã€
+  ã“ã“ã§ã¯çœç•¥
+  NACSIS å‰å²¡
 */
 static void send_jumanrc(ifp, ofp)
     FILE *ifp, *ofp;
@@ -156,9 +156,9 @@ static char *escape_string(dst_str, src_str)
  * getopt_client
  */
 /*
-  getopt_client¤òoption_proc_for_client¤Ë²şÌ¾
-  ¥ª¥×¥·¥ç¥ó¤Î¼è°·¤¤¤òjuman.c¤Îoption_proc¤ò»²¹Í¤Ë¤·¤Ê¤¬¤éÊÑ¹¹
- NACSIS µÈ²¬
+  getopt_clientã‚’option_proc_for_clientã«æ”¹å
+  ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®å–æ‰±ã„ã‚’juman.cã®option_procã‚’å‚è€ƒã«ã—ãªãŒã‚‰å¤‰æ›´
+ NACSIS å‰å²¡
 */
 static char *option_proc_for_client(argc, argv)
     int argc;
@@ -292,8 +292,8 @@ static int open_connection(server, port)
  * return code: exit code
  */
 /*
-  °ú¿ô¤È¤·¤Æargc¤òÄÉ²Ã¥ª¥×¥·¥ç¥ó¤Î°·¤¤¤òJUMANÍÑ¤ØÊÑ¹¹
-  NACSIS µÈ²¬
+  å¼•æ•°ã¨ã—ã¦argcã‚’è¿½åŠ ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®æ‰±ã„ã‚’JUMANç”¨ã¸å¤‰æ›´
+  NACSIS å‰å²¡
 */
 int juman_client(argc, argv, server, port)
     int argc;
@@ -320,9 +320,9 @@ int juman_client(argc, argv, server, port)
     option = option_proc_for_client(argc, argv);
     fprintf(ofp, "RUN %s\n", option);
 
-    /* fork_and_gets¤ÎÃæ¤Çfork¤¹¤ë
-       ¢ª »Ò¥×¥í¥»¥¹¤¬fork_and_gets¤ÎÃæ¤Ç¥µ¡¼¥Ğ¤«¤é¤Î½ĞÎÏ¤ò¼õ¤±¼è¤Ã¤ÆÉ½¼¨
-       ¢ª ¿Æ¥×¥í¥»¥¹¤¬¤³¤³¤Ë¤«¤¨¤Ã¤Æ¤­¤ÆÆşÎÏ¤ò¥µ¡¼¥Ğ¤ËÁ÷¤ë */
+    /* fork_and_getsã®ä¸­ã§forkã™ã‚‹
+       â†’ å­ãƒ—ãƒ­ã‚»ã‚¹ãŒfork_and_getsã®ä¸­ã§ã‚µãƒ¼ãƒã‹ã‚‰ã®å‡ºåŠ›ã‚’å—ã‘å–ã£ã¦è¡¨ç¤º
+       â†’ è¦ªãƒ—ãƒ­ã‚»ã‚¹ãŒã“ã“ã«ã‹ãˆã£ã¦ãã¦å…¥åŠ›ã‚’ã‚µãƒ¼ãƒã«é€ã‚‹ */
 
     if ((pid = fork_and_gets(ifp)) < 0)
       return 1;

@@ -15,6 +15,7 @@
 #endif
 
 #include	<juman.h>
+#include	"icu_conv.h"
 
 /*
 ------------------------------------------------------------------------------
@@ -60,13 +61,13 @@ void	option_proc(int argc, char **argv);
 void	juman_help(void);
 void	juman_version(void);
 /*
-  ¥µ¡¼¥Ğ¡¼¥â¡¼¥ÉÂĞ±ş¤Î¤¿¤á¡¢½¾Íè¤Îmain¤Î¸åÈ¾Éô¤Ç¤¢¤ëjuman_standalone¤È
-  ¥µ¡¼¥Ğ¡¼¥â¡¼¥É¤Î´Ø¿ô¤Ç¤¢¤ëjuman_server¤òÍøÍÑ¤¹¤ë¡£
-  set_juman_server´Ø¿ô¤Ï¥¯¥é¥¤¥¢¥ó¥È¥â¡¼¥É¤Î¥ª¥×¥·¥ç¥ó¤Ç¤¢¤ë¥Û¥¹¥ÈÌ¾¤È
-  ¥İ¡¼¥ÈÈÖ¹æ¤ÎÀßÄê¤ò¥ª¥×¥·¥ç¥ó¤ËÂĞ±ş¤·¤ÆÀßÄê¤¹¤ë´Ø¿ô 
-  set_juman_port´Ø¿ô¤Ï¥µ¡¼¥Ğ¡¼¥â¡¼¥É¤Î¥ª¥×¥·¥ç¥ó¤Ç¤¢¤ë¥İ¡¼¥ÈÈÖ¹æ¤ÎÀßÄê
-  ¥ª¥×¥·¥ç¥ó¤ËÂĞ±ş¤·¤Æ¥İ¡¼¥ÈÈÖ¹æ¤òÀßÄê¤¹¤ë´Ø¿ô 
-  NACSIS µÈ²¬
+  ã‚µãƒ¼ãƒãƒ¼ãƒ¢ãƒ¼ãƒ‰å¯¾å¿œã®ãŸã‚ã€å¾“æ¥ã®mainã®å¾ŒåŠéƒ¨ã§ã‚ã‚‹juman_standaloneã¨
+  ã‚µãƒ¼ãƒãƒ¼ãƒ¢ãƒ¼ãƒ‰ã®é–¢æ•°ã§ã‚ã‚‹juman_serverã‚’åˆ©ç”¨ã™ã‚‹ã€‚
+  set_juman_serveré–¢æ•°ã¯ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆãƒ¢ãƒ¼ãƒ‰ã®ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã§ã‚ã‚‹ãƒ›ã‚¹ãƒˆåã¨
+  ãƒãƒ¼ãƒˆç•ªå·ã®è¨­å®šã‚’ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã«å¯¾å¿œã—ã¦è¨­å®šã™ã‚‹é–¢æ•° 
+  set_juman_porté–¢æ•°ã¯ã‚µãƒ¼ãƒãƒ¼ãƒ¢ãƒ¼ãƒ‰ã®ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã§ã‚ã‚‹ãƒãƒ¼ãƒˆç•ªå·ã®è¨­å®š
+  ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã«å¯¾å¿œã—ã¦ãƒãƒ¼ãƒˆç•ªå·ã‚’è¨­å®šã™ã‚‹é–¢æ•° 
+  NACSIS å‰å²¡
 */
 void    juman_standalone(void);
 void    juman_server(char **argv, int port, int foreground);
@@ -82,10 +83,10 @@ static void set_juman_server(char* server);
 int main(int argc, char **argv)
 {
     /*
-         ¥µ¡¼¥Ğ¥â¡¼¥É¡§¥ª¥×¥·¥ç¥ó¤Ç -s »ØÄê
-	 ¥¯¥é¥¤¥¢¥ó¥È¥â¡¼¥É¡§´Ä¶­ÊÑ¿ô JUMANSERVER »ØÄê ¤Ş¤¿¤Ï
-			     ¥ª¥×¥·¥ç¥ó¤Ç -D hostname »ØÄê
-	 ¥¹¥¿¥ó¥É¥¢¥í¥ó¥â¡¼¥É¡§¤½¤ÎÂ¾
+         ã‚µãƒ¼ãƒãƒ¢ãƒ¼ãƒ‰ï¼šã‚ªãƒ—ã‚·ãƒ§ãƒ³ã§ -s æŒ‡å®š
+	 ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆãƒ¢ãƒ¼ãƒ‰ï¼šç’°å¢ƒå¤‰æ•° JUMANSERVER æŒ‡å®š ã¾ãŸã¯
+			     ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã§ -D hostname æŒ‡å®š
+	 ã‚¹ã‚¿ãƒ³ãƒ‰ã‚¢ãƒ­ãƒ³ãƒ¢ãƒ¼ãƒ‰ï¼šãã®ä»–
     */
     char *serv_env;
  
@@ -94,27 +95,28 @@ int main(int argc, char **argv)
     Cha_stderr = stderr;
 
 #if ! defined _WIN32
-    /* ´Ä¶­ÊÑ¿ô JUMANSERVER */
+    /* ç’°å¢ƒå¤‰æ•° JUMANSERVER */
 
     if ((serv_env = getenv("JUMANSERVER")) != NULL)
 	set_juman_server(serv_env);
 
-    /* ³Æ¥â¡¼¥É¤Î½èÍı */
-    if (JUMAN_server_mode) {	/* ¥µ¡¼¥Ğ¥â¡¼¥É */
+    /* å„ãƒ¢ãƒ¼ãƒ‰ã®å‡¦ç† */
+    if (JUMAN_server_mode) {	/* ã‚µãƒ¼ãƒãƒ¢ãƒ¼ãƒ‰ */
 	set_jumanrc_fileptr((Show_Opt_jumanrc ? argv[Show_Opt_jumanrc]: NULL),
 			    TRUE, TRUE);
 	juman_server(argv, juman_port, JUMAN_server_foreground);
     }
-    else if (juman_host[0]) {	/* ¥¯¥é¥¤¥¢¥ó¥È¥â¡¼¥É */
+    else if (juman_host[0]) {	/* ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆãƒ¢ãƒ¼ãƒ‰ */
 	set_jumanrc_fileptr((Show_Opt_jumanrc ? argv[Show_Opt_jumanrc]: NULL), 
-			    FALSE, FALSE);	/* RC_DEFAULT ¤ò¤ß¤Ê¤¤ */
+			    FALSE, FALSE);	/* RC_DEFAULT ã‚’ã¿ãªã„ */
 	juman_client(argc, argv, juman_host, juman_port);
     }
     else
 #endif
-    {			/* ¥¹¥¿¥ó¥É¥¢¥í¥ó¥â¡¼¥É */
+    {			/* ã‚¹ã‚¿ãƒ³ãƒ‰ã‚¢ãƒ­ãƒ³ãƒ¢ãƒ¼ãƒ‰ */
 	set_jumanrc_fileptr((Show_Opt_jumanrc ? argv[Show_Opt_jumanrc]: NULL), 
 			    TRUE, TRUE);
+	init_ucnv();
 	juman_standalone();
     }
     return 0;
@@ -140,23 +142,24 @@ int readtonl(FILE *fp)
 ------------------------------------------------------------------------------
 */
 /*
-  ½¾Íè¤Îmain¤Î¸åÈ¾Éô¡£¤¿¤À¤·¡¢½ĞÎÏ¤Î¤¿¤á¤Ë¸Æ¤Ó½Ğ¤¹´Ø¿ô¤Ë¤Ä¤¤¤Æ¤Ï¡¢¥µ¡¼¥Ğ¡¼
-  ¥â¡¼¥ÉÂĞ±ş¤Î¤¿¤á¤ÎÊÑ¹¹¤Ë±ş¤¸¤Æ¡¢stdout¤ò°ú¿ô¤È¤·¤Æ¼è¤ë¡£
-  NACSIS µÈ²¬
+  å¾“æ¥ã®mainã®å¾ŒåŠéƒ¨ã€‚ãŸã ã—ã€å‡ºåŠ›ã®ãŸã‚ã«å‘¼ã³å‡ºã™é–¢æ•°ã«ã¤ã„ã¦ã¯ã€ã‚µãƒ¼ãƒãƒ¼
+  ãƒ¢ãƒ¼ãƒ‰å¯¾å¿œã®ãŸã‚ã®å¤‰æ›´ã«å¿œã˜ã¦ã€stdoutã‚’å¼•æ•°ã¨ã—ã¦å–ã‚‹ã€‚
+  NACSIS å‰å²¡
  */
 
 void juman_standalone(void)
 {
     int length;
-#ifdef _WIN32
-    char *eucstr;
-#endif
+    char *utf8str;
+    UChar* ucsstr;
+    char* locale_cstr;
+    char** mrph_result;
     
-    if (!juman_init_rc(Jumanrc_Fileptr)) {	/* rcfile´Ø·¸¤Î½é´ü²½ */
+    if (!juman_init_rc(Jumanrc_Fileptr)) {	/* rcfileé–¢ä¿‚ã®åˆæœŸåŒ– */
 	fprintf(stderr, "error in .jumanrc\n");
 	exit(0);
     }
-    juman_init_etc(); 	/* Ì¤ÄêµÁ¸ì½èÍı¡¤¿ô»ì½èÍı¡¤Æ©²á½èÍıÅù¤Î½é´ü²½ */
+    juman_init_etc(); 	/* æœªå®šç¾©èªå‡¦ç†ï¼Œæ•°è©å‡¦ç†ï¼Œé€éå‡¦ç†ç­‰ã®åˆæœŸåŒ– */
 
     String[LENMAX - 1] = '\n';
     while ( fgets(String, LENMAX, stdin) != NULL ) {
@@ -167,11 +170,13 @@ void juman_standalone(void)
 	    readtonl(stdin);
 	    continue;
 	}
-#ifdef _WIN32
-	eucstr = toStringEUC(String);
-	strcpy(String,eucstr);
-	free(eucstr);
-#endif       
+
+	ucsstr = fromCurrLocaleCharenc(String);
+	utf8str = toUtf8Charenc(ucsstr);
+	strcpy(String, utf8str);
+	free(ucsstr);
+	free(utf8str);
+
 	if (Show_Opt_tag[0])
 	    if (!strncmp(String , Show_Opt_tag , strlen(Show_Opt_tag))) {
 		fprintf(stdout, "%s", String);
@@ -194,16 +199,24 @@ void juman_standalone(void)
 	if (juman_sent() == TRUE) {
 	    switch (Show_Opt1) {
 	    case Op_B:
-		print_best_path(stdout); break;
+		mrph_result = print_best_path(NULL); break;
 	    case Op_M:
-		print_all_mrph(stdout); break;
+		mrph_result = print_all_mrph(NULL); break;
 	    case Op_P:
-		print_all_path(stdout); break;
+		mrph_result = print_all_path(NULL); break;
 	    case Op_BB:
 	    case Op_PP:
-		print_homograph_path(stdout); break;
+		mrph_result = print_homograph_path(NULL); break;
 	    default:
 		break;
+	    }
+	    while (*mrph_result) {
+		ucsstr = fromUtf8Charenc(*mrph_result);
+		locale_cstr = toCurrLocaleCharenc(ucsstr);
+		fprintf(stdout, locale_cstr);
+		free(ucsstr);
+		free(locale_cstr);
+		mrph_result++;	//advance the pointer
 	    }
 	}
 	fprintf(stdout, "EOS\n");
@@ -224,9 +237,9 @@ void juman_standalone(void)
 ------------------------------------------------------------------------------
 */
 /*
-  ¥µ¡¼¥Ğ¡¼¥â¡¼¥ÉÍÑ¤Î¥ª¥×¥·¥ç¥ó¤Î¼è°·¤¤¤Ë´Ø¤¹¤ë¼êÂ³¤­¤È¤òÉÕ²Ã¤¹¤ë¤È¶¦¤Ë¡¢
-  ¥½¥±¥Ã¥È¤Î¥İ¡¼¥ÈÈÖ¹æ¤òÀßÄê¤¹¤ë´Ø¿ô¤Ç¤¢¤ëset_juman_port´Ø¿ô¤òÄêµÁ
-  NACSIS µÈ²¬
+  ã‚µãƒ¼ãƒãƒ¼ãƒ¢ãƒ¼ãƒ‰ç”¨ã®ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®å–æ‰±ã„ã«é–¢ã™ã‚‹æ‰‹ç¶šãã¨ã‚’ä»˜åŠ ã™ã‚‹ã¨å…±ã«ã€
+  ã‚½ã‚±ãƒƒãƒˆã®ãƒãƒ¼ãƒˆç•ªå·ã‚’è¨­å®šã™ã‚‹é–¢æ•°ã§ã‚ã‚‹set_juman_porté–¢æ•°ã‚’å®šç¾©
+  NACSIS å‰å²¡
 */  
 void option_proc(int argc, char **argv)
 {
@@ -282,12 +295,12 @@ else {
 	    else if ( argv[i][1] == 'R' ) Repetition_Opt = 0;
 
 #if ! defined _WIN32
-	    /* ¥µ¡¼¥Ğ¡¼¥â¡¼¥ÉÍÑ¤Î¥ª¥×¥·¥ç¥ó¤Î¼è°·¤¤ */
+	    /* ã‚µãƒ¼ãƒãƒ¼ãƒ¢ãƒ¼ãƒ‰ç”¨ã®ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®å–æ‰±ã„ */
             else if ( argv[i][1] == 'S' ) JUMAN_server_mode = TRUE;
             else if ( argv[i][1] == 'F' ) JUMAN_server_foreground = TRUE;
             else if ( argv[i][1] == 'N' ) /* port no */
 		set_juman_port(argv[i+1]), i++;
-	    /* ¥¯¥é¥¤¥¢¥ó¥È¥â¡¼¥ÉÍÑ¤Î¥ª¥×¥·¥ç¥ó¤Î¼è°·¤¤ */
+	    /* ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆãƒ¢ãƒ¼ãƒ‰ç”¨ã®ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®å–æ‰±ã„ */
             else if ( argv[i][1] == 'C' ) {
 	        if (i != argc - 1)
 		  set_juman_server(argv[i+1]), i++;

@@ -37,7 +37,7 @@ static	U_CHAR	hankaku_table[]=
      "!\"#$%&()*+,-.'/0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^abcdefghijklmnopqrstuvwxyz{|}^~_ --" ;
 
 static U_CHAR	zenkaku_table[]=
-     "���ɡ������ʡˡ��ܡ��ݡ��ǡ����������������������������䡩�����£ãģţƣǣȣɣʣˣ̣ͣΣϣУѣңӣԣգ֣ףأ٣ڡΡ�ϡ������������������������������������Сáѡ�����������" ;
+     "！”＃＄％＆（）＊＋，−．’／０１２３４５６７８９：；＜＝＞？＠ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ［￥］＾ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ｛｜｝＾￣＿　‐―" ;
 
 static U_CHAR	str_buffer[100000];
 

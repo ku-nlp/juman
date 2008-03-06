@@ -37,7 +37,7 @@ static void *jm_malloc_char(int size)
     }
 
     buffer_idx += size;
-    return buffer_ptr[buffer_ptr_num - 1] + buffer_idx - size;
+    return ((char *)buffer_ptr[buffer_ptr_num - 1]) + buffer_idx - size;
 }
 
 static int midasi_compare(line_info *l1, line_info *l2)

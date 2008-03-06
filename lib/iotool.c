@@ -11,7 +11,7 @@
 #endif
 
 #include	<juman.h>
-#define         DEF_GRAM_FILE           "Ê¸Ë¡¥Õ¥¡¥¤¥ë"
+#define         DEF_GRAM_FILE           "æ–‡æ³•ãƒ•ã‚¡ã‚¤ãƒ«"
 /*
 ------------------------------------------------------------------------------
 	GLOBAL:
@@ -467,30 +467,30 @@ void print_execute_time(FILE *fp, int dt, float dp)
         PROCEDURE:
         <set_jumanrc_fileptr>: set Jumanrc_Fileptr
 
-	WIN32 ÍÑ¤Ë juman.ini ¤ò¸«¤Ë¹Ô¤¯¤è¤¦¤ËÊÑ¹¹
-	RC_DEFAULT¤¬¤Ê¤¤¾ì¹ç¤Ëexit¤¹¤ë¤«¤É¤¦¤«¤òflag¤ÇÀ©¸æ¤¹¤ë¤è¤¦¤ËÊÑ¹¹  (2002/11/08)
+	WIN32 ç”¨ã« juman.ini ã‚’è¦‹ã«è¡Œãã‚ˆã†ã«å¤‰æ›´
+	RC_DEFAULTãŒãªã„å ´åˆã«exitã™ã‚‹ã‹ã©ã†ã‹ã‚’flagã§åˆ¶å¾¡ã™ã‚‹ã‚ˆã†ã«å¤‰æ›´  (2002/11/08)
 ------------------------------------------------------------------------------
 */
 void set_jumanrc_fileptr(char *option_rcfile, int look_rcdefault_p, int exit_rc_notfound_p)
 {
     /*
-      rcfile¤ò¤µ¤¬¤¹½ç
+      rcfileã‚’ã•ãŒã™é †
 
       <makeint, makemat>
       	$HOME/.jumanrc
-	¢ª rcfile¤¬¤Ê¤¯¤Æ¤â¤è¤¤
+	â†’ rcfileãŒãªãã¦ã‚‚ã‚ˆã„
 
       <juman server, standalone> 
-       	-r ¥ª¥×¥·¥ç¥ó
-	$HOME/.jumanrc                _WIN32 ¤Î¾ì¹ç¤ÏÃµ¤¹É¬Í×¤Ï¤Ê¤¤ (Changed by Taku Kudoh)
-        c:\(winnt|windows)\juman.ini  _WIN32 ¤Î¾ì¹çjuman.ini ¤òÃµ¤¹ (Changed by Taku Kudoh)
+       	-r ã‚ªãƒ—ã‚·ãƒ§ãƒ³
+	$HOME/.jumanrc                _WIN32 ã®å ´åˆã¯æ¢ã™å¿…è¦ã¯ãªã„ (Changed by Taku Kudoh)
+        c:\(winnt|windows)\juman.ini  _WIN32 ã®å ´åˆjuman.ini ã‚’æ¢ã™ (Changed by Taku Kudoh)
 	RC_DEFAULT (Makefile)         
-	¢ª rcfile¤¬¤Ê¤±¤ì¤Ğ¥¨¥é¡¼
+	â†’ rcfileãŒãªã‘ã‚Œã°ã‚¨ãƒ©ãƒ¼
 
       <juman client>
-       	-r ¥ª¥×¥·¥ç¥ó
+       	-r ã‚ªãƒ—ã‚·ãƒ§ãƒ³
 	$HOME/.jumanrc
-	¢ª rcfile¤¬¤Ê¤¯¤Æ¤â¤è¤¤
+	â†’ rcfileãŒãªãã¦ã‚‚ã‚ˆã„
     */
 
     char *user_home_ptr, *getenv(), filename[FILENAME_MAX];
@@ -550,12 +550,12 @@ void set_jumangram_dirname()
     Jumangram_Dirname[0]='\0';
 
 #ifdef  _WIN32
-    /* MS Windows ¤Î¤Ğ¤¢¤¤¤Ï,juman.ini ¤ò¸«¤Ë¹Ô¤¯¤è¤¦¤ËÊÑ¹¹ 
+    /* MS Windows ã®ã°ã‚ã„ã¯,juman.ini ã‚’è¦‹ã«è¡Œãã‚ˆã†ã«å¤‰æ›´ 
      dicfile == gramfile */
     GetPrivateProfileString("juman","dicfile","",Jumangram_Dirname,sizeof(Jumangram_Dirname),"juman.ini");
     if (Jumangram_Dirname[0]) {
 	return;
-	/* juman.ini¤¬ÍøÍÑ¤Ç¤­¤Ê¤±¤ì¤Ğ¡¢jumanrc¤«¤éÆÉ¤à */
+	/* juman.iniãŒåˆ©ç”¨ã§ããªã‘ã‚Œã°ã€jumanrcã‹ã‚‰èª­ã‚€ */
     }
 #endif
 

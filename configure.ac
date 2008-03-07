@@ -22,7 +22,7 @@ AC_CHECK_LIB(nsl, gethostbyname, NET_LIBS="-lnsl $NET_LIBS")
 AC_SUBST(NET_LIBS)
 
 AC_CHECK_LIB(icuuc, ucnv_open_3_8, ICU_LIBS="-licuuc $ICU_LIBS", AC_MSG_ERROR([ICU library is not found. Please install ICU library (http://www.icu-project.org/).]))
-AC_CHECK_LIB(icui18n, ucnv_fromUChars_3_8, ICU_LIBS="-licui18n $ICU_LIBS", AC_MSG_ERROR([ICU library is not found. Please install ICU library (http://www.icu-project.org/).]))
+AC_CHECK_LIB(icui18n, ucnv_fromUChars_3_8, ICU_LIBS="-licui18n $ICU_LIBS")
 AC_SUBST(ICU_LIBS)
 
 # Checks for header files.

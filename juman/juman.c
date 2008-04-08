@@ -172,11 +172,6 @@ void juman_standalone(void)
 	strcpy(String,eucstr);
 	free(eucstr);
 #endif       
-	if (Show_Opt_tag[0])
-	    if (!strncmp(String , Show_Opt_tag , strlen(Show_Opt_tag))) {
-		fprintf(stdout, "%s", String);
-		continue;
-	    }
 	
 	length = strlen(String);
 	if (length == LENMAX-1 && String[length - 1] != '\n') {
@@ -190,6 +185,12 @@ void juman_standalone(void)
 	    if (String[length - 1] == '\n') String[length - 1] = '\0';
 	    else String[length] = '\0';
 	}
+
+	if (Show_Opt_tag[0])
+	    if (!strncmp(String , Show_Opt_tag , strlen(Show_Opt_tag))) {
+		fprintf(stdout, "%s JUMAN:%s\n", String, VERSION);
+		continue;
+	    }
 
 	if (juman_sent() == TRUE) {
 	    switch (Show_Opt1) {

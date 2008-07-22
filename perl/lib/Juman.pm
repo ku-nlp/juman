@@ -207,7 +207,7 @@ sub juman_lines {
     # UTFフラグをチェックする
     if (utf8::is_utf8($str)) {
 	require Encode;
-	$str = Encode::encode('euc-jp', $str);
+	$str = Encode::encode('euc-jp', $str, sub {'〓'});
 	$this->{input_is_utf8} = 1;
     }
     else {

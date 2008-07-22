@@ -1,3 +1,8 @@
+2008-07-22  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* lib/Juman.pm:
+	Transform undefined characters to GETA.
+
 2008-03-05  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* lib/Juman/MList.pm:

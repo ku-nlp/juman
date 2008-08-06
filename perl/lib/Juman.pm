@@ -198,6 +198,24 @@ sub new {
     $this;
 }
 
+# EUC-JPの3バイトコードを〓に変換
+sub conv_3bytecode_to_geta {
+    my ($buf) = @_;
+    my ($ret_buf);
+
+    while ($buf =~ /([^\x80-\xfe]|[\x80-\x8e\x90-\xfe][\x80-\xfe]|\x8f[\x80-\xfe][\x80-\xfe])/g) {
+	my $chr = $1;
+	if ($chr =~ /^\x8f/) { # 3byte code (JISX0212)
+	    $ret_buf .= '〓';
+	}
+	else {
+	    $ret_buf .= $chr;
+	}
+    }
+
+    return $ret_buf;
+}
+
 sub juman_lines {
     my( $this, $str ) = @_;
     my $socket  = $this->open();
@@ -207,7 +225,8 @@ sub juman_lines {
     # UTFフラグをチェックする
     if (utf8::is_utf8($str)) {
 	require Encode;
-	$str = Encode::encode('euc-jp', $str, sub {'〓'});
+	# euc-jpにない文字とJISX0212補助漢字(3バイト)は〓に変換
+	$str = &conv_3bytecode_to_geta(Encode::encode('euc-jp', $str, sub {'〓'}));
 	$this->{input_is_utf8} = 1;
     }
     else {

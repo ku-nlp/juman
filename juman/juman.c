@@ -340,16 +340,16 @@ void juman_help()
     fprintf(stderr, "usage: juman -[b|B|m|p|P] -[f|c|e|E] [-i string] [-r rc_file]\n");
 #endif
     fprintf(stderr, "\n");
-    fprintf(stderr, "             -b : show best path (default)\n");
-    fprintf(stderr, "             -B : show best path including homographs\n");
+    fprintf(stderr, "             -b : show best path\n");
+    fprintf(stderr, "             -B : show best path including homographs (default)\n");
     fprintf(stderr, "             -m : show all morphemes\n");
     fprintf(stderr, "             -p : show all pathes\n");
     fprintf(stderr, "             -P : show all pathes by -B style\n");
     fprintf(stderr, "\n");
-    fprintf(stderr, "             -f : show formatted morpheme data (default)\n");
+    fprintf(stderr, "             -f : show formatted morpheme data\n");
     fprintf(stderr, "             -c : show coded morpheme data\n");
     fprintf(stderr, "             -e : show entire morpheme data\n");
-    fprintf(stderr, "             -e2 : -e plus semantics data\n");
+    fprintf(stderr, "             -e2 : -e plus semantics data (default)\n");
     fprintf(stderr, "             -E : -e plus location and semantics data\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "             -V : not search voiceless morphemes\n");

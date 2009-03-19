@@ -577,9 +577,9 @@ int search_all(int position)
 
     /* ひらがな、カタカナの繰り返し表現を副詞の候補とする */
     if (Repetition_Opt) {
-	if (check_code(String, position) == HIRAGANA ||
-	    check_code(String, position) == KATAKANA) {
-	    recognize_repetition(String + position, pat_buffer);
+	int code = check_code(String, position);
+	if (code == HIRAGANA || code == KATAKANA) {
+	    recognize_repetition(String + position, pat_buffer, code);
 	}
     }   
     pbuf = pat_buffer;
@@ -595,15 +595,16 @@ int search_all(int position)
         PROCEDURE: <recognize_repetition>   >>> Added by Ryohei Sasano <<<
 ------------------------------------------------------------------------------
 */
-int recognize_repetition(char *key, char *rslt)
+int recognize_repetition(char *key, char *rslt, int orig_code)
 {
-    int i, len, code, weight, con_tbl;
+    int i, len, code, next_code, weight, con_tbl;
     int key_length = strlen(key); /* キーの文字数を数えておく */
     U_CHAR *buf, midasi[LENMAX];
 
     U_CHAR *youon[] = {"ぁ", "ぃ", "ぅ", "ぇ", "ぉ", "ァ", "ィ", "ゥ", "ェ", "ォ", 
 		       "っ", "ッ", "ゃ", "ャ", "ゅ", "ュ", "ょ", "ョ", "\0"};
 
+    code = orig_code;
     for (len = 2; len < 5; len++) {
 
 	if (key_length < len * 4) return 0;
@@ -613,10 +614,15 @@ int recognize_repetition(char *key, char *rslt)
 	    if (!strncmp(key, youon[i], 2)) return 0;
 	}
 
+	next_code = check_code(key, len * 2 - 2);
+
 	/* 平仮名、片仮名、"ー"以外を含むものは不可 */
-	if (strncmp(key + len * 2 - 2, "ー", 2) &&
-	    check_code(key, len * 2 - 2) != HIRAGANA &&
-	    check_code(key, len * 2 - 2) != KATAKANA) return 0;
+	if (next_code != CHOON && next_code != HIRAGANA
+	    && next_code != KATAKANA) return 0;
+	if (next_code != CHOON) {
+	    if (next_code != code) return 0;
+	    code = next_code;
+	}
 
 	if (!strncmp(key, key + len * 2, len * 2)) {
 	    
@@ -661,7 +667,6 @@ int recognize_repetition(char *key, char *rslt)
 	    rslt += len * 4 + 8;
 
 	    while (*buf) {
-		code = *(buf)*256 + *(buf+1);
 		*(rslt++) = *buf;
 		*(rslt++) = *(buf+1);
 		buf += 2;

@@ -31,6 +31,7 @@ extern int		Show_Opt_jumanrc;
 extern int		Show_Opt_debug;
 extern int		Vocalize_Opt;
 extern int		Repetition_Opt;
+extern int		Normalized_Opt;
 
 extern FILE		*Jumanrc_Fileptr;
 extern FILE 		*Cha_stderr;
@@ -240,6 +241,7 @@ void option_proc(int argc, char **argv)
     Show_Opt_debug = 0;
     Vocalize_Opt = 1;
     Repetition_Opt = 1;
+    Normalized_Opt = 1;
 
     for ( i=1; i<argc; i++ ) {
 	if ( argv[i][0] != '-' ) {
@@ -281,6 +283,7 @@ else {
 	    else if ( argv[i][1] == 'D' ) Show_Opt_debug = 2;
 	    else if ( argv[i][1] == 'V' ) Vocalize_Opt = 0;
 	    else if ( argv[i][1] == 'R' ) Repetition_Opt = 0;
+	    else if ( argv[i][1] == 'L' ) Normalized_Opt = 0;
 
 #if ! defined _WIN32
 	    /* サーバーモード用のオプションの取扱い */
@@ -354,6 +357,7 @@ void juman_help()
     fprintf(stderr, "\n");
     fprintf(stderr, "             -V : not search voiceless morphemes\n");
     fprintf(stderr, "             -R : not recognize adverb automatically\n");
+    fprintf(stderr, "             -L : not search normalized lowercase\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "             -i : ignore an input line startig with 'string'\n");
     fprintf(stderr, "             -r : use 'rc_file' as '.jumanrc'\n");

@@ -72,6 +72,7 @@ extern int		Show_Opt_jumanrc;
 extern int		Show_Opt_debug;
 extern int		Vocalize_Opt;
 extern int		Repetition_Opt;
+extern int		Normalized_Opt;
 
 extern U_CHAR	        String[LENMAX];
 

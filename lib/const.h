@@ -1,4 +1,11 @@
-/* 連濁のコスト */
+/* 非正規表記 */
+#define NORMALIZED_COST        1  /* 小文字を大文字化するコスト */
+#define NORMALIZED_LENGTH      6  /* 大文字化を考慮する最大形態素長 */
+
+/* 改善される例
+   「ぁつい」、「ちぃさい」、「ヵゎぃぃ」 */
+
+/* 連濁 */
 #define VERB_VOICED_COST       7  /* "が"から始まる動詞を除く動詞の連濁化のコスト */
 #define VERB_GA_VOICED_COST    9  /* "が"から始まる動詞の連濁化のコスト */
 #define NOUN_VOICED_COST       8  /* "が"から始まる名詞を除く名詞の連濁化のコスト */
@@ -27,10 +34,10 @@
    形容詞の連濁化のコスト
      10以上だと、"盛りだくさん"が解析できない(061031) */
 
-/* 反復型オノマトペのコスト */
+/* 反復型オノマトペ */
 #define REPETITION_COST       13  /* 繰り返し1音あたりのコスト */
-#define YOUON_BONUS            4  /* 拗音があった場合のボーナス */
-#define DAKUON_BONUS           2  /* 拗音があった場合のボーナス */
+#define LOWERCASE_BONUS        4  /* 小文字があった場合のボーナス */
+#define DAKUON_BONUS           2  /* 濁音があった場合のボーナス */
 #define KATAKANA_BONUS         2  /* カタカナであった場合のボーナス */
 
 /* 以上のweightで基本的に副詞と認識されるもの

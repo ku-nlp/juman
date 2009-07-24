@@ -1594,6 +1594,14 @@ void print_path_mrph(FILE* output, int path_num , int para_flag)
 	break;
 
     case Op_EE:
+	/* ラティスのつながりを表示 */
+	fprintf(output, "%d ", path_num);
+	for (i = 0; proc_p->path[i] != -1; i++) {
+	    if (i) fprintf(output, ";");
+	    fprintf(output, "%d", proc_p->path[i]);
+	}
+	fprintf(output, " ");
+
 	fprintf(output, "%d ", pos);
 	if (!strcmp(midasi1, "\\ ")) pos++; else pos += strlen(midasi1);
 	fprintf(output, "%d ", pos);

@@ -61,5 +61,5 @@ eval RC_DEFAULT=`eval echo "$RC_DEFAULT"`
 AC_DEFINE_UNQUOTED(RC_DEFAULT, "$RC_DEFAULT", [Define to the location of "jumanrc" file.])
 
 
-AC_CONFIG_FILES([Makefile lib/Makefile makemat/Makefile makeint/Makefile makepat/Makefile juman/Makefile dic/Makefile doc/Makefile])
+AC_CONFIG_FILES([Makefile lib/Makefile makemat/Makefile makeint/Makefile makepat/Makefile juman/Makefile dic/Makefile autodic/Makefile doc/Makefile])
 AC_OUTPUT

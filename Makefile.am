@@ -1,4 +1,4 @@
-SUBDIRS = lib makeint makemat makepat juman dic doc
+SUBDIRS = lib makeint makemat makepat juman dic autodic doc
 
 jumanrcdir=$(sysconfdir)
 nodist_jumanrc_DATA = jumanrc

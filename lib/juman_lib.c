@@ -1040,7 +1040,7 @@ char *_take_data(char *s, MRPH *mrph, int dakuon_flag, int normal_flag)
 	k++;
     }
 
-    /* 正規化したものにペナルティ(非正規表現用) */
+    /* 正規化したものにペナルティ(小文字化された表現用) */
     if (normal_flag) {
 	mrph->weight += NORMALIZED_COST;
     }
@@ -1456,16 +1456,16 @@ MRPH *prepare_path_mrph(int path_num , int para_flag)
 	strcat(yomi, Form[mrph_p->katuyou1][mrph_p->katuyou2].gobi_yomi);
     }
 
-    /* 非正規表現用 */
+    /* 小文字による非標準表記用 */
     if (mrph_p->hinsi != 1 && mrph_p->hinsi != 15 &&
 	strncmp(String + p_buffer[path_num].start, midasi1, mrph_p->length)) {
 	strncpy(midasi1, String + p_buffer[path_num].start, mrph_p->length);
 	if (strcmp(mrph_p->imis, NILSYMBOL)) {
 	    mrph_p->imis[strlen(mrph_p->imis) - 1] = '\0';
-	    strcat(mrph_p->imis, " 正規化\"");
+	    strcat(mrph_p->imis, " 小文字化\"");
 	}
 	else {
-	    strcpy(mrph_p->imis, "\"正規化\"");
+	    strcpy(mrph_p->imis, "\"小文字化\"");
 	}
     }
 

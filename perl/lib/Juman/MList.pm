@@ -106,8 +106,14 @@ sub spec {
     my $str;
     for my $mrph ( $this->mrph_list() ){
 	$str .= $mrph->spec();
-	for my $doukei ( $mrph->doukei() ){
-	    $str .= '@ ' . $doukei->spec();
+
+	# KNP::Morpheme は fstring に同形が埋め込まれている
+	# spec と repname の実装は straightforward ではない
+	# KNP::MList を作って処理すべき
+	if ( !defined $this->{fstring} ){
+	    for my $doukei ( $mrph->doukei() ){
+		$str .= '@ ' . $doukei->spec();
+	    }
 	}
     }
     $str;

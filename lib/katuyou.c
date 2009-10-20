@@ -150,6 +150,8 @@ void katuyou(FILE *fp_out)
 	    != NULL) break;
 	if ((fp = pathfopen(KATUYOUFILE, "r", juman_path, katuyoufile_path))
 	    != NULL) break;
+	if ((fp = pathfopen(KATUYOUFILE, "r", "../dic/", katuyoufile_path)) /* for compilation */
+	    != NULL) break;
 	error(OpenError, "can't open", katuyoufile_path, ".", EOA);
     }
 

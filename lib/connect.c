@@ -65,6 +65,8 @@ void connect_table(FILE *fp_out)
 	      != NULL ) break;
 	  if ( (fp = pathfopen(TABLEFILE, "r", JumanPath, tablefile_path))
 	      != NULL ) break;
+	  if ( (fp = pathfopen(TABLEFILE, "r", "../dic/", tablefile_path)) /* for compilation */
+	      != NULL ) break;
 	  error(OpenError, "can't open", TABLEFILE, ".", EOA);
      }
 

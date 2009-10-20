@@ -178,6 +178,8 @@ void grammar(FILE *fp_out)
 	      != NULL ) break;
 	  if ( (fp = pathfopen(GRAMMARFILE, "r", JumanPath, grammarfile_path))
 	      != NULL ) break;
+	  if ( (fp = pathfopen(GRAMMARFILE, "r", "../dic/", grammarfile_path)) /* for compilation */
+	      != NULL ) break;
 	  error(OpenError, "can't open", GRAMMARFILE, ".", EOA);
      }
 

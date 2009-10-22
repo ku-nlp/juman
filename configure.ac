@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(juman, 6.0, nl-resource@nlp.kuee.kyoto-u.ac.jp)
+AC_INIT(juman, 6.1, nl-resource@nlp.kuee.kyoto-u.ac.jp)
 AC_PREREQ(2.53)
 # AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([juman/juman.c])

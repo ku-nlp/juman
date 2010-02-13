@@ -29,7 +29,7 @@ main(int argc, char *argv[])
   char comm;
   int i;
   pat_node *tmp;
-  char kugiri[1]; /* 区切り文字 */
+  char kugiri[2]; /* 区切り文字 */
   char rslt[50000];
   char	CurPath[FILENAME_MAX];
   char	JumanPath[FILENAME_MAX];

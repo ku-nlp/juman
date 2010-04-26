@@ -750,6 +750,7 @@ int take_data(int pos, char **pbuf, int dakuon_flag, int normal_flag)
 	    k = 0;
 	    while ((new_mrph->midasi[k++] = *(s++)) != ' ') {}
 	    new_mrph->midasi[k-1] = '\0';
+	    new_mrph->midasi2[0] = '\0';
 
 	    s = _take_data(s, new_mrph, dakuon_flag, normal_flag);
 

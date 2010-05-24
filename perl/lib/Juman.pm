@@ -161,7 +161,7 @@ $VERSION = '0.5.7';
       port    => 32000,				# Juman サーバーのポート番号
       timeout => 30,				# Juman サーバーの応答の待ち時間
       option  => '-e2 -B',
-      rcfile  => $ENV{HOME}.'/.jumanrc',
+      rcfile  => (exists($ENV{HOME}) ? $ENV{HOME} : '') . '/.jumanrc',
       mclass  => $Juman::Result::DEFAULT{mclass},
       ignorepattern => '',
     );

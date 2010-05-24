@@ -1,3 +1,8 @@
+2010-05-24  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* lib/Juman.pm:
+	Modified to check the existence of $ENV{HOME}.
+
 2008-08-06  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* lib/Juman.pm:

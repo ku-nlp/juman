@@ -113,6 +113,7 @@
 #define 	DEF_KAKKO_BUNRUI2	"括弧終"
 #define 	DEF_KUUHAKU_HINSI	"特殊"
 #define 	DEF_KUUHAKU_BUNRUI	"空白"
+#define         DEF_ONOMATOPOEIA_HINSI  "副詞"
 
 #define 	DEF_UNDEF		"未定義語"
 #define 	DEF_UNDEF_KATA		"カタカナ"
@@ -157,6 +158,7 @@ int		Show_Opt_jumanrc;
 int		Show_Opt_debug;
 int		Vocalize_Opt;
 int		Repetition_Opt;
+int             Onomatopoeia_Opt;
 int		Normalized_Opt;
 
 U_CHAR	        String[LENMAX];
@@ -169,6 +171,7 @@ int		undef_kata_con_tbl, undef_alph_con_tbl, undef_etc_con_tbl;
 int             suusi_hinsi, suusi_bunrui;
 int             kakko_hinsi, kakko_bunrui1, kakko_bunrui2;
 int		kuuhaku_hinsi, kuuhaku_bunrui, kuuhaku_con_tbl;
+int		onomatopoeia_hinsi, onomatopoeia_bunrui, onomatopoeia_con_tbl;
 int             jiritsu_num;
 int             p_buffer_num;
 CONNECT_COST	connect_cache[CONNECT_MATRIX_MAX];
@@ -189,28 +192,6 @@ U_CHAR		midasi1[MIDASI_MAX]; /* 活用 */
 U_CHAR		midasi2[MIDASI_MAX]; /* 原形 */
 U_CHAR		yomi[MIDASI_MAX];    /* 活用の読み */
 
-/* 濁音化している形態素を検索するために用いる */
-/* 半濁音は副詞の自動認識のみで用いる */
-/* 奇数番目が平仮名、続く偶数番目が対応する片仮名である必要あり */
-U_CHAR          *dakuon[] = {"ぱ", "パ", "ぴ", "ピ", "ぷ", "プ", "ぺ", "ペ", "ぽ", "ポ",
-			     "が", "ガ", "ぎ", "ギ", "ぐ", "グ", "げ", "ゲ", "ご", "ゴ",
-			     "ざ", "ザ", "じ", "ジ", "ず", "ズ", "ぜ", "ゼ", "ぞ", "ゾ",
-			     "だ", "ダ", "ぢ", "ヂ", "づ", "ヅ", "で", "デ", "ど", "ド",
-			     "ば", "バ", "び", "ビ", "ぶ", "ブ", "べ", "ベ", "ぼ", "ボ",
-			     "\0"};
-U_CHAR          *seion[]  = {"は", "ハ", "ひ", "ヒ", "ふ", "フ", "へ", "ヘ", "ほ", "ホ",
-			     "か", "カ", "き", "キ", "く", "ク", "け", "ケ", "こ", "コ",
-			     "さ", "サ", "し", "シ", "す", "ス", "せ", "セ", "そ", "ソ",
-			     "た", "タ", "ち", "チ", "つ", "ツ", "て", "テ", "と", "ト",
-			     "は", "ハ", "ひ", "ヒ", "ふ", "フ", "へ", "ヘ", "ほ", "ホ",
-			     "\0"};	     
-U_CHAR *lowercase[] = {"ぁ", "ぃ", "ぅ", "ぇ", "ぉ", "ゎ", "ヵ",
-		       "ァ", "ィ", "ゥ", "ェ", "ォ", "ヮ",
-		       "っ", "ッ", "ゃ", "ャ", "ゅ", "ュ", "ょ", "ョ", "\0"};
-U_CHAR *uppercase[] = {"あ", "い", "う", "え", "お", "わ", "か",
-		       "ア", "イ", "ウ", "エ", "オ", "ワ", "\0"};
-int normalized_lowercase = 7; /* 正規化するlowercase[]の範囲(7→"ヵ"までが対象) */
-
 extern COST_OMOMI       cost_omomi;     /*k.n*/
 extern char             Jumangram_Dirname[FILENAME_MAX];  /*k.n*/
 
@@ -225,10 +206,10 @@ int	juman_close(void);
 void	realloc_mrph_buffer(void);
 void	realloc_process_buffer(void);
 void    read_class_cost(CELL *cell); /* k.n */
-static BOOL    katuyou_process(int position, int *k, MRPH mrph, int *length, int normal_flag);
+static BOOL    katuyou_process(int position, int *k, MRPH mrph, int *length, char opt);
 int     search_all(int position);
-int     take_data(int pos, char **pbuf, int dakuon_flag, int normal_flag);
-char *	_take_data(char *s, MRPH *mrph, int dakuon_flag, int normal_flag);
+int     take_data(int pos, char **pbuf, char opt);
+char *	_take_data(char *s, MRPH *mrph, char opt);
 int 	numeral_decode(char **str);
 int 	numeral_decode2(char **str);
 void 	hiragana_decode(char **str, char *yomi);
@@ -259,7 +240,7 @@ int	_print_homograph_path(FILE* output, int pbuf_start, int new_p);
 
 int	pos_match_process(int pos, int p_start);
 int	pos_right_process(int position);
-int	check_connect(int pos_start, int m_num, int dakuon_flag);
+int	check_connect(int pos_start, int m_num, char opt);
 int	juman_sent(void);
 
 /*
@@ -512,12 +493,12 @@ void read_class_cost(CELL *cell)
 	PROCEDURE: <katuyou_process>       >>> changed by T.Nakamura <<<
 ------------------------------------------------------------------------------
 */
-static BOOL katuyou_process(int position, int *k, MRPH mrph, int *length, int normal_flag)
+static BOOL katuyou_process(int position, int *k, MRPH mrph, int *length, char opt)
 {
      while (Form[mrph.katuyou1][*k].name) {
 	  if (compare_top_str1(Form[mrph.katuyou1][*k].gobi,
 			      String + position + mrph.length) ||
-	      normal_flag && /* 非正規表現用 */
+	      (opt & OPT_NORMALIZE) && /* 非正規表現用 */
 	      compare_top_str1(Form[mrph.katuyou1][*k].gobi,
 			       NormalizedString + position + mrph.length)) {
 	       *length     = mrph.length + 
@@ -547,67 +528,38 @@ int search_all(int position)
     for(dic_no = 0 ; dic_no < DicFile.number ; dic_no++) {
 	changeDictionary(dic_no);
 
-	pat_buffer[0] = '\0';
-
 	/* パトリシア木から形態素を検索 */
-	pat_search(db, String + position, &DicFile.tree_top[dic_no],
-		   pat_buffer);
+	pat_buffer[0] = '\0';
+	pat_search(db, String + position, &DicFile.tree_top[dic_no], pat_buffer);
 	pbuf = pat_buffer;
-
 	while (*pbuf != '\0') {
-	    if (take_data(position, &pbuf, 0, 0) == FALSE) return FALSE;
+	    if (take_data(position, &pbuf, 0) == FALSE) return FALSE;
 	}
 
-	/* パトリシア木から形態素を検索(非正規表現用) by sasano */
-	if (Normalized_Opt) {
-	    if (strncmp(String + position, NormalizedString + position, NORMALIZED_LENGTH * 2)) {
-		pat_buffer[0] = '\0';
-		pat_search(db, NormalizedString + position, &DicFile.tree_top[dic_no],
-			   pat_buffer);
-		pbuf = pat_buffer;
-		
-		while (*pbuf != '\0') {
-		    if (take_data(position, &pbuf, 0, 1) == FALSE) return FALSE;
-		}
+	if (Normalized_Opt && /* 非正規表現用の検索 */
+	    strncmp(String + position, NormalizedString + position, NORMALIZED_LENGTH * 2)) {
+	    pat_buffer[0] = '\0';
+	    pat_search(db, NormalizedString + position, &DicFile.tree_top[dic_no], pat_buffer);
+	    pbuf = pat_buffer;
+	    while (*pbuf != '\0') {
+		if (take_data(position, &pbuf, OPT_NORMALIZE) == FALSE) return FALSE;
 	    }
 	}
 
-	if (Vocalize_Opt) {
-	    /* 濁音化した形態素に対応するための処理 by sasano
-	       とりあえず、濁音から始まる語があった場合は
-	       すべて対応する清音から始まる語も検索しておき
-	       take_data以下で直前が名詞、または動詞の連用形であるなどの制限や
-	       スコアにペナルティをかけている("dakuon_flag"で検索可能)
-	    */
+	if (Vocalize_Opt) { /* 濁音化した形態素の検索 */
+	    pat_buffer[0] = '\0';
 	    for (i = 10; *dakuon[i]; i++) {
 		if (!strncmp(String + position, dakuon[i], 2)) {
 		    sprintf(buf, "%s%s", seion[i], String + position + 2);
-
-		    /* パトリシア木から形態素を検索 */	
-		    pat_buffer[0] = '\0';
 		    pat_search(db, buf, &DicFile.tree_top[dic_no], pat_buffer);
 		    pbuf = pat_buffer;
-
 		    while (*pbuf != '\0') {
-			if (take_data(position, &pbuf, i, 0) == FALSE) return FALSE;
+			if (take_data(position, &pbuf, OPT_DEVOICE) == FALSE) return FALSE;
 		    }
 		    break;
 		}
 	    }
 	}
-    }
-    pat_buffer[0] = '\0';
-
-    /* ひらがな、カタカナの繰り返し表現を副詞の候補とする */
-    if (Repetition_Opt) {
-	int code = check_code(String, position);
-	if (code == HIRAGANA || code == KATAKANA) {
-	    recognize_repetition(String + position, pat_buffer, code);
-	}
-    }   
-    pbuf = pat_buffer;
-    while (*pbuf != '\0') {
-	if (take_data(position, &pbuf, 0, 0) == FALSE) return FALSE;
     }
 
     return TRUE;
@@ -618,85 +570,75 @@ int search_all(int position)
         PROCEDURE: <recognize_repetition>   >>> Added by Ryohei Sasano <<<
 ------------------------------------------------------------------------------
 */
-int recognize_repetition(char *key, char *rslt, int orig_code)
+int recognize_onomatopoeia(int pos)
 {
-    int i, len, code, next_code, weight, con_tbl;
-    int key_length = strlen(key); /* キーの文字数を数えておく */
-    U_CHAR *buf, midasi[LENMAX];
+    int i, len, code, next_code;
+    int key_length = strlen(String + pos); /* キーの文字数を数えておく */
 
-    code = orig_code;
-    for (len = 2; len < 5; len++) {
-
-	if (key_length < len * 4) return 0;
-	
-	/* 小文字から始まるものは不可 */
-	for (i = 0; *lowercase[i]; i++) {
-	    if (!strncmp(key, lowercase[i], 2)) return 0;
-	}
-
-	next_code = check_code(key, len * 2 - 2);
-
-	/* 平仮名、片仮名、"ー"以外を含むものは不可 */
-	if (next_code != CHOON && next_code != HIRAGANA
-	    && next_code != KATAKANA) return 0;
-	if (next_code != CHOON) {
-	    if (next_code != code) return 0;
-	    code = next_code;
-	}
-
-	if (!strncmp(key, key + len * 2, len * 2)) {
-	    
-	    strncpy(midasi, key, len * 4);
- 	    midasi[len * 4] = '\0';
-	    buf = midasi;	    
-
-	    /* 基本的には語数に比例してペナルティを与える */
-	    weight = REPETITION_COST*len+0x20;
-
-	    /* 小文字があった場合は1文字分マイナス+ボーナス */
-	    for (i = 2; *lowercase[i]; i++) {
-		if (strstr(buf, lowercase[i])) break;
-	    }
-	    if (*lowercase[i]) {
-		if (len == 2) return 0; /* 1音の繰り返しは禁止 */		
-		weight -= REPETITION_COST + LOWERCASE_BONUS;
-	    }
-
-	    /* 濁音があった場合もボーナス */
-	    for (i = 0; *dakuon[i]; i++) {
-		if (strstr(buf, dakuon[i])) break;
-	    }
-	    if (*dakuon[i]) {
-		weight -= DAKUON_BONUS;
-		/* 先頭が濁音だった場合はさらにボーナス */
-		if (!strncmp(buf, dakuon[i], 2)) weight -= DAKUON_BONUS;
-	    }
-
-	    /* カタカナもボーナス */
-	    if (check_code(key, 0) == KATAKANA) weight -= KATAKANA_BONUS;
-    
-	    con_tbl = check_table_for_undef(8, 0); /* hinsi = 8, bunrui = 0 */
-	    sprintf(rslt, "%s\t%c%c%c%c%c%c%c", buf,
-		    8+0x20, /* hinsi = 8 */
-		    0+0x20, /* bunrui = 0 */
-		    0+0x20, /* katuyou1 = 0 */
-		    0+0x20, /* katuyou2 = 0 */
-		    weight, /* weight */
-		    con_tbl / (0x100-0x20)+0x20,
-		    con_tbl % (0x100-0x20)+0x20);
-	    rslt += len * 4 + 8;
-
-	    while (*buf) {
-		*(rslt++) = *buf;
-		*(rslt++) = *(buf+1);
-		buf += 2;
-	    }
-	    *(rslt++) = 0x20;
-	    *(rslt++) = 10+0x20;
-	    strcpy(rslt, "\"自動認識\"\n");
-	    return len;
-	}
+    /* 通常の平仮名、片仮名以外から始まるものは不可 */
+    code = check_code(String, pos);
+    if (code != HIRAGANA && code != KATAKANA) return FALSE;
+    for (i = 0; *lowercase[i]; i++) {
+	if (!strncmp(String + pos, lowercase[i], 2)) return FALSE;
     }
+
+    /* 反復型オノマトペ */
+    for (len = 2; len < 5; len++) {
+	/* 途中で文字種が変わるものは不可 */
+	next_code = check_code(String, pos + len * 2 - 2);
+	if (next_code == CHOON) next_code = code; /* 長音は直前の文字種として扱う */
+	if (key_length < len * 4 || code != next_code) return FALSE;
+	code = next_code;
+
+	/* 反復があるか判定 */
+	if (strncmp(String + pos, String + pos + len * 2, len * 2)) continue;
+
+	m_buffer[m_buffer_num].hinsi = onomatopoeia_hinsi;
+	m_buffer[m_buffer_num].bunrui = onomatopoeia_bunrui;
+	m_buffer[m_buffer_num].con_tbl = onomatopoeia_con_tbl;
+	
+	m_buffer[m_buffer_num].katuyou1 = 0;
+	m_buffer[m_buffer_num].katuyou2 = 0;
+	m_buffer[m_buffer_num].length = len * 4;
+
+	strncpy(m_buffer[m_buffer_num].midasi, String+pos, len * 4);
+	m_buffer[m_buffer_num].midasi[len * 4] = '\0';
+	strncpy(m_buffer[m_buffer_num].yomi, String+pos, len * 4);
+	m_buffer[m_buffer_num].yomi[len * 4] = '\0';
+
+	/* weightの設定 */
+	m_buffer[m_buffer_num].weight = REPETITION_COST * len;
+	/* 拗音を含む場合 */
+	for (i = contracted_lowercase; *lowercase[i]; i++) {
+	    if (strstr(m_buffer[m_buffer_num].midasi, lowercase[i])) break;
+	}
+	if (*lowercase[i]) {
+	    if (len == 2) return FALSE; /* 1音の繰り返しは禁止 */		
+	    /* 1文字分マイナス+ボーナス */
+	    m_buffer[m_buffer_num].weight -= REPETITION_COST + CONTRACTED_BONUS;
+	}
+	/* 濁音を含む場合 */
+	for (i = 0; *dakuon[i]; i++) {
+	    if (strstr(m_buffer[m_buffer_num].midasi, dakuon[i])) break;
+	}
+	if (*dakuon[i]) {
+	    m_buffer[m_buffer_num].weight -= DAKUON_BONUS; /* ボーナス */
+	    /* 先頭が濁音の場合はさらにボーナス */
+	    if (!strncmp(m_buffer[m_buffer_num].midasi, dakuon[i], 2)) 
+		m_buffer[m_buffer_num].weight -= DAKUON_BONUS;
+	}
+	/* カタカナである場合 */
+	if (code == KATAKANA) 
+	    m_buffer[m_buffer_num].weight -= KATAKANA_BONUS;
+	
+	strcpy(m_buffer[m_buffer_num].midasi2, m_buffer[m_buffer_num].midasi);
+	strcpy(m_buffer[m_buffer_num].imis, "\"自動認識\"");
+
+	check_connect(pos, m_buffer_num, 0);
+	if (++m_buffer_num == mrph_buffer_max) realloc_mrph_buffer();	
+	return TRUE;
+    }
+    return FALSE;
 }
 
 /*
@@ -704,7 +646,7 @@ int recognize_repetition(char *key, char *rslt, int orig_code)
         PROCEDURE: <take_data>                  >>> Changed by yamaji <<<
 ------------------------------------------------------------------------------
 */
-int take_data(int pos, char **pbuf, int dakuon_flag, int normal_flag)
+int take_data(int pos, char **pbuf, char opt)
 {
     unsigned char    *s;
     int     i, k, f, num;
@@ -718,16 +660,10 @@ int take_data(int pos, char **pbuf, int dakuon_flag, int normal_flag)
     s = *pbuf;
 
     k = 0 ;
-	    
+
     while ((mrph.midasi[k++] = *(s++)) != '\t') {}
     mrph.midasi[k-1] = '\0';
     mrph.midasi2[0] = '\0';
-
-    if (dakuon_flag) {
-	strcpy(mrph.midasi2, mrph.midasi);
-	strncpy(mrph.midasi, String + pos, strlen(mrph.midasi));
-	mrph.midasi[strlen(mrph.midasi)] = '\0';
-    }
 
     if (*s == 0xff) { /* 連語情報だった場合 */
 
@@ -739,7 +675,7 @@ int take_data(int pos, char **pbuf, int dakuon_flag, int normal_flag)
 	
 	pos_bak = pos;
 
-	s = _take_data(s, &mrph, dakuon_flag, normal_flag);
+	s = _take_data(s, &mrph, opt);
 	rengo_con_tbl = mrph.con_tbl;
 	rengo_weight  = mrph.weight;
 	num = mrph.bunrui;
@@ -752,7 +688,8 @@ int take_data(int pos, char **pbuf, int dakuon_flag, int normal_flag)
 	    new_mrph->midasi[k-1] = '\0';
 	    new_mrph->midasi2[0] = '\0';
 
-	    s = _take_data(s, new_mrph, dakuon_flag, normal_flag);
+	    s = _take_data(s, new_mrph, opt);
+	    if (opt) new_mrph->weight = STOP_MRPH_WEIGHT;
 
 	    length = strlen(new_mrph->midasi);
 	    if (Class[new_mrph->hinsi][new_mrph->bunrui].kt) /* 活用する */
@@ -779,7 +716,7 @@ int take_data(int pos, char **pbuf, int dakuon_flag, int normal_flag)
 		/* 末尾の形態素が活用する場合 */
 		k2 = strlen(new_mrph->midasi) ? 1 : 2;
 		co = 0;
-		while (katuyou_process(pos, &k2, *new_mrph, &length, 0)) {
+		while (katuyou_process(pos, &k2, *new_mrph, &length, opt)) {
 		    add_list[co++] = k2;
 		    k2++;
 		}
@@ -814,7 +751,7 @@ int take_data(int pos, char **pbuf, int dakuon_flag, int normal_flag)
 			printf("\n");
 		    }
 		    
-		    check_connect(pos, m_buffer_num, dakuon_flag);
+		    check_connect(pos, m_buffer_num, opt);
 		    if (p_buffer_num == pnum_bak) break;
 
 		    p_buffer[pnum_bak].end = pos + new_mrph->length;
@@ -889,16 +826,15 @@ int take_data(int pos, char **pbuf, int dakuon_flag, int normal_flag)
 	}
 
     } else {           /* 普通の形態素だった場合 */
-	s = _take_data(s, &mrph, dakuon_flag, normal_flag);
+	s = _take_data(s, &mrph, opt);
 
 	if ( Class[mrph.hinsi][mrph.bunrui].kt ) { /* 活用する */
 	    if ( mrph.katuyou2 == 0 ) {   /* 語幹あり */
 		k2 = 1;
-		while (katuyou_process(pos, &k2, mrph, &length, normal_flag)) {
+		while (katuyou_process(pos, &k2, mrph, &length, opt)) {
 		    /* 正規化ノードは2字以上、かつ、length内に対象の小文字を含む場合のみ作成 */
-		    if (normal_flag &&
-			(length == 2 ||
-			 !strncmp(String + pos, NormalizedString + pos, length))) {
+		    if ((opt & OPT_NORMALIZE) && /* 非正規表現用 */
+			(length == 2 || !strncmp(String + pos, NormalizedString + pos, length))) {
 			k2++;
 			continue;
 		    }
@@ -906,7 +842,7 @@ int take_data(int pos, char **pbuf, int dakuon_flag, int normal_flag)
 		    m_buffer[m_buffer_num].katuyou2 = k2;
 		    m_buffer[m_buffer_num].length = length;
 		    m_buffer[m_buffer_num].con_tbl += (k2 - 1);
-		    check_connect(pos, m_buffer_num, dakuon_flag);
+		    check_connect(pos, m_buffer_num, opt);
 		    if (++m_buffer_num == mrph_buffer_max)
 			realloc_mrph_buffer();
 		    k2++;
@@ -916,18 +852,18 @@ int take_data(int pos, char **pbuf, int dakuon_flag, int normal_flag)
 		m_buffer[m_buffer_num].midasi[0] = '\0';
 		m_buffer[m_buffer_num].midasi2[0] = '\0';
 		m_buffer[m_buffer_num].yomi[0]  = '\0';
-		check_connect(pos, m_buffer_num, dakuon_flag);
+		check_connect(pos, m_buffer_num, opt);
 		if (++m_buffer_num == mrph_buffer_max)
 		    realloc_mrph_buffer();
 	    }
 	} else {	                                 /* 活用しない */
-	    if (!normal_flag ||  
+	    if (!(opt & OPT_NORMALIZE) || /* 非正規表現用 */
 		/* 正規化ノードは2字以上、かつ、length内に対象の小文字を含む場合のみ作成 */
 		strlen(mrph.midasi) > 2 && 
 		strncmp(String + pos, NormalizedString + pos, strlen(mrph.midasi))) {
 		
 		m_buffer[m_buffer_num] = mrph;
-		check_connect(pos, m_buffer_num, dakuon_flag);
+		check_connect(pos, m_buffer_num, opt);
 		new_mrph_num = m_buffer_num;
 		if (++m_buffer_num == mrph_buffer_max)
 		    realloc_mrph_buffer();	    
@@ -953,7 +889,7 @@ int take_data(int pos, char **pbuf, int dakuon_flag, int normal_flag)
 ------------------------------------------------------------------------------
 */
 
-char *_take_data(char *s, MRPH *mrph, int dakuon_flag, int normal_flag)
+char *_take_data(char *s, MRPH *mrph, char opt)
 {
     int		i, j, k = 0;
     char	c, *rep;
@@ -973,80 +909,73 @@ char *_take_data(char *s, MRPH *mrph, int dakuon_flag, int normal_flag)
 	mrph->imis[k] = '\0';
     }
     s++;
+    if (k == 0) strcpy(mrph->imis, NILSYMBOL);  
     
-    if (dakuon_flag) {
-	/* ライマンの法則 */
-	/* もともと濁音を含む要素は濁音化しない */
-	/* 例外となる"はしご"には、濁音可というfeatureを付与して対処している */
-	for (i = 10; *dakuon[i]; i++) {
-	    if (strstr(mrph->midasi + 2, dakuon[i])) break;
-	}
-	/* ライマンの法則に該当、語幹のない語、形態素が1文字だった場合 */
-	/* 濁音化の処理はしない(=大きなペナルティを与える) */
-	if (!strstr(mrph->imis, "濁音可") && *dakuon[i] || 
-	    mrph->katuyou2 || 
- 	    (mrph->length == 2) && !Class[mrph->hinsi][mrph->bunrui].kt) {
-	    mrph->weight = 255;
-	}
-	/* 連濁は和語のみ */
-	/* このため代表表記の最初の文字が漢字でないものは不可 */
-	else if ((rep = strstr(mrph->imis, "代表表記:")) &&
-		 check_code(rep, 9) == KATAKANA) {
-	    mrph->weight = 255;
+    if (opt & OPT_DEVOICE) {
+
+	/* 濁音化の処理はしない形態素の重みをSTOP_MRPH_WEIGHTにする */
+	if (mrph->katuyou2 || /* 語幹のない語 */
+ 	    mrph->length == 2 && !Class[mrph->hinsi][mrph->bunrui].kt || /* 1文字の形態素 */
+	    (rep = strstr(mrph->imis, "代表表記:")) && check_code(rep, 9) == KATAKANA) { /* 非和語 */
+	    mrph->weight = STOP_MRPH_WEIGHT;
 	}
 	else {
-	    /* 動詞 */
-	    if (mrph->hinsi == 2) {
-		if (!strncmp(mrph->midasi, "が", 2)) {
-		    mrph->weight += VERB_GA_VOICED_COST;
-		}
-		else {
-		    mrph->weight += VERB_VOICED_COST;
-		}
+	    if (mrph->hinsi == 2) { /* 動詞 */
+		mrph->weight += strncmp(mrph->midasi, "か", 2) ? VERB_VOICED_COST : VERB_GA_VOICED_COST;
 	    }
-	    /* 名詞 */
-	    else if (mrph->hinsi == 6 && (mrph->bunrui < 3 || mrph->bunrui > 7)) {
-		if (!strncmp(mrph->midasi, "が", 2)) {
-		    mrph->weight += NOUN_GA_VOICED_COST;
-		}
-		else {
-		    mrph->weight += NOUN_VOICED_COST;
-		}
+	    else if (mrph->hinsi == 6 && (mrph->bunrui < 3 || mrph->bunrui > 7)) { /* 名詞 */
+		mrph->weight += strncmp(mrph->midasi, "か", 2) ? NOUN_VOICED_COST : NOUN_GA_VOICED_COST;
 	    }
-	    /* 形容詞 */
-	    else if (mrph->hinsi == 3) {
+	    else if (mrph->hinsi == 3) { /* 形容詞 */
 		mrph->weight += ADJECTIVE_VOICED_COST;
 	    }
-	    /* その他 */
-	    /* その他の品詞でも濁音可という意味素があれば解析できるようにするため */
-	    /* 副助詞および副詞の"くらい"を想定しているが、とりあえずは使用せず */
+	    /* その他の品詞でも濁音可という意味素があれば解析できるようにする */
 	    else if (strstr(mrph->imis, "濁音可")) {
 		mrph->weight += OTHER_VOICED_COST;
 	    }
 	    else {
-		mrph->weight = 255;
+		mrph->weight = STOP_MRPH_WEIGHT;
 	    }
 	}
-	
-	/* 読みの濁音化は片仮名の場合は平仮名にする */
-	strncpy(mrph->yomi, dakuon[(dakuon_flag/2)*2], 2);
-	
-	if (k == 0) {
-	    strcpy(mrph->imis, "\"濁音化\"");
+
+	/* ライマンの法則に該当し濁音可という意味情報のない形態素の連濁は認めない */
+	if (mrph->weight != STOP_MRPH_WEIGHT) {
+	    for (i = 10; *dakuon[i]; i++) {
+		if (strstr(mrph->midasi + 2, dakuon[i])) break;
+	    }
+	    if (*dakuon[i] && !strstr(mrph->imis, "濁音可")) mrph->weight = STOP_MRPH_WEIGHT;
 	}
-	else {
-	    mrph->imis[k - 1] = '\0';
-	    strcat(mrph->imis, " 濁音化\"");
+
+	/* 読み、意味情報を修正 */
+	if (mrph->weight != STOP_MRPH_WEIGHT) {
+	    for (i = 10; *seion[i]; i++) {
+		if (!strncmp(mrph->yomi, seion[i], 2)) {
+		    strncpy(mrph->yomi, dakuon[(i/2)*2], 2);
+		    break;
+		}
+	    }
+	    
+	    if (k == 0) {
+		strcpy(mrph->imis, "\"濁音化\"");
+	    }
+	    else {
+		mrph->imis[strlen(mrph->imis) - 1] = '\0';
+		strcat(mrph->imis, " 濁音化\"");
+	    }
 	}
-	k++;
     }
 
     /* 正規化したものにペナルティ(小文字化された表現用) */
-    if (normal_flag) {
-	mrph->weight += NORMALIZED_COST;
+    if (opt & OPT_NORMALIZE) {
+	mrph->weight += NORMALIZED_COST;	
+	if (k == 0) {
+	    strcpy(mrph->imis, "\"小文字化\"");
+	}
+	else {
+	    mrph->imis[strlen(mrph->imis) - 1] = '\0';
+	    strcat(mrph->imis, " 小文字化\"");
+	}
     }
-    
-    if (k == 0) strcpy(mrph->imis, NILSYMBOL);
     
     return(s);
 }
@@ -1194,6 +1123,11 @@ int undef_word(int pos)
     if (++m_buffer_num == mrph_buffer_max)
 	realloc_mrph_buffer();
 
+    /* オノマトペの自動認識 */
+    if (Repetition_Opt) {
+	recognize_onomatopoeia(pos);
+    }
+
 #ifdef THROUGH_P				/* 半角スペース透過 */
     if (code == KUUHAKU) {
 	return (through_word(pos, m_buffer_num-1));
@@ -1254,6 +1188,11 @@ void juman_init_etc(void)
     kuuhaku_hinsi = get_hinsi_id(DEF_KUUHAKU_HINSI);
     kuuhaku_bunrui = get_bunrui_id(DEF_KUUHAKU_BUNRUI, kuuhaku_hinsi);
     kuuhaku_con_tbl = check_table_for_undef(kuuhaku_hinsi, kuuhaku_bunrui);
+
+    /* オノマトペ自動認識の準備 */
+    onomatopoeia_hinsi = get_hinsi_id(DEF_ONOMATOPOEIA_HINSI);
+    onomatopoeia_bunrui = 0;
+    onomatopoeia_con_tbl = check_table_for_undef(onomatopoeia_hinsi, onomatopoeia_bunrui);
 }
 
 /*
@@ -1457,17 +1396,10 @@ MRPH *prepare_path_mrph(int path_num , int para_flag)
 	strcat(yomi, Form[mrph_p->katuyou1][mrph_p->katuyou2].gobi_yomi);
     }
 
-    /* 小文字による非標準表記用 */
+    /* 連濁、小文字化用 */
     if (mrph_p->hinsi != 1 && mrph_p->hinsi != 15 &&
-	strncmp(String + p_buffer[path_num].start, midasi1, mrph_p->length)) {
+	strncmp(midasi1, String + p_buffer[path_num].start, mrph_p->length)) {
 	strncpy(midasi1, String + p_buffer[path_num].start, mrph_p->length);
-	if (strcmp(mrph_p->imis, NILSYMBOL)) {
-	    mrph_p->imis[strlen(mrph_p->imis) - 1] = '\0';
-	    strcat(mrph_p->imis, " 小文字化\"");
-	}
-	else {
-	    strcpy(mrph_p->imis, "\"小文字化\"");
-	}
     }
 
     return mrph_p;
@@ -1924,7 +1856,7 @@ int pos_right_process(int pos)
 ------------------------------------------------------------------------------
 */
 
-int check_connect(int pos, int m_num, int dakuon_flag)
+int check_connect(int pos, int m_num, char opt)
 {
     static CHK_CONNECT_WK chk_connect[MAX_PATHES_WK];
     int chk_con_num;
@@ -1946,8 +1878,7 @@ int check_connect(int pos, int m_num, int dakuon_flag)
     /* 連接キャッシュにヒットすれば，探索を行わない */
     c_cache = &connect_cache[rensetu_tbl[new_mrph->con_tbl].j_pos];
     if (Show_Opt_debug == 0) {
-	if (c_cache->pos == pos && c_cache->dakuon_flag == dakuon_flag 
-	    && c_cache->p_no > 0) {
+	if (c_cache->pos == pos && c_cache->p_no > 0 && c_cache->opt == opt) {
 	    p_buffer[p_buffer_num].score = c_cache->cost + class_score;
 	    p_buffer[p_buffer_num].mrph_p = m_num;
 	    p_buffer[p_buffer_num].start = pos;
@@ -1969,11 +1900,10 @@ int check_connect(int pos, int m_num, int dakuon_flag)
 	right_con = new_mrph->con_tbl;
 
 	c_score = check_matrix(left_con , right_con);
-
+	
 	/* 濁音化するのは直前の形態素が名詞、または動詞の連用形、名詞性接尾辞の場合のみ */
 	/* 直前の形態素が接尾辞の場合を除き平仮名1文字となるものは不可 */
-	/* weight=255のときは不可 */
-	if (dakuon_flag &&
+	if ((opt & OPT_DEVOICE) &&
 	    (!(m_buffer[p_buffer[j].mrph_p].hinsi == 6 ||
 	       m_buffer[p_buffer[j].mrph_p].hinsi == 2 &&
 	       m_buffer[p_buffer[j].mrph_p].katuyou2 == 8 ||
@@ -1981,9 +1911,10 @@ int check_connect(int pos, int m_num, int dakuon_flag)
 	       m_buffer[p_buffer[j].mrph_p].bunrui < 5) ||
 	     (m_buffer[p_buffer[j].mrph_p].hinsi != 14 &&
 	      check_code(m_buffer[p_buffer[j].mrph_p].midasi, 0) == HIRAGANA &&
-	      m_buffer[p_buffer[j].mrph_p].length == 2) ||
-	     new_mrph->weight == 255))
-	    c_score = 0;
+	      m_buffer[p_buffer[j].mrph_p].length == 2))) c_score = 0;
+
+	/* weight=STOP_MRPH_WEIGHTのときは不可 */
+	if (new_mrph->weight == STOP_MRPH_WEIGHT) c_score = 0;
 
 	if (c_score) {
 	    chk_connect[chk_con_num].pre_p = j;
@@ -2062,7 +1993,7 @@ int check_connect(int pos, int m_num, int dakuon_flag)
     c_cache->p_no = p_buffer_num;
     c_cache->cost = best_score;
     c_cache->pos = pos;
-    c_cache->dakuon_flag = dakuon_flag;
+    c_cache->opt = opt;
 
     /* 取り敢えずベストパスの1つを0番に登録 */
     p_buffer[p_buffer_num].path[0] = chk_connect[best_score_num].pre_p;

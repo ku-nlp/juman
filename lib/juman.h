@@ -349,7 +349,7 @@ typedef struct _connect_cost {
     short p_no;     /* PROCESS_BUFFER のインデックス */
     short pos;
     int cost;     /* コスト */
-    int dakuon_flag;
+    char opt;
 } CONNECT_COST;
 
 /*

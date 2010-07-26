@@ -31,7 +31,9 @@ extern int		Show_Opt_jumanrc;
 extern int		Show_Opt_debug;
 extern int		Vocalize_Opt;
 extern int		Repetition_Opt;
+extern int              Onomatopoeia_Opt;
 extern int		Normalized_Opt;
+extern int		Unkword_Pat_Num;
 
 extern FILE		*Jumanrc_Fileptr;
 extern FILE 		*Cha_stderr;
@@ -158,6 +160,7 @@ void juman_standalone(void)
 	exit(0);
     }
     juman_init_etc(); 	/* 未定義語処理，数詞処理，透過処理等の初期化 */
+    if (Onomatopoeia_Opt) Unkword_Pat_Num = compile_unkword_patterns();
 
     String[LENMAX - 1] = '\n';
     while ( fgets(String, LENMAX, stdin) != NULL ) {
@@ -241,6 +244,7 @@ void option_proc(int argc, char **argv)
     Show_Opt_debug = 0;
     Vocalize_Opt = 1;
     Repetition_Opt = 1;
+    Onomatopoeia_Opt = 0;
     Normalized_Opt = 1;
 
     for ( i=1; i<argc; i++ ) {
@@ -283,6 +287,7 @@ else {
 	    else if ( argv[i][1] == 'D' ) Show_Opt_debug = 2;
 	    else if ( argv[i][1] == 'V' ) Vocalize_Opt = 0;
 	    else if ( argv[i][1] == 'R' ) Repetition_Opt = 0;
+	    else if ( argv[i][1] == 'o' ) Onomatopoeia_Opt = 1;
 	    else if ( argv[i][1] == 'L' ) Normalized_Opt = 0;
 
 #if ! defined _WIN32

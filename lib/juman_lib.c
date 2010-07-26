@@ -163,6 +163,7 @@ int		Normalized_Opt;
 
 U_CHAR	        String[LENMAX];
 U_CHAR	        NormalizedString[LENMAX];
+int		Unkword_Pat_Num;
 int             m_buffer_num;
 int             Jiritsu_buffer[CLASSIFY_NO + 1];
 int             undef_hinsi;
@@ -391,6 +392,64 @@ BOOL juman_init_rc(FILE *fp)
 
 /*
 ------------------------------------------------------------------------------
+	PROCEDURE: <compile_patterns>
+------------------------------------------------------------------------------
+*/
+
+int compile_unkword_patterns() {
+    int i, j, flag;
+
+    /* malloc m_pattern */
+    for (i = 0; *mrph_pattern[i]; i++);    
+    m_pattern = (MRPH_PATTERN *)(malloc(sizeof(MRPH_PATTERN) * i));
+
+    /* make m_pattern[i].preg */
+    for (i = 0; *mrph_pattern[i]; i++) {
+
+	/* read mrph_pattern */
+	flag = 0;
+	m_pattern[i].weight = DefaultWeight;
+	sprintf(m_pattern[i].regex, "^");
+	for (j = 0; *(mrph_pattern[i] + j); j += 2) {
+	    if ((mrph_pattern[i] + j)[0] == ' ' ||
+		(mrph_pattern[i] + j)[0] == '\t') {
+		flag = 1;
+		j -= 1;
+		continue;
+	    }
+
+	    /* read weight */
+	    if (flag) {
+		m_pattern[i].weight = atof(mrph_pattern[i] + j);
+		break;
+	    }
+
+	    /* read pattern */
+	    if (strlen(m_pattern[i].regex) >= PATTERN_MAX - 3) {
+		printf("too long pattern: \"%s\"\n", mrph_pattern[i]);
+		exit(1);
+	    }
+	    if (!strncmp(mrph_pattern[i] + j, Hkey, 2)) {
+		strcat(m_pattern[i].regex, Hcode);
+	    }
+	    else if (!strncmp(mrph_pattern[i] + j, Kkey, 2)) {
+		strcat(m_pattern[i].regex, Kcode);
+	    }
+	    else {
+		strncat(m_pattern[i].regex, mrph_pattern[i] + j, 2);
+	    }
+	}
+
+	/* compile mrph_pattern */
+	if (regcomp(&(m_pattern[i].preg), m_pattern[i].regex, REG_EXTENDED) != 0) {
+	    printf("regex compile failed\n");
+	}
+    }
+    return i;
+}
+
+/*
+------------------------------------------------------------------------------
         PROCEDURE: <juman_close>             >>> changed by T.Nakamura <<<
 ------------------------------------------------------------------------------
 */
@@ -575,6 +634,7 @@ int recognize_onomatopoeia(int pos)
 {
     int i, len, code, next_code;
     int key_length = strlen(String + pos); /* キーの文字数を数えておく */
+    regmatch_t pmatch[1];
 
     /* 通常の平仮名、片仮名以外から始まるものは不可 */
     code = check_code(String, pos);
@@ -584,63 +644,97 @@ int recognize_onomatopoeia(int pos)
     }
     if (!strncmp(String + pos, "ん", 2) || !strncmp(String + pos, "ン", 2)) return FALSE;
 
-    /* 反復型オノマトペ */
-    for (len = 2; len < 5; len++) {
-	/* 途中で文字種が変わるものは不可 */
-	next_code = check_code(String, pos + len * 2 - 2);
-	if (next_code == CHOON) next_code = code; /* 長音は直前の文字種として扱う */
-	if (key_length < len * 4 || code != next_code) return FALSE;
-	code = next_code;
-
-	/* 反復があるか判定 */
-	if (strncmp(String + pos, String + pos + len * 2, len * 2)) continue;
-
-	m_buffer[m_buffer_num].hinsi = onomatopoeia_hinsi;
-	m_buffer[m_buffer_num].bunrui = onomatopoeia_bunrui;
-	m_buffer[m_buffer_num].con_tbl = onomatopoeia_con_tbl;
-	
-	m_buffer[m_buffer_num].katuyou1 = 0;
-	m_buffer[m_buffer_num].katuyou2 = 0;
-	m_buffer[m_buffer_num].length = len * 4;
-
-	strncpy(m_buffer[m_buffer_num].midasi, String+pos, len * 4);
-	m_buffer[m_buffer_num].midasi[len * 4] = '\0';
-	strncpy(m_buffer[m_buffer_num].yomi, String+pos, len * 4);
-	m_buffer[m_buffer_num].yomi[len * 4] = '\0';
-
-	/* weightの設定 */
-	m_buffer[m_buffer_num].weight = REPETITION_COST * len;
-	/* 拗音を含む場合 */
-	for (i = contracted_lowercase; *lowercase[i]; i++) {
-	    if (strstr(m_buffer[m_buffer_num].midasi, lowercase[i])) break;
+    /* 非反復型オノマトペ */
+    if (Onomatopoeia_Opt) {
+	for (i = 0; i < Unkword_Pat_Num; i++) {
+	    m_pattern[i].preg;
+	    
+	    /* マッチング */
+	    if (regexec(&(m_pattern[i].preg), String + pos, 1, pmatch, 0) == 0) {
+		
+		m_buffer[m_buffer_num].hinsi = onomatopoeia_hinsi;
+		m_buffer[m_buffer_num].bunrui = onomatopoeia_bunrui;
+		m_buffer[m_buffer_num].con_tbl = onomatopoeia_con_tbl;
+		
+		m_buffer[m_buffer_num].katuyou1 = 0;
+		m_buffer[m_buffer_num].katuyou2 = 0;
+		m_buffer[m_buffer_num].length = (int)(pmatch[0].rm_eo - pmatch[0].rm_so);    
+		
+		strncpy(m_buffer[m_buffer_num].midasi, String+pos, m_buffer[m_buffer_num].length);
+		m_buffer[m_buffer_num].midasi[m_buffer[m_buffer_num].length] = '\0';
+		strncpy(m_buffer[m_buffer_num].yomi, String+pos, m_buffer[m_buffer_num].length);
+		m_buffer[m_buffer_num].yomi[m_buffer[m_buffer_num].length] = '\0';
+		
+		m_buffer[m_buffer_num].weight = m_pattern[i].weight;
+		
+		strcpy(m_buffer[m_buffer_num].midasi2, m_buffer[m_buffer_num].midasi);
+		strcpy(m_buffer[m_buffer_num].imis, "\"自動認識\"");
+		
+		check_connect(pos, m_buffer_num, 0);
+		if (++m_buffer_num == mrph_buffer_max) realloc_mrph_buffer();	
+		break; /* 最初にマッチしたもののみ採用 */
+	    }
 	}
-	if (*lowercase[i]) {
-	    if (len == 2) return FALSE; /* 1音の繰り返しは禁止 */		
-	    /* 1文字分マイナス+ボーナス */
-	    m_buffer[m_buffer_num].weight -= REPETITION_COST + CONTRACTED_BONUS;
-	}
-	/* 濁音を含む場合 */
-	for (i = 0; *dakuon[i]; i++) {
-	    if (strstr(m_buffer[m_buffer_num].midasi, dakuon[i])) break;
-	}
-	if (*dakuon[i]) {
-	    m_buffer[m_buffer_num].weight -= DAKUON_BONUS; /* ボーナス */
-	    /* 先頭が濁音の場合はさらにボーナス */
-	    if (!strncmp(m_buffer[m_buffer_num].midasi, dakuon[i], 2)) 
-		m_buffer[m_buffer_num].weight -= DAKUON_BONUS;
-	}
-	/* カタカナである場合 */
-	if (code == KATAKANA) 
-	    m_buffer[m_buffer_num].weight -= KATAKANA_BONUS;
-	
-	strcpy(m_buffer[m_buffer_num].midasi2, m_buffer[m_buffer_num].midasi);
-	strcpy(m_buffer[m_buffer_num].imis, "\"自動認識\"");
-
-	check_connect(pos, m_buffer_num, 0);
-	if (++m_buffer_num == mrph_buffer_max) realloc_mrph_buffer();	
-	return TRUE;
     }
-    return FALSE;
+
+    /* 反復型オノマトペ */
+    if (Repetition_Opt) {
+	for (len = 2; len < 5; len++) {
+	    /* 途中で文字種が変わるものは不可 */
+	    next_code = check_code(String, pos + len * 2 - 2);
+	    if (next_code == CHOON) next_code = code; /* 長音は直前の文字種として扱う */
+	    if (key_length < len * 4 || code != next_code) break;
+	    code = next_code;
+	    
+	    /* 反復があるか判定 */
+	    if (strncmp(String + pos, String + pos + len * 2, len * 2)) continue;
+	    
+	    m_buffer[m_buffer_num].hinsi = onomatopoeia_hinsi;
+	    m_buffer[m_buffer_num].bunrui = onomatopoeia_bunrui;
+	    m_buffer[m_buffer_num].con_tbl = onomatopoeia_con_tbl;
+	    
+	    m_buffer[m_buffer_num].katuyou1 = 0;
+	    m_buffer[m_buffer_num].katuyou2 = 0;
+	    m_buffer[m_buffer_num].length = len * 4;
+	    
+	    strncpy(m_buffer[m_buffer_num].midasi, String+pos, len * 4);
+	    m_buffer[m_buffer_num].midasi[len * 4] = '\0';
+	    strncpy(m_buffer[m_buffer_num].yomi, String+pos, len * 4);
+	    m_buffer[m_buffer_num].yomi[len * 4] = '\0';
+	    
+	    /* weightの設定 */
+	    m_buffer[m_buffer_num].weight = REPETITION_COST * len;
+	    /* 拗音を含む場合 */
+	    for (i = contracted_lowercase; *lowercase[i]; i++) {
+		if (strstr(m_buffer[m_buffer_num].midasi, lowercase[i])) break;
+	    }
+	    if (*lowercase[i]) {
+		if (len == 2) continue; /* 1音の繰り返しは禁止 */		
+		/* 1文字分マイナス+ボーナス */
+		m_buffer[m_buffer_num].weight -= REPETITION_COST + CONTRACTED_BONUS;
+	    }
+	    /* 濁音を含む場合 */
+	    for (i = 0; *dakuon[i]; i++) {
+		if (strstr(m_buffer[m_buffer_num].midasi, dakuon[i])) break;
+	    }
+	    if (*dakuon[i]) {
+		m_buffer[m_buffer_num].weight -= DAKUON_BONUS; /* ボーナス */
+		/* 先頭が濁音の場合はさらにボーナス */
+		if (!strncmp(m_buffer[m_buffer_num].midasi, dakuon[i], 2)) 
+		    m_buffer[m_buffer_num].weight -= DAKUON_BONUS;
+	    }
+	    /* カタカナである場合 */
+	    if (code == KATAKANA) 
+		m_buffer[m_buffer_num].weight -= KATAKANA_BONUS;
+	    
+	    strcpy(m_buffer[m_buffer_num].midasi2, m_buffer[m_buffer_num].midasi);
+	    strcpy(m_buffer[m_buffer_num].imis, "\"自動認識\"");
+	    
+	    check_connect(pos, m_buffer_num, 0);
+	    if (++m_buffer_num == mrph_buffer_max) realloc_mrph_buffer();	
+	    break; /* 最初にマッチしたもののみ採用 */
+	}
+    }
 }
 
 /*
@@ -867,8 +961,8 @@ int take_data(int pos, char **pbuf, char opt)
 		    realloc_mrph_buffer();
 	    }
 	} else {	                                 /* 活用しない */
-	    if (!(opt & OPT_NORMALIZE) || /* 非正規表現用 */
-		/* 正規化ノードは2字以上、かつ、length内に対象の小文字を含む場合のみ作成 */
+	    if (!(opt & OPT_NORMALIZE) ||
+		/* 正規化ノードは2字以上、かつ、length内に小文字を含む場合のみ作成 */
 		strlen(mrph.midasi) > 2 && 
 		strncmp(String + pos, NormalizedString + pos, strlen(mrph.midasi))) {
 		
@@ -1134,7 +1228,7 @@ int undef_word(int pos)
 	realloc_mrph_buffer();
 
     /* オノマトペの自動認識 */
-    if (Repetition_Opt) {
+    if (Repetition_Opt || Onomatopoeia_Opt) {
 	recognize_onomatopoeia(pos);
     }
 

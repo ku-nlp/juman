@@ -20,6 +20,10 @@
 #include	<string.h>
 #endif
 
+#ifdef HAVE_REGEX_H
+#include        <regex.h>
+#endif
+
 #include	<stdarg.h>
 
 #ifdef HAVE_LIMITS_H

@@ -25,7 +25,7 @@ AC_SUBST(NET_LIBS)
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdlib.h string.h sys/file.h sys/socket.h unistd.h windows.h winsock.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdlib.h string.h regex.h sys/file.h sys/socket.h unistd.h windows.h winsock.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

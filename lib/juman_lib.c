@@ -549,7 +549,8 @@ int search_all(int position)
 	if (Vocalize_Opt) { /* 濁音化した形態素の検索 */
 	    pat_buffer[0] = '\0';
 	    for (i = 10; *dakuon[i]; i++) {
-		if (!strncmp(String + position, dakuon[i], 2)) {
+		if (position != 0 && !strncmp(String + position, dakuon[i], 2) &&
+		    check_code(String, position) == check_code(String, position + 2)) {
 		    sprintf(buf, "%s%s", seion[i], String + position + 2);
 		    pat_search(db, buf, &DicFile.tree_top[dic_no], pat_buffer);
 		    pbuf = pat_buffer;
@@ -581,6 +582,7 @@ int recognize_onomatopoeia(int pos)
     for (i = 0; *lowercase[i]; i++) {
 	if (!strncmp(String + pos, lowercase[i], 2)) return FALSE;
     }
+    if (!strncmp(String + pos, "ん", 2) || !strncmp(String + pos, "ン", 2)) return FALSE;
 
     /* 反復型オノマトペ */
     for (len = 2; len < 5; len++) {
@@ -828,12 +830,20 @@ int take_data(int pos, char **pbuf, char opt)
     } else {           /* 普通の形態素だった場合 */
 	s = _take_data(s, &mrph, opt);
 
+	/* 重みがSTOP_MRPH_WEIGHTとなっているノードは生成しない */
+	if (mrph.weight == STOP_MRPH_WEIGHT) {
+	    *pbuf = s;
+	    return TRUE;
+	}
+
 	if ( Class[mrph.hinsi][mrph.bunrui].kt ) { /* 活用する */
 	    if ( mrph.katuyou2 == 0 ) {   /* 語幹あり */
 		k2 = 1;
 		while (katuyou_process(pos, &k2, mrph, &length, opt)) {
-		    /* 正規化ノードは2字以上、かつ、length内に対象の小文字を含む場合のみ作成 */
-		    if ((opt & OPT_NORMALIZE) && /* 非正規表現用 */
+		    /* 濁音化ノードは2字以上の場合のみ、 */
+		    /* 正規化ノードは2字以上、かつ、length内に小文字を含む場合のみ作成 */
+		    if ((opt & OPT_DEVOICE) && length == 2 ||
+			(opt & OPT_NORMALIZE) &&
 			(length == 2 || !strncmp(String + pos, NormalizedString + pos, length))) {
 			k2++;
 			continue;
@@ -1912,9 +1922,6 @@ int check_connect(int pos, int m_num, char opt)
 	     (m_buffer[p_buffer[j].mrph_p].hinsi != 14 &&
 	      check_code(m_buffer[p_buffer[j].mrph_p].midasi, 0) == HIRAGANA &&
 	      m_buffer[p_buffer[j].mrph_p].length == 2))) c_score = 0;
-
-	/* weight=STOP_MRPH_WEIGHTのときは不可 */
-	if (new_mrph->weight == STOP_MRPH_WEIGHT) c_score = 0;
 
 	if (c_score) {
 	    chk_connect[chk_con_num].pre_p = j;

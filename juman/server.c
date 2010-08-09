@@ -71,8 +71,9 @@ extern char		Show_Opt_tag[MIDASI_MAX];
 extern int		Show_Opt_jumanrc;
 extern int		Show_Opt_debug;
 extern int		Vocalize_Opt;
-extern int		Repetition_Opt;
 extern int		Normalized_Opt;
+extern int		Repetition_Opt;
+extern int              Onomatopoeia_Opt;
 
 extern U_CHAR	        String[LENMAX];
 

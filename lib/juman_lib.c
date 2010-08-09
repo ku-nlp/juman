@@ -607,7 +607,7 @@ int search_all(int position)
 
 	if (Vocalize_Opt) { /* 濁音化した形態素の検索 */
 	    pat_buffer[0] = '\0';
-	    for (i = 10; *dakuon[i]; i++) {
+	    for (i = VOICED_CONSONANT_S; i < VOICED_CONSONANT_E; i++) {
 		if (position != 0 && !strncmp(String + position, dakuon[i], 2) &&
 		    check_code(String, position) == check_code(String, position + 2)) {
 		    sprintf(buf, "%s%s", seion[i], String + position + 2);
@@ -642,7 +642,6 @@ int recognize_onomatopoeia(int pos)
     for (i = 0; *lowercase[i]; i++) {
 	if (!strncmp(String + pos, lowercase[i], 2)) return FALSE;
     }
-    if (!strncmp(String + pos, "ん", 2) || !strncmp(String + pos, "ン", 2)) return FALSE;
 
     /* 非反復型オノマトペ */
     if (Onomatopoeia_Opt) {
@@ -705,15 +704,15 @@ int recognize_onomatopoeia(int pos)
 	    /* weightの設定 */
 	    m_buffer[m_buffer_num].weight = REPETITION_COST * len;
 	    /* 拗音を含む場合 */
-	    for (i = contracted_lowercase; *lowercase[i]; i++) {
+	    for (i = CONTRACTED_LOWERCASE_S; i < CONTRACTED_LOWERCASE_E; i++) {
 		if (strstr(m_buffer[m_buffer_num].midasi, lowercase[i])) break;
 	    }
-	    if (*lowercase[i]) {
+	    if (i < CONTRACTED_LOWERCASE_E) {
 		if (len == 2) continue; /* 1音の繰り返しは禁止 */		
 		/* 1文字分マイナス+ボーナス */
 		m_buffer[m_buffer_num].weight -= REPETITION_COST + CONTRACTED_BONUS;
 	    }
-	    /* 濁音を含む場合 */
+	    /* 濁音・半濁音を含む場合 */
 	    for (i = 0; *dakuon[i]; i++) {
 		if (strstr(m_buffer[m_buffer_num].midasi, dakuon[i])) break;
 	    }
@@ -1044,15 +1043,16 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 
 	/* ライマンの法則に該当し濁音可という意味情報のない形態素の連濁は認めない */
 	if (mrph->weight != STOP_MRPH_WEIGHT) {
-	    for (i = 10; *dakuon[i]; i++) {
+	    for (i = VOICED_CONSONANT_S; i < VOICED_CONSONANT_E; i++) {
 		if (strstr(mrph->midasi + 2, dakuon[i])) break;
 	    }
-	    if (*dakuon[i] && !strstr(mrph->imis, "濁音可")) mrph->weight = STOP_MRPH_WEIGHT;
+	    if (i < VOICED_CONSONANT_E && !strstr(mrph->imis, "濁音可")) 
+		mrph->weight = STOP_MRPH_WEIGHT;
 	}
 
 	/* 読み、意味情報を修正 */
 	if (mrph->weight != STOP_MRPH_WEIGHT) {
-	    for (i = 10; *seion[i]; i++) {
+	    for (i = VOICED_CONSONANT_S; i < VOICED_CONSONANT_E; i++) {
 		if (!strncmp(mrph->yomi, seion[i], 2)) {
 		    strncpy(mrph->yomi, dakuon[(i/2)*2], 2);
 		    break;
@@ -2166,7 +2166,7 @@ int juman_sent(void)
     strcpy(NormalizedString, String);
     for (pos = 0; pos < length; pos+=next_pos) {
 	if (String[pos]&0x80) { /* 全角の場合 */
-	    for (i = 0; i < normalized_lowercase; i++) {
+	    for (i = NORMALIZED_LOWERCASE_S; i < NORMALIZED_LOWERCASE_E; i++) {
 		if (!strncmp(String + pos, lowercase[i], 2)) {
 		    NormalizedString[pos] = uppercase[i][0];
 		    NormalizedString[pos+1] = uppercase[i][1];

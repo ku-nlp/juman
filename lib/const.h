@@ -104,6 +104,7 @@ U_CHAR *uppercase[] = {"あ", "い", "う", "え", "お", "わ", "か", "\0"};
 #define Kkey             "Ｋ"
 #define DefaultWeight    10
 
+#ifdef HAVE_REGEX_H
 /* 非反復型オノマトペのパターンを保持するための構造体 */
 typedef struct {
     char        regex[PATTERN_MAX];
@@ -122,3 +123,4 @@ char *mrph_pattern[]  = {
     "ＫＫっと    20", /* ピタっと */
     "ＫＫッと    20", /* ピタッと */
     "\0"};
+#endif

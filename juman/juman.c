@@ -160,7 +160,9 @@ void juman_standalone(void)
 	exit(0);
     }
     juman_init_etc(); 	/* 未定義語処理，数詞処理，透過処理等の初期化 */
+#ifdef HAVE_REGEX_H
     if (Onomatopoeia_Opt) Unkword_Pat_Num = compile_unkword_patterns();
+#endif
 
     String[LENMAX - 1] = '\n';
     while ( fgets(String, LENMAX, stdin) != NULL ) {

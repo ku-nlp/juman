@@ -396,6 +396,7 @@ BOOL juman_init_rc(FILE *fp)
 ------------------------------------------------------------------------------
 */
 
+#ifdef HAVE_REGEX_H
 int compile_unkword_patterns() {
     int i, j, flag;
 
@@ -447,6 +448,7 @@ int compile_unkword_patterns() {
     }
     return i;
 }
+#endif
 
 /*
 ------------------------------------------------------------------------------
@@ -634,7 +636,9 @@ int recognize_onomatopoeia(int pos)
 {
     int i, len, code, next_code;
     int key_length = strlen(String + pos); /* キーの文字数を数えておく */
+#ifdef HAVE_REGEX_H
     regmatch_t pmatch[1];
+#endif
 
     /* 通常の平仮名、片仮名以外から始まるものは不可 */
     code = check_code(String, pos);
@@ -643,6 +647,7 @@ int recognize_onomatopoeia(int pos)
 	if (!strncmp(String + pos, lowercase[i], 2)) return FALSE;
     }
 
+#ifdef HAVE_REGEX_H
     /* 非反復型オノマトペ */
     if (Onomatopoeia_Opt) {
 	for (i = 0; i < Unkword_Pat_Num; i++) {
@@ -675,6 +680,7 @@ int recognize_onomatopoeia(int pos)
 	    }
 	}
     }
+#endif
 
     /* 反復型オノマトペ */
     if (Repetition_Opt) {

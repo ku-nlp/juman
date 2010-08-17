@@ -96,7 +96,8 @@ void insert_dic_data(FILE *f, pat_node *x_ptr, char *kugiri)
     }
   }
   printf("\n");
-  printf("## %d entry  %ld th char\n",entry_ctr,i);
+  printf("## %ld entry  %ld th char\n",entry_ctr,i);
+  /* modified by S. Sato, 2010.8.12; for MacOS 10.6.x; %d -> %ld */
 
   return;
 }

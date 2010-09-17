@@ -79,6 +79,7 @@ sub new {
     my( $str );
     while ( defined( $str = shift @$result ) ) {
 	if ( $str =~ m!$pattern! and @$result == 0 ) {
+	    $this->{_eos} = $str;
 	    last;
 	} elsif ( $str =~ m!\A\@ \@ \@ [^\@]! ){
 	    # 「@」のみからなる未定義語を処理する
@@ -107,7 +108,20 @@ sub new {
 
 =item mrph
 
+=cut
+
 =item spec
+
+形態素列の全文字列を返す．Juman による出力と同じ形式の結果が得られる．
+
+=cut
+sub spec {
+    my( $this ) = @_;
+    sprintf( "%s%s",
+	     $this->Juman::MList::spec(),
+	     $this->{_eos} );
+}
+
 
 =back
 

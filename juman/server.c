@@ -8,8 +8,6 @@
  *
  */
 
-#ifndef _WIN32
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -23,11 +21,13 @@
 
 #if defined _WIN32 && ! defined __CYGWIN__
 
-#ifdef HAVE_WINSOCK_H
-#include <winsock.h>
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
 #endif
 
 #else
+
+#define closesocket(s)  close(s)
 
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -223,13 +223,15 @@ int option_proc_for_server(int argc, char **argv)
 {
     int 	i;
     
-    Show_Opt1 = Op_B;
-    Show_Opt2 = Op_F;
+    Show_Opt1 = Op_BB;
+    Show_Opt2 = Op_E2;
     Show_Opt_jumanrc = 0;
     Show_Opt_tag[0] = '\0';
     Show_Opt_debug = 0;
     Vocalize_Opt = 1;
+    Normalized_Opt = 1;
     Repetition_Opt = 1;
+    Onomatopoeia_Opt = 1;
     
     for (i = 1; i < argc; i++ ) {
 	if (argv[i][0] != '-') {
@@ -251,7 +253,10 @@ int option_proc_for_server(int argc, char **argv)
 	    else if ( argv[i][1] == 'E' ) Show_Opt2 = Op_EE;
 	    else if ( argv[i][1] == 'i' ) strcpy(Show_Opt_tag, argv[i+1]), i++;
             else if ( argv[i][1] == 'r' ) i++;
-
+	    else if ( argv[i][1] == 'V' ) Vocalize_Opt = 0;
+	    else if ( argv[i][1] == 'L' ) Normalized_Opt = 0;
+	    else if ( argv[i][1] == 'R' ) Repetition_Opt = 0;
+	    else if ( argv[i][1] == 'O' ) Onomatopoeia_Opt = 0;
 	    else {
 	      fprintf(client_ofp, "Invalid Option !!\nHELP command for more detail.\n");
 	      return FALSE;
@@ -472,9 +477,21 @@ static int open_server_socket(port)
     int sfd;
     struct sockaddr_in sin;
 
+#ifdef _WIN32
+    WSADATA wsd;
+    if (WSAStartup(MAKEWORD(2, 0), &wsd)) { /* use winsock2 */
+	cha_perror("WSAStartup");
+	return -1;
+    }
+    if((sfd = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0)) == INVALID_SOCKET)
+#else
     if((sfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+#endif
     {
 	cha_perror("socket");
+#ifdef _WIN32
+	WSACleanup();
+#endif
 	return -1;
     }
 
@@ -493,7 +510,10 @@ static int open_server_socket(port)
     if(bind(sfd, (struct sockaddr *)&sin, sizeof(sin)) < 0)
     {
 	cha_perror("bind");
-	close(sfd);
+	closesocket(sfd);
+#ifdef _WIN32
+	WSACleanup();
+#endif
 	return -1;
     }
 
@@ -501,13 +521,17 @@ static int open_server_socket(port)
     if(listen(sfd, SOMAXCONN) < 0)
     {
 	cha_perror("listen");
-	close(sfd);
+	closesocket(sfd);
+#ifdef _WIN32
+	WSACleanup();
+#endif
 	return -1;
     }
 
     return sfd;
 }
 
+#ifndef _WIN32
 static void sigchld_handler(sig)
     int sig;
 {
@@ -517,6 +541,7 @@ static void sigchld_handler(sig)
       ;
     signal(SIGCHLD, sigchld_handler);
 }
+#endif
 
 static int sfd = -1;
 static void sig_term()
@@ -558,6 +583,7 @@ int juman_server(argv, port, foreground)
      * 自分自身をforkしてバックグラウンドに移行する
      * (-F オプションつきで起動した場合は移行しない)
      */
+#ifndef _WIN32
     if (!foreground) {
       if((i = fork()) > 0)
 	return 0;
@@ -576,6 +602,7 @@ int juman_server(argv, port, foreground)
     signal(SIGTERM, sig_term);
     signal(SIGINT,  sig_term);
     signal(SIGQUIT, sig_term);
+#endif
 
     /* make a socket */
     if((sfd = open_server_socket(port)) < 0)
@@ -586,31 +613,49 @@ int juman_server(argv, port, foreground)
     printf("## Parent PID=%d\n", getpid());
 #endif
 
+#ifndef _WIN32
     signal(SIGCHLD, sigchld_handler);
+#endif
 
     fputs("JUMAN server started\n", stdout);
 
     while(1)
     {
-	int pid;
+	int pid = 0;
 
 	if((client_fd = accept(sfd, NULL, NULL)) < 0) {
 	    if(errno == EINTR)
 	      continue;
 	    cha_perror("accept");
+#ifdef _WIN32
+	    WSACleanup();
+#endif
 	    return 1;
 	}
 
+#ifndef _WIN32
 	if((pid = fork()) < 0) {
 	    cha_perror("fork");
 	    sleep(1);
 	    continue;
 	}
+#endif
 
 	if(pid == 0) { /* child */
-	    close(sfd);
+#ifdef _WIN32
+	    int client_fd_osfhandle;
+	    if ((client_fd_osfhandle = _open_osfhandle(client_fd, O_RDWR | O_BINARY)) < 0) {
+		fprintf(stderr, ";; _open_osfhandle error\n");
+		closesocket(sfd);
+		WSACleanup();
+		return 1;
+	    }
+	    client_ofp = fdopen(client_fd_osfhandle, "wb+");
+	    client_ifp = fdopen(client_fd_osfhandle, "rb+");
+#else
 	    client_ofp = fdopen(client_fd, "w");
 	    client_ifp = fdopen(client_fd, "r");
+#endif
 	    Cha_stderr = client_ofp;
 
 	    fprintf(client_ofp, "200 Running JUMAN version: %s\n", VERSION);
@@ -621,13 +666,17 @@ int juman_server(argv, port, foreground)
 	    shutdown(client_fd, 2);
 	    fclose(client_ofp);
 	    fclose(client_ifp);
+#ifdef _WIN32
+	    close(client_fd_osfhandle);
+#else
+	    closesocket(sfd);
 	    close(client_fd);
-
 	    exit(0);
+#endif
 	}
 
+	/* parent */
 	close(client_fd);
     }
+    return 0;
 }
-
-#endif

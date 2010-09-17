@@ -96,7 +96,6 @@ int main(int argc, char **argv)
     option_proc(argc, argv);
     Cha_stderr = stderr;
 
-#if ! defined _WIN32
     /* 環境変数 JUMANSERVER */
 
     if ((serv_env = getenv("JUMANSERVER")) != NULL)
@@ -114,7 +113,6 @@ int main(int argc, char **argv)
 	juman_client(argc, argv, juman_host, juman_port);
     }
     else
-#endif
     {			/* スタンドアロンモード */
 	set_jumanrc_fileptr((Show_Opt_jumanrc ? argv[Show_Opt_jumanrc]: NULL), 
 			    TRUE, TRUE);
@@ -292,10 +290,11 @@ else {
 	    else if ( argv[i][1] == 'R' ) Repetition_Opt = 0;
 	    else if ( argv[i][1] == 'O' ) Onomatopoeia_Opt = 0;
 
-#if ! defined _WIN32
 	    /* サーバーモード用のオプションの取扱い */
             else if ( argv[i][1] == 'S' ) JUMAN_server_mode = TRUE;
+#if ! defined _WIN32
             else if ( argv[i][1] == 'F' ) JUMAN_server_foreground = TRUE;
+#endif
             else if ( argv[i][1] == 'N' ) /* port no */
 		set_juman_port(argv[i+1]), i++;
 	    /* クライアントモード用のオプションの取扱い */
@@ -307,7 +306,6 @@ else {
 		  juman_help();
 		}
 	    }
-#endif
 	    else {
 		fprintf(stderr, "Invalid Option !!\n");
 		juman_help();
@@ -344,11 +342,7 @@ static void set_juman_server(server)
 
 void juman_help()
 {
-#if ! defined _WIN32
     fprintf(stderr, "usage: juman -[b|B|m|p|P] -[f|c|e|E] [-S] [-N port] [-C host[:port]] [-i string] [-r rc_file]\n");
-#else
-    fprintf(stderr, "usage: juman -[b|B|m|p|P] -[f|c|e|E] [-i string] [-r rc_file]\n");
-#endif
     fprintf(stderr, "\n");
     fprintf(stderr, "             -b : show best path\n");
     fprintf(stderr, "             -B : show best path including homographs (default)\n");
@@ -371,14 +365,14 @@ void juman_help()
     fprintf(stderr, "             -r : use 'rc_file' as '.jumanrc'\n");
     fprintf(stderr, "             -v : show version\n");
     fprintf(stderr, "\n");
-#if ! defined _WIN32
     fprintf(stderr, "             -S : start JUMAN server\n");
+#if ! defined _WIN32
     fprintf(stderr, "             -F : force JUMAN server run in the foreground\n");
     fprintf(stderr, "                       (use with -S, do not go to the background)\n");
+#endif
     fprintf(stderr, "             -N port : specify JUMAN server's port Number\n");
     fprintf(stderr, "                       (use with -S, the default is 32000)\n");
     fprintf(stderr, "             -C host[:port] connect to JUMAN server\n");
-#endif
     exit(0);
 }
 

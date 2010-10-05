@@ -436,6 +436,9 @@ int compile_unkword_patterns() {
 	    else if (!strncmp(mrph_pattern[i] + j, Kkey, 2)) {
 		strcat(m_pattern[i].regex, Kcode);
 	    }
+	    else if (!strncmp(mrph_pattern[i] + j, Ykey, 2)) {
+		strcat(m_pattern[i].regex, Ycode);
+	    }
 	    else {
 		strncat(m_pattern[i].regex, mrph_pattern[i] + j, 2);
 	    }

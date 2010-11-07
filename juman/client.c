@@ -241,16 +241,30 @@ static void server_communication_wo_fork(ifp, ofp)
     FILE *ifp, *ofp;
 {
     char line[CHA_INPUT_SIZE];
+#ifdef _WIN32
+    char *eucstr, *sjisstr;
+#endif
 
     /* check the response of RUN */
     check_status(ifp, "error");
 
     /* LOOP */
     while (fgets(line, sizeof(line), stdin) != NULL) {
+#ifdef _WIN32
+	eucstr = toStringEUC(line);
+	strcpy(line, eucstr);
+	free(eucstr);
+#endif
 	fputs(line, ofp);
 	fflush(ofp);
 	while (fgets(line, sizeof(line), ifp) != NULL) {
+#ifdef _WIN32
+	    sjisstr = toStringSJIS(line);
+	    fputs(sjisstr, stdout);
+	    free(sjisstr);
+#else
 	    fputs(line, stdout);
+#endif
 	    fflush(stdout);
 	    if (strncmp(line, "EOS", 3) == 0) break;
 	}

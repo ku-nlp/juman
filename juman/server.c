@@ -617,8 +617,6 @@ int juman_server(argv, port, foreground)
     signal(SIGCHLD, sigchld_handler);
 #endif
 
-    fputs("JUMAN server started\n", stdout);
-
     while(1)
     {
 	int pid = 0;

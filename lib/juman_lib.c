@@ -113,7 +113,25 @@
 #define 	DEF_KAKKO_BUNRUI2	"括弧終"
 #define 	DEF_KUUHAKU_HINSI	"特殊"
 #define 	DEF_KUUHAKU_BUNRUI	"空白"
+
 #define         DEF_ONOMATOPOEIA_HINSI  "副詞"
+#define         DEF_ONOMATOPOEIA_IMIS   "自動認識"
+#define         DEF_RENDAKU_HINSI1      "動詞"
+#define         DEF_RENDAKU_RENYOU      "基本連用形"
+#define         DEF_RENDAKU_HINSI2      "名詞"
+#define         DEF_RENDAKU_BUNRUI2_1   "普通名詞"
+#define         DEF_RENDAKU_BUNRUI2_2   "サ変名詞"
+#define         DEF_RENDAKU_HINSI3      "形容詞"
+#define         DEF_RENDAKU_HINSI4      "接尾辞"
+#define         DEF_RENDAKU_BUNRUI4_1   "名詞性述語接尾辞"
+#define         DEF_RENDAKU_BUNRUI4_2   "名詞性名詞接尾辞"
+#define         DEF_RENDAKU_BUNRUI4_3   "名詞性名詞助数辞"
+#define         DEF_RENDAKU_BUNRUI4_4   "名詞性特殊接尾辞"
+#define         DEF_RENDAKU_FEATURE     "連濁可"
+#define         DEF_RENDAKU_MIDASI_KA   "か"
+#define         DEF_RENDAKU_REP         "代表表記"
+#define         DEF_RENDAKU_IMIS        "濁音化"
+#define         DEF_LOWERCASE_IMIS      "小文字化"
 
 #define 	DEF_UNDEF		"未定義語"
 #define 	DEF_UNDEF_KATA		"カタカナ"
@@ -173,6 +191,9 @@ int             suusi_hinsi, suusi_bunrui;
 int             kakko_hinsi, kakko_bunrui1, kakko_bunrui2;
 int		kuuhaku_hinsi, kuuhaku_bunrui, kuuhaku_con_tbl;
 int		onomatopoeia_hinsi, onomatopoeia_bunrui, onomatopoeia_con_tbl;
+int             rendaku_hinsi1, rendaku_hinsi2, rendaku_hinsi3, rendaku_hinsi4;
+int             rendaku_renyou, rendaku_bunrui2_1, rendaku_bunrui2_2;
+int             rendaku_bunrui4_1, rendaku_bunrui4_2, rendaku_bunrui4_3, rendaku_bunrui4_4;
 int             jiritsu_num;
 int             p_buffer_num;
 CONNECT_COST	connect_cache[CONNECT_MATRIX_MAX];
@@ -654,7 +675,6 @@ int recognize_onomatopoeia(int pos)
     /* 非反復型オノマトペ */
     if (Onomatopoeia_Opt) {
 	for (i = 0; i < Unkword_Pat_Num; i++) {
-	    m_pattern[i].preg;
 	    
 	    /* マッチング */
 	    if (regexec(&(m_pattern[i].preg), String + pos, 1, pmatch, 0) == 0) {
@@ -675,7 +695,9 @@ int recognize_onomatopoeia(int pos)
 		m_buffer[m_buffer_num].weight = m_pattern[i].weight;
 		
 		strcpy(m_buffer[m_buffer_num].midasi2, m_buffer[m_buffer_num].midasi);
-		strcpy(m_buffer[m_buffer_num].imis, "\"自動認識\"");
+		strcpy(m_buffer[m_buffer_num].imis, "\"");
+		strcat(m_buffer[m_buffer_num].imis, DEF_ONOMATOPOEIA_IMIS);
+		strcat(m_buffer[m_buffer_num].imis, "\"");
 		
 		check_connect(pos, m_buffer_num, 0);
 		if (++m_buffer_num == mrph_buffer_max) realloc_mrph_buffer();	
@@ -736,7 +758,9 @@ int recognize_onomatopoeia(int pos)
 		m_buffer[m_buffer_num].weight -= KATAKANA_BONUS;
 	    
 	    strcpy(m_buffer[m_buffer_num].midasi2, m_buffer[m_buffer_num].midasi);
-	    strcpy(m_buffer[m_buffer_num].imis, "\"自動認識\"");
+	    strcpy(m_buffer[m_buffer_num].imis, "\"");
+	    strcat(m_buffer[m_buffer_num].imis, DEF_ONOMATOPOEIA_IMIS);
+	    strcat(m_buffer[m_buffer_num].imis, "\"");
 	    
 	    check_connect(pos, m_buffer_num, 0);
 	    if (++m_buffer_num == mrph_buffer_max) realloc_mrph_buffer();	
@@ -758,7 +782,6 @@ int take_data(int pos, char **pbuf, char opt)
     MRPH    mrph;
     MRPH    *new_mrph;
     int	    length, con_tbl_bak, k2, pnum_bak;
-    PROCESS_BUFFER p_buffer_bak;
     int	    new_mrph_num;
 
     s = *pbuf;
@@ -1028,21 +1051,21 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 	/* 濁音化の処理はしない形態素の重みをSTOP_MRPH_WEIGHTにする */
 	if (mrph->katuyou2 || /* 語幹のない語 */
  	    mrph->length == 2 && !Class[mrph->hinsi][mrph->bunrui].kt || /* 1文字の形態素 */
-	    (rep = strstr(mrph->imis, "代表表記:")) && check_code(rep, 9) == KATAKANA) { /* 非和語 */
+	    (rep = strstr(mrph->imis, DEF_RENDAKU_REP)) && *(rep+8) == ':' && check_code(rep, 9) == KATAKANA) { /* 非和語 */
 	    mrph->weight = STOP_MRPH_WEIGHT;
 	}
 	else {
-	    if (mrph->hinsi == 2) { /* 動詞 */
-		mrph->weight += strncmp(mrph->midasi, "か", 2) ? VERB_VOICED_COST : VERB_GA_VOICED_COST;
+	    if (mrph->hinsi == rendaku_hinsi1) { /* 動詞 */
+		mrph->weight += strncmp(mrph->midasi, DEF_RENDAKU_MIDASI_KA, 2) ? VERB_VOICED_COST : VERB_GA_VOICED_COST;
 	    }
-	    else if (mrph->hinsi == 6 && (mrph->bunrui < 3 || mrph->bunrui > 7)) { /* 名詞 */
-		mrph->weight += strncmp(mrph->midasi, "か", 2) ? NOUN_VOICED_COST : NOUN_GA_VOICED_COST;
+	    else if (mrph->hinsi == rendaku_hinsi2 && (mrph->bunrui == rendaku_bunrui2_1 || mrph->bunrui == rendaku_bunrui2_2)) { /* 名詞 */
+		mrph->weight += strncmp(mrph->midasi, DEF_RENDAKU_MIDASI_KA, 2) ? NOUN_VOICED_COST : NOUN_GA_VOICED_COST;
 	    }
-	    else if (mrph->hinsi == 3) { /* 形容詞 */
+	    else if (mrph->hinsi == rendaku_hinsi3) { /* 形容詞 */
 		mrph->weight += ADJECTIVE_VOICED_COST;
 	    }
 	    /* その他の品詞でも濁音可という意味素があれば解析できるようにする */
-	    else if (strstr(mrph->imis, "濁音可")) {
+	    else if (strstr(mrph->imis, DEF_RENDAKU_FEATURE)) {
 		mrph->weight += OTHER_VOICED_COST;
 	    }
 	    else {
@@ -1055,7 +1078,7 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 	    for (i = VOICED_CONSONANT_S; i < VOICED_CONSONANT_E; i++) {
 		if (strstr(mrph->midasi + 2, dakuon[i])) break;
 	    }
-	    if (i < VOICED_CONSONANT_E && !strstr(mrph->imis, "濁音可")) 
+	    if (i < VOICED_CONSONANT_E && !strstr(mrph->imis, DEF_RENDAKU_FEATURE)) 
 		mrph->weight = STOP_MRPH_WEIGHT;
 	}
 
@@ -1069,12 +1092,13 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 	    }
 	    
 	    if (k == 0) {
-		strcpy(mrph->imis, "\"濁音化\"");
+		strcpy(mrph->imis, "\"");
 	    }
 	    else {
-		mrph->imis[strlen(mrph->imis) - 1] = '\0';
-		strcat(mrph->imis, " 濁音化\"");
+		mrph->imis[strlen(mrph->imis) - 1] = ' ';
 	    }
+	    strcat(mrph->imis, DEF_RENDAKU_IMIS);
+	    strcat(mrph->imis, "\"");
 	}
     }
 
@@ -1082,12 +1106,13 @@ char *_take_data(char *s, MRPH *mrph, char opt)
     if (opt & OPT_NORMALIZE) {
 	mrph->weight += NORMALIZED_COST;	
 	if (k == 0) {
-	    strcpy(mrph->imis, "\"小文字化\"");
+	    strcpy(mrph->imis, "\"");
 	}
 	else {
-	    mrph->imis[strlen(mrph->imis) - 1] = '\0';
-	    strcat(mrph->imis, " 小文字化\"");
+	    mrph->imis[strlen(mrph->imis) - 1] = ' ';
 	}
+	strcat(mrph->imis, DEF_LOWERCASE_IMIS);
+	strcat(mrph->imis, "\"");
     }
     
     return(s);
@@ -1306,6 +1331,19 @@ void juman_init_etc(void)
     onomatopoeia_hinsi = get_hinsi_id(DEF_ONOMATOPOEIA_HINSI);
     onomatopoeia_bunrui = 0;
     onomatopoeia_con_tbl = check_table_for_undef(onomatopoeia_hinsi, onomatopoeia_bunrui);
+
+    /* 連濁処理 */
+    rendaku_hinsi1 = get_hinsi_id(DEF_RENDAKU_HINSI1);
+    rendaku_renyou = get_form_id(DEF_RENDAKU_RENYOU, 1); /* 母音動詞(type=1)の基本連用形のform_idを基本連用形の汎用idとみなす */
+    rendaku_hinsi2 = get_hinsi_id(DEF_RENDAKU_HINSI2);
+    rendaku_bunrui2_1 = get_bunrui_id(DEF_RENDAKU_BUNRUI2_1, rendaku_hinsi2);
+    rendaku_bunrui2_2 = get_bunrui_id(DEF_RENDAKU_BUNRUI2_2, rendaku_hinsi2);
+    rendaku_hinsi3 = get_hinsi_id(DEF_RENDAKU_HINSI3);
+    rendaku_hinsi4 = get_hinsi_id(DEF_RENDAKU_HINSI4);
+    rendaku_bunrui4_1 = get_bunrui_id(DEF_RENDAKU_BUNRUI4_1, rendaku_hinsi4);
+    rendaku_bunrui4_2 = get_bunrui_id(DEF_RENDAKU_BUNRUI4_2, rendaku_hinsi4);
+    rendaku_bunrui4_3 = get_bunrui_id(DEF_RENDAKU_BUNRUI4_3, rendaku_hinsi4);
+    rendaku_bunrui4_4 = get_bunrui_id(DEF_RENDAKU_BUNRUI4_4, rendaku_hinsi4);
 }
 
 /*
@@ -2015,14 +2053,17 @@ int check_connect(int pos, int m_num, char opt)
 	c_score = check_matrix(left_con , right_con);
 	
 	/* 濁音化するのは直前の形態素が名詞、または動詞の連用形、名詞性接尾辞の場合のみ */
-	/* 直前の形態素が接尾辞の場合を除き平仮名1文字となるものは不可 */
+	/* 接尾辞の場合を除き直前の形態素が平仮名1文字となるものは不可 */
 	if ((opt & OPT_DEVOICE) &&
-	    (!(m_buffer[p_buffer[j].mrph_p].hinsi == 6 ||
-	       m_buffer[p_buffer[j].mrph_p].hinsi == 2 &&
-	       m_buffer[p_buffer[j].mrph_p].katuyou2 == 8 ||
-	       m_buffer[p_buffer[j].mrph_p].hinsi == 14 &&
-	       m_buffer[p_buffer[j].mrph_p].bunrui < 5) ||
-	     (m_buffer[p_buffer[j].mrph_p].hinsi != 14 &&
+	    (!(m_buffer[p_buffer[j].mrph_p].hinsi == rendaku_hinsi1 &&
+	       m_buffer[p_buffer[j].mrph_p].katuyou2 == rendaku_renyou ||
+	       m_buffer[p_buffer[j].mrph_p].hinsi == rendaku_hinsi2 ||
+	       m_buffer[p_buffer[j].mrph_p].hinsi == rendaku_hinsi4 &&
+	       (m_buffer[p_buffer[j].mrph_p].bunrui == rendaku_bunrui4_1 ||
+		m_buffer[p_buffer[j].mrph_p].bunrui == rendaku_bunrui4_2 ||
+		m_buffer[p_buffer[j].mrph_p].bunrui == rendaku_bunrui4_3 ||
+		m_buffer[p_buffer[j].mrph_p].bunrui == rendaku_bunrui4_4)) ||
+	     (m_buffer[p_buffer[j].mrph_p].hinsi != rendaku_hinsi4 &&
 	      check_code(m_buffer[p_buffer[j].mrph_p].midasi, 0) == HIRAGANA &&
 	      m_buffer[p_buffer[j].mrph_p].length == 2))) c_score = 0;
 

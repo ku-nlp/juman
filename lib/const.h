@@ -15,6 +15,7 @@
 #define STOP_MRPH_WEIGHT       255 /* このWeigthのときは形態素候補から除く */
 #define OPT_NORMALIZE          1
 #define OPT_DEVOICE            2
+#define OPT_MACRON             4
 #define NORMALIZED_LENGTH      6   /* 非正規表記の処理で考慮する最大形態素長 */
 
 /* 濁音・半濁音、濁音と対応する清音の一覧 
@@ -78,6 +79,9 @@ U_CHAR *uppercase[] = {"あ", "い", "う", "え", "お", "わ", "か", "\0"};
 
 /* 小文字を大文字化する際の追加コスト */
 #define NORMALIZED_COST        1
+
+/* 長音を削除する際の追加コスト */
+#define MACRON_COST	1
 
 /* 反復型オノマトペのコスト */
 

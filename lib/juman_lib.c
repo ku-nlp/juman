@@ -132,6 +132,7 @@
 #define         DEF_RENDAKU_REP         "代表表記"
 #define         DEF_RENDAKU_IMIS        "濁音化"
 #define         DEF_LOWERCASE_IMIS      "小文字化"
+#define         DEF_MACRON_IMIS         "長音化"
 
 #define 	DEF_UNDEF		"未定義語"
 #define 	DEF_UNDEF_KATA		"カタカナ"
@@ -178,6 +179,7 @@ int		Vocalize_Opt;
 int		Repetition_Opt;
 int             Onomatopoeia_Opt;
 int		Normalized_Opt;
+int		Macron_Opt;
 
 U_CHAR	        String[LENMAX];
 U_CHAR	        NormalizedString[LENMAX];
@@ -230,8 +232,8 @@ void	realloc_process_buffer(void);
 void    read_class_cost(CELL *cell); /* k.n */
 static BOOL    katuyou_process(int position, int *k, MRPH mrph, int *length, char opt);
 int     search_all(int position);
-int     take_data(int pos, char **pbuf, char opt);
-char *	_take_data(char *s, MRPH *mrph, char opt);
+int     take_data(int pos, char **pbuf, char opt, int deleted_offset, int deleted_length);
+char *	_take_data(char *s, MRPH *mrph, char opt, int deleted_offset, int deleted_length);
 int 	numeral_decode(char **str);
 int 	numeral_decode2(char **str);
 void 	hiragana_decode(char **str, char *yomi);
@@ -598,6 +600,39 @@ static BOOL katuyou_process(int position, int *k, MRPH mrph, int *length, char o
 
 /*
 ------------------------------------------------------------------------------
+        PROCEDURE: <make_macron_deleted_string>
+------------------------------------------------------------------------------
+*/
+int make_macron_deleted_string(char *buf, int pos, int *deleted_position)
+{
+    int length = strlen(String);
+    int deleted_length = 0;
+
+    /* (今の位置から調べて)最初の長音連続を削除したbufを作成する */
+
+    buf[0] = '\0';
+    for (; pos < length; pos += 2) {
+	if (String[pos] & 0x80) { /* 全角の場合 */
+	    if (!buf[0] || strncmp(String + pos, "ー", 2)) { /* 1文字目または長音以外 */
+		if (deleted_length) {
+		    break;
+		}
+		strncat(buf, String + pos, 2);
+	    }
+	    else {
+		if (!deleted_length) {
+		    *deleted_position = pos;
+		}
+		deleted_length += 2;
+	    }
+	}
+    }
+    strcat(buf, String + pos);
+    return deleted_length; /* 削除した長さ(バイト)を返す */
+}
+
+/*
+------------------------------------------------------------------------------
 	PROCEDURE: <search_all>       >>> changed by T.Nakamura <<<
 ------------------------------------------------------------------------------
 */
@@ -607,6 +642,7 @@ int search_all(int position)
     int         dic_no;
     int         jmp ;
     int		i;
+    int		deleted_length, deleted_position = 0;
     char	*pbuf;
     U_CHAR      buf[LENMAX];
 
@@ -618,7 +654,7 @@ int search_all(int position)
 	pat_search(db, String + position, &DicFile.tree_top[dic_no], pat_buffer);
 	pbuf = pat_buffer;
 	while (*pbuf != '\0') {
-	    if (take_data(position, &pbuf, 0) == FALSE) return FALSE;
+	    if (take_data(position, &pbuf, 0, 0, 0) == FALSE) return FALSE;
 	}
 
 	if (Normalized_Opt && /* 非正規表現用の検索 */
@@ -627,7 +663,7 @@ int search_all(int position)
 	    pat_search(db, NormalizedString + position, &DicFile.tree_top[dic_no], pat_buffer);
 	    pbuf = pat_buffer;
 	    while (*pbuf != '\0') {
-		if (take_data(position, &pbuf, OPT_NORMALIZE) == FALSE) return FALSE;
+		if (take_data(position, &pbuf, OPT_NORMALIZE, 0, 0) == FALSE) return FALSE;
 	    }
 	}
 
@@ -640,9 +676,22 @@ int search_all(int position)
 		    pat_search(db, buf, &DicFile.tree_top[dic_no], pat_buffer);
 		    pbuf = pat_buffer;
 		    while (*pbuf != '\0') {
-			if (take_data(position, &pbuf, OPT_DEVOICE) == FALSE) return FALSE;
+			if (take_data(position, &pbuf, OPT_DEVOICE, 0, 0) == FALSE) return FALSE;
 		    }
 		    break;
+		}
+	    }
+	}
+
+	if (Macron_Opt) { /* 長音を含む表現について、長音を削除して検索 */
+	    pat_buffer[0] = '\0';
+	    if ((deleted_length = make_macron_deleted_string(buf, position, &deleted_position))) { /* 長音があれば、それを削除した文字列を作る */
+		fprintf(stderr, "lookup: <%s>\n", buf);
+		fprintf(stderr, "      : <%s>\n", String + position);
+		pat_search(db, buf, &DicFile.tree_top[dic_no], pat_buffer);
+		pbuf = pat_buffer;
+		while (*pbuf != '\0') {
+		    if (take_data(position, &pbuf, OPT_MACRON, deleted_position - position, deleted_length) == FALSE) return FALSE;
 		}
 	    }
 	}
@@ -774,7 +823,7 @@ int recognize_onomatopoeia(int pos)
         PROCEDURE: <take_data>                  >>> Changed by yamaji <<<
 ------------------------------------------------------------------------------
 */
-int take_data(int pos, char **pbuf, char opt)
+int take_data(int pos, char **pbuf, char opt, int deleted_offset, int deleted_length)
 {
     unsigned char    *s;
     int     i, k, f, num;
@@ -802,7 +851,7 @@ int take_data(int pos, char **pbuf, char opt)
 	
 	pos_bak = pos;
 
-	s = _take_data(s, &mrph, opt);
+	s = _take_data(s, &mrph, opt, 0, 0);
 	rengo_con_tbl = mrph.con_tbl;
 	rengo_weight  = mrph.weight;
 	num = mrph.bunrui;
@@ -815,7 +864,7 @@ int take_data(int pos, char **pbuf, char opt)
 	    new_mrph->midasi[k-1] = '\0';
 	    new_mrph->midasi2[0] = '\0';
 
-	    s = _take_data(s, new_mrph, opt);
+	    s = _take_data(s, new_mrph, opt, 0, 0);
 	    if (opt) new_mrph->weight = STOP_MRPH_WEIGHT;
 
 	    length = strlen(new_mrph->midasi);
@@ -953,7 +1002,7 @@ int take_data(int pos, char **pbuf, char opt)
 	}
 
     } else {           /* 普通の形態素だった場合 */
-	s = _take_data(s, &mrph, opt);
+	s = _take_data(s, &mrph, opt, deleted_offset, deleted_length);
 
 	/* 重みがSTOP_MRPH_WEIGHTとなっているノードは生成しない */
 	if (mrph.weight == STOP_MRPH_WEIGHT) {
@@ -1024,9 +1073,9 @@ int take_data(int pos, char **pbuf, char opt)
 ------------------------------------------------------------------------------
 */
 
-char *_take_data(char *s, MRPH *mrph, char opt)
+char *_take_data(char *s, MRPH *mrph, char opt, int deleted_offset, int deleted_length)
 {
-    int		i, j, k = 0;
+    int		i, j, k = 0, deleted_flag = FALSE;
     char	c, *rep;
     
     mrph->hinsi    = numeral_decode(&s);
@@ -1037,6 +1086,15 @@ char *_take_data(char *s, MRPH *mrph, char opt)
     mrph->con_tbl  = numeral_decode2(&s);
     hiragana_decode(&s, mrph->yomi);
     mrph->length   = strlen(mrph->midasi);
+    if (deleted_length) {
+	if (deleted_offset < mrph->length) { /* この形態素において、長音などの削除が行われた場合 */
+	    mrph->length += deleted_length; /* 削除された長さを足す */
+	    deleted_flag = TRUE;
+	}
+	else { /* 長音などの削除が行ってサーチしたが、この形態素が長音とは関係ない場合 */
+	    mrph->weight = STOP_MRPH_WEIGHT; /* 生成しない */
+	}
+    }
     
     if (*s != ' ' && *s != '\n') { /* 意味情報あり */
 	j = numeral_decode(&s);
@@ -1112,6 +1170,19 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 	    mrph->imis[strlen(mrph->imis) - 1] = ' ';
 	}
 	strcat(mrph->imis, DEF_LOWERCASE_IMIS);
+	strcat(mrph->imis, "\"");
+    }
+
+    /* 長音削除したものにペナルティ */
+    if (deleted_flag) {
+	mrph->weight += MACRON_COST;
+	if (k == 0) {
+	    strcpy(mrph->imis, "\"");
+	}
+	else {
+	    mrph->imis[strlen(mrph->imis) - 1] = ' ';
+	}
+	strcat(mrph->imis, DEF_MACRON_IMIS);
 	strcat(mrph->imis, "\"");
     }
     
@@ -1551,6 +1622,7 @@ MRPH *prepare_path_mrph(int path_num , int para_flag)
     if (mrph_p->hinsi != 1 && mrph_p->hinsi != 15 &&
 	strncmp(midasi1, String + p_buffer[path_num].start, mrph_p->length)) {
 	strncpy(midasi1, String + p_buffer[path_num].start, mrph_p->length);
+	midasi1[mrph_p->length] = '\0';
     }
 
     return mrph_p;

@@ -74,6 +74,7 @@ extern int		Vocalize_Opt;
 extern int		Normalized_Opt;
 extern int		Repetition_Opt;
 extern int              Onomatopoeia_Opt;
+extern int              Macron_Opt;
 
 extern U_CHAR	        String[LENMAX];
 
@@ -232,6 +233,7 @@ int option_proc_for_server(int argc, char **argv)
     Normalized_Opt = 1;
     Repetition_Opt = 1;
     Onomatopoeia_Opt = 1;
+    Macron_Opt = 0;
     
     for (i = 1; i < argc; i++ ) {
 	if (argv[i][0] != '-') {
@@ -257,6 +259,7 @@ int option_proc_for_server(int argc, char **argv)
 	    else if ( argv[i][1] == 'L' ) Normalized_Opt = 0;
 	    else if ( argv[i][1] == 'R' ) Repetition_Opt = 0;
 	    else if ( argv[i][1] == 'O' ) Onomatopoeia_Opt = 0;
+	    else if ( argv[i][1] == 'M' ) Macron_Opt = 1;
 	    else {
 	      fprintf(client_ofp, "Invalid Option !!\nHELP command for more detail.\n");
 	      return FALSE;

@@ -33,6 +33,7 @@ extern int		Vocalize_Opt;
 extern int		Normalized_Opt;
 extern int		Repetition_Opt;
 extern int              Onomatopoeia_Opt;
+extern int		Macron_Opt;
 extern int		Unkword_Pat_Num;
 
 extern FILE		*Jumanrc_Fileptr;
@@ -246,6 +247,7 @@ void option_proc(int argc, char **argv)
     Normalized_Opt = 1;
     Repetition_Opt = 1;
     Onomatopoeia_Opt = 1;
+    Macron_Opt = 0;
 
     for ( i=1; i<argc; i++ ) {
 	if ( argv[i][0] != '-' ) {
@@ -289,6 +291,7 @@ else {
 	    else if ( argv[i][1] == 'L' ) Normalized_Opt = 0;
 	    else if ( argv[i][1] == 'R' ) Repetition_Opt = 0;
 	    else if ( argv[i][1] == 'O' ) Onomatopoeia_Opt = 0;
+	    else if ( argv[i][1] == 'M' ) Macron_Opt = 1;
 
 	    /* サーバーモード用のオプションの取扱い */
             else if ( argv[i][1] == 'S' ) JUMAN_server_mode = TRUE;
@@ -360,6 +363,7 @@ void juman_help()
     fprintf(stderr, "             -L : not search normalized lowercase\n");
     fprintf(stderr, "             -R : not recognize repetitive onomatopoeia automatically\n");
     fprintf(stderr, "             -O : not recognize non-repetitive onomatopoeia automatically\n");
+    fprintf(stderr, "             -M : search macron-deleted morphemes\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "             -i : ignore an input line startig with 'string'\n");
     fprintf(stderr, "             -r : use 'rc_file' as '.jumanrc'\n");

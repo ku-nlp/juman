@@ -686,8 +686,6 @@ int search_all(int position)
 	if (Macron_Opt) { /* 長音を含む表現について、長音を削除して検索 */
 	    pat_buffer[0] = '\0';
 	    if ((deleted_length = make_macron_deleted_string(buf, position, &deleted_position))) { /* 長音があれば、それを削除した文字列を作る */
-		fprintf(stderr, "lookup: <%s>\n", buf);
-		fprintf(stderr, "      : <%s>\n", String + position);
 		pat_search(db, buf, &DicFile.tree_top[dic_no], pat_buffer);
 		pbuf = pat_buffer;
 		while (*pbuf != '\0') {
@@ -1087,7 +1085,7 @@ char *_take_data(char *s, MRPH *mrph, char opt, int deleted_offset, int deleted_
     hiragana_decode(&s, mrph->yomi);
     mrph->length   = strlen(mrph->midasi);
     if (deleted_length) {
-	if (deleted_offset < mrph->length) { /* この形態素において、長音などの削除が行われた場合 */
+	if (deleted_offset <= mrph->length) { /* この形態素において、長音などの削除が行われた場合 */
 	    mrph->length += deleted_length; /* 削除された長さを足す */
 	    deleted_flag = TRUE;
 	}
@@ -1618,9 +1616,8 @@ MRPH *prepare_path_mrph(int path_num , int para_flag)
 	strcat(yomi, Form[mrph_p->katuyou1][mrph_p->katuyou2].gobi_yomi);
     }
 
-    /* 連濁、小文字化用 */
-    if (mrph_p->hinsi != 1 && mrph_p->hinsi != 15 &&
-	strncmp(midasi1, String + p_buffer[path_num].start, mrph_p->length)) {
+    /* 連濁、小文字化、長音用 */
+    if (strncmp(midasi1, String + p_buffer[path_num].start, mrph_p->length)) {
 	strncpy(midasi1, String + p_buffer[path_num].start, mrph_p->length);
 	midasi1[mrph_p->length] = '\0';
     }

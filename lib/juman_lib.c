@@ -577,38 +577,17 @@ void read_class_cost(CELL *cell)
 
 /*
 ------------------------------------------------------------------------------
-	PROCEDURE: <katuyou_process>       >>> changed by T.Nakamura <<<
-------------------------------------------------------------------------------
-*/
-static BOOL katuyou_process(int position, int *k, MRPH mrph, int *length, char opt)
-{
-     while (Form[mrph.katuyou1][*k].name) {
-	  if (compare_top_str1(Form[mrph.katuyou1][*k].gobi,
-			      String + position + mrph.length) ||
-	      (opt & OPT_NORMALIZE) && /* 非正規表現用 */
-	      compare_top_str1(Form[mrph.katuyou1][*k].gobi,
-			       NormalizedString + position + mrph.length)) {
-	       *length     = mrph.length + 
-		    strlen(Form[mrph.katuyou1][*k].gobi);
-	       return TRUE;
-   	  } else {
-	       (*k)++;
-	  }
-     }
-     return FALSE;
-}
-
-/*
-------------------------------------------------------------------------------
         PROCEDURE: <make_macron_deleted_string>
 ------------------------------------------------------------------------------
 */
 int make_macron_deleted_string(char *buf, int pos, int *deleted_position)
 {
     int length = strlen(String);
-    int deleted_length = 0;
+    int deleted_length = 0, code;
 
-    /* (今の位置から調べて)最初の長音連続を削除したbufを作成する */
+    /* (今の位置から調べて)最初の長音連続を削除したbufを作成する
+       条件: 2文字目以降
+             長音の直前がひらがなまたは漢字 */
 
     buf[0] = '\0';
     for (; pos < length; pos += 2) {
@@ -620,6 +599,11 @@ int make_macron_deleted_string(char *buf, int pos, int *deleted_position)
 		strncat(buf, String + pos, 2);
 	    }
 	    else {
+		code = check_code(buf, strlen(buf) - 2);
+		if (code != HIRAGANA && code != KANJI) { /* 長音直前がひらがな・漢字ではないなら削除しない */
+		    return 0;
+		}
+
 		if (!deleted_length) {
 		    *deleted_position = pos;
 		}
@@ -629,6 +613,37 @@ int make_macron_deleted_string(char *buf, int pos, int *deleted_position)
     }
     strcat(buf, String + pos);
     return deleted_length; /* 削除した長さ(バイト)を返す */
+}
+
+/*
+------------------------------------------------------------------------------
+	PROCEDURE: <katuyou_process>       >>> changed by T.Nakamura <<<
+------------------------------------------------------------------------------
+*/
+static BOOL katuyou_process(int position, int *k, MRPH mrph, int *length, char opt)
+{
+    U_CHAR      buf[LENMAX];
+    int deleted_length, deleted_position = 0;
+
+     while (Form[mrph.katuyou1][*k].name) {
+	 if ((Macron_Opt && /* 長音認識時 */
+	      (deleted_length = make_macron_deleted_string(buf, position + mrph.length, &deleted_position)) && /* 長音があれば、それを削除した文字列を作る */
+	      deleted_position <= (position + mrph.length + strlen(Form[mrph.katuyou1][*k].gobi)) && 
+	      compare_top_str1(Form[mrph.katuyou1][*k].gobi, buf))) {
+	     *length = mrph.length + strlen(Form[mrph.katuyou1][*k].gobi) + deleted_length;
+	     return TRUE;
+	 } else if (compare_top_str1(Form[mrph.katuyou1][*k].gobi, /* 通常時 */
+				     String + position + mrph.length) ||
+		    ((opt & OPT_NORMALIZE) && /* 非正規表現用 */
+		     compare_top_str1(Form[mrph.katuyou1][*k].gobi,
+				      NormalizedString + position + mrph.length))) {
+	     *length = mrph.length + strlen(Form[mrph.katuyou1][*k].gobi);
+	     return TRUE;
+	 } else {
+	     (*k)++;
+	 }
+     }
+     return FALSE;
 }
 
 /*

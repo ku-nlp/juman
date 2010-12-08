@@ -1,3 +1,8 @@
+2010-09-17  Yugo Murawaki  <murawaki@nlp.kuee.kyoto-u.ac.jp>
+
+	* lib/Juman/Result.pm:
+	spec が EOS も吐くように変更 (KNP::Result 準拠)
+
 2010-05-24  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* lib/Juman.pm:

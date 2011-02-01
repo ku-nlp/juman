@@ -5,6 +5,7 @@ use English qw/ $PERL_VERSION /;
 use IO::Handle;
 use IO::Pipe;
 use POSIX;
+use Time::HiRes;
 use strict;
 use base qw/ Exporter /;
 use vars qw/ @EXPORT_OK $TIMEOUT /;
@@ -226,9 +227,9 @@ sub alive {
 sub kill {
     my( $this ) = @_;
     $this->close;
-    sleep 1;
+#    sleep 1;
     kill 15, $this->{PID};
-    sleep 1;
+    Time::HiRes::sleep 0.01;
     kill 9, $this->{PID};
     $this->alive();			# To avoid zombie.
     $this->{PID} = 0;

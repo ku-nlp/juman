@@ -281,6 +281,32 @@ void changeDictionary(int number)
 
 /*
 ------------------------------------------------------------------------------
+	PROCEDURE: <push_dic_file_for_win>
+------------------------------------------------------------------------------
+*/
+
+int push_dic_file_for_win(char *dic_file_name, int num)
+{
+    char full_file_name[BUFSIZE];
+
+    /* open and set a dictionary for Windows */
+
+    if ((endchar(dic_file_name)) != '\\')
+	strcat(dic_file_name, "\\");
+    
+    sprintf(full_file_name, "%s%s", dic_file_name, PATFILE);
+    strcat(dic_file_name, DICFILE);
+
+    /* if ((DicFile.dic[num] = fopen(dic_file_name , "rb")) == NULL)
+       return FALSE; */
+    DicFile.dic[num] = my_fopen(dic_file_name , "rb");
+    pat_init_tree_top(&DicFile.tree_top[num]);
+    com_l(full_file_name, &DicFile.tree_top[num]);
+    return TRUE;
+}
+
+/*
+------------------------------------------------------------------------------
 	PROCEDURE: <juman_init_rc>
 ------------------------------------------------------------------------------
 */
@@ -307,7 +333,11 @@ BOOL juman_init_rc(FILE *fp)
 #ifdef _WIN32
     /* 文法ファイル */
     num = 0;
+#ifdef WIN_AZURE
+    GetPrivateProfileString("juman","dicfile",WIN_AZURE_DICFILE_DEFAULT,Jumangram_Dirname,sizeof(Jumangram_Dirname),"juman.ini");
+#else
     GetPrivateProfileString("juman","dicfile","",Jumangram_Dirname,sizeof(Jumangram_Dirname),"juman.ini");
+#endif
     if (Jumangram_Dirname[0]) {
 	grammar(NULL);
 	katuyou(NULL);
@@ -315,16 +345,19 @@ BOOL juman_init_rc(FILE *fp)
 	connect_matrix(NULL);
 
 	/* 辞書ファイル */
+#ifdef WIN_AZURE
+	/* use dic, autodic and wikipediadic for Azure */
+	GetPrivateProfileString("juman","dicfile",WIN_AZURE_DICFILE_DEFAULT,dic_file_name,sizeof(dic_file_name),"juman.ini");
+	push_dic_file_for_win(dic_file_name, num++);
+	GetPrivateProfileString("juman","autodicfile",WIN_AZURE_AUTODICFILE_DEFAULT,dic_file_name,sizeof(dic_file_name),"juman.ini");
+	push_dic_file_for_win(dic_file_name, num++);
+	GetPrivateProfileString("juman","wikipediadicfile",WIN_AZURE_WIKIPEDIADICFILE_DEFAULT,dic_file_name,sizeof(dic_file_name),"juman.ini");
+	push_dic_file_for_win(dic_file_name, num++);
+#else
 	GetPrivateProfileString("juman","dicfile","",dic_file_name,sizeof(dic_file_name),"juman.ini");
-	if ((endchar(dic_file_name)) != '\\')
-	    strcat(dic_file_name, "\\");
-    
-	sprintf(full_file_name, "%s%s", dic_file_name, PATFILE);
-	strcat(dic_file_name, DICFILE);
-	DicFile.dic[num] = my_fopen(dic_file_name , "rb");
-	pat_init_tree_top(&DicFile.tree_top[0]);
-	com_l(full_file_name, &DicFile.tree_top[0]);
-	DicFile.number = 1;
+	push_dic_file_for_win(dic_file_name, num++);
+#endif
+	DicFile.number = num;
 	changeDictionary(0);
 	win32_decided = 1;
     }

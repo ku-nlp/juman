@@ -245,6 +245,9 @@ enum		_ExitCode 	{ NormalExit,
 #define		GR                      0xb0a0
 #define		KANJI                   0xffff
 
+#define WIN_AZURE_DICFILE_DEFAULT ".\\dic\\"
+#define WIN_AZURE_AUTODICFILE_DEFAULT ".\\autodic\\"
+#define WIN_AZURE_WIKIPEDIADICFILE_DEFAULT ".\\wikipediadic\\"
 /*
 ------------------------------------------------------------------------------
 	global type definition of structures

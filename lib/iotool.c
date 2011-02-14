@@ -502,7 +502,11 @@ void set_jumanrc_fileptr(char *option_rcfile, int look_rcdefault_p, int exit_rc_
 	}
     } else {
 #ifdef _WIN32
+#ifdef WIN_AZURE
+	GetPrivateProfileString("juman","dicfile", WIN_AZURE_DICFILE_DEFAULT,filename,sizeof(filename),"juman.ini");
+#else
 	GetPrivateProfileString("juman","dicfile","C:\\juman\\dic",filename,sizeof(filename),"juman.ini");
+#endif
 	if ((endchar(filename)) != '\\') strcat(filename, "\\");
 	strcat(filename,"jumanrc");
 #else
@@ -552,7 +556,11 @@ void set_jumangram_dirname()
 #ifdef  _WIN32
     /* MS Windows のばあいは,juman.ini を見に行くように変更 
      dicfile == gramfile */
+#ifdef WIN_AZURE
+    GetPrivateProfileString("juman","dicfile",WIN_AZURE_DICFILE_DEFAULT,Jumangram_Dirname,sizeof(Jumangram_Dirname),"juman.ini");
+#else
     GetPrivateProfileString("juman","dicfile","",Jumangram_Dirname,sizeof(Jumangram_Dirname),"juman.ini");
+#endif
     if (Jumangram_Dirname[0]) {
 	return;
 	/* juman.iniが利用できなければ、jumanrcから読む */

@@ -615,40 +615,41 @@ void read_class_cost(CELL *cell)
 */
 int make_macron_deleted_string(char *buf, int pos, int *deleted_position)
 {
-    int length = strlen(String);
-    int deleted_length = 0, code, beginning_pos = pos;
+    int deleted_length = 0, code;
+    U_CHAR *cp, c = '\0';
 
     /* (今の位置から調べて)最初の長音連続を削除したbufを作成する
        条件: 2文字目以降
-             長音の直前がひらがなまたは漢字 */
+             先頭、および、長音の直前がひらがなまたは漢字 */
+    code = check_code(String + pos, 0);
+    if (code != HIRAGANA && code != KANJI) return 0;
 
-    buf[0] = '\0';
-    for (; pos < length; pos += 2) {
-	if (String[pos] & 0x80) { /* 全角の場合 */
-	    if (!buf[0] || strncmp(String + pos, "ー", 2)) { /* 1文字目または長音以外 */
-		if (deleted_length) {
-		    break;
-		}
-		else if ((pos - beginning_pos) > MACRON_SEARCH_LENGTH) { /* 検索限界 (ここまでになかったら終了) */
-		    return 0;
-		}
-		strncat(buf, String + pos, 2);
-	    }
-	    else {
-		code = check_code(buf, strlen(buf) - 2);
-		if (code != HIRAGANA && code != KANJI) { /* 長音直前がひらがな・漢字ではないなら削除しない */
-		    return 0;
-		}
-
-		if (!deleted_length) {
-		    *deleted_position = pos;
-		}
-		deleted_length += 2;
-	    }
-	}
+    /* strstrの時間を短くするため一時的に途中でStringを終端 */
+    if (strlen(String) - pos > MACRON_SEARCH_LENGTH + 2) {
+	c = String[pos + MACRON_SEARCH_LENGTH + 2];
+	String[pos + MACRON_SEARCH_LENGTH + 2] = '\0';
     }
-    strcat(buf, String + pos);
-    return deleted_length; /* 削除した長さ(バイト)を返す */
+
+    if (cp = strstr(String + pos + 2, "ー")) {
+	if (c != '\0') String[pos + MACRON_SEARCH_LENGTH + 2] = c;
+	*deleted_position = cp - String;
+	code = check_code(cp - 2, 0);
+
+	if (*deleted_position % 2 == 1 || /* 文字区切り以外の部分でマッチした場合は不可 */
+	    code != HIRAGANA && code != KANJI) { /* 長音直前がひらがな・漢字ではないなら削除しない */
+	    return 0;
+	}
+
+	for (; !strncmp(cp, "ー", 2); cp += 2) deleted_length += 2;
+	strncpy(buf, String + pos, *deleted_position - pos);
+	buf[*deleted_position - pos] = '\0';
+	strcat(buf, cp);
+	return deleted_length; /* 削除した長さ(バイト)を返す */
+    }
+    else {
+	if (c != '\0') String[pos + MACRON_SEARCH_LENGTH + 2] = c;
+	return 0;
+    }
 }
 
 /*
@@ -691,41 +692,46 @@ char *guess_replaced_string(char *buf)
 */
 int make_macron_replaced_string(char *buf, int pos)
 {
-    char *replaced_string;
-    int length = strlen(String);
-    int replaced_position = -1, code, beginning_position = pos;
+    int replaced_position = -1, code;
+    U_CHAR *replaced_string, *cp, c = '\0';
 
     /* (今の位置から調べて)最初の長音を置換したbufを作成する
        条件: 2文字目以降
-             長音の直前がひらがなまたは漢字 */
+             先頭がひらがなまたは漢字、長音の直前はひらがな */
+    code = check_code(String + pos, 0);
+    if (code != HIRAGANA && code != KANJI) return 0;
 
-    buf[0] = '\0';
-    for (; pos < length; pos += 2) {
-	if (String[pos] & 0x80) { /* 全角の場合 */
-	    if (!buf[0] || strncmp(String + pos, "ー", 2)) { /* 1文字目または長音以外 */
-		if ((pos - beginning_position) > MACRON_SEARCH_LENGTH) {
-		    return -1;
-		}
-		strncat(buf, String + pos, 2);
-	    }
-	    else {
-		code = check_code(buf, strlen(buf) - 2);
-		if (code != HIRAGANA) { /* 長音直前がひらがなでないなら置換しない */
-		    return -1;
-		}
-		replaced_position = pos;
-		if ((replaced_string = guess_replaced_string(buf + strlen(buf) - 2))) {
-		    strcat(buf, replaced_string);
-		    break;
-		}
-		else {
-		    return -1;
-		}
-	    }
+    /* strstrの時間を短くするため一時的に途中でStringを終端 */
+    if (strlen(String) - pos > MACRON_SEARCH_LENGTH + 2) {
+	c = String[pos + MACRON_SEARCH_LENGTH + 2];
+	String[pos + MACRON_SEARCH_LENGTH + 2] = '\0';
+    }
+
+    if (cp = strstr(String + pos + 2, "ー")) {
+	if (c != '\0') String[pos + MACRON_SEARCH_LENGTH + 2] = c;
+        replaced_position = cp - String;
+	code = check_code(cp - 2, 0);
+
+	if (replaced_position % 2 == 1 || /* 文字区切り以外の部分でマッチした場合は不可 */
+	    code != HIRAGANA) { /* 長音直前がひらがな・漢字ではないなら削除しない */
+	    return -1;
+	}
+
+	if ((replaced_string = guess_replaced_string(cp - 2))) {
+	    strncpy(buf, String + pos, replaced_position - pos);
+	    buf[replaced_position - pos] = '\0';
+	    strcat(buf, replaced_string);
+	    strcat(buf, cp + 2);
+	    return replaced_position; /* 置換した場所を返す */
+	}
+	else {
+	    return -1;
 	}
     }
-    strcat(buf, String + pos);
-    return replaced_position; /* 置換した場所を返す */
+    else {
+	if (c != '\0') String[pos + MACRON_SEARCH_LENGTH + 2] = c;
+	return -1;
+    }
 }
 
 /*
@@ -1238,7 +1244,7 @@ char *_take_data(char *s, MRPH *mrph, char opt, int deleted_offset, int deleted_
 	    mrph->length += deleted_length; /* 削除された長さを足す */
 	    deleted_flag = TRUE;
 	}
-	else { /* 長音などの削除が行ってサーチしたが、この形態素が長音とは関係ない場合 */
+	else { /* 長音などの削除を行ってサーチしたが、この形態素が長音とは関係ない場合 */
 	    mrph->weight = STOP_MRPH_WEIGHT; /* 生成しない */
 	}
     }

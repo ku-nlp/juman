@@ -109,18 +109,8 @@ static void numeral_encode2(FILE *fp, int num)
 
 static void hiragana_encode(FILE *fp, unsigned char *str)
 {
-    int code;
-
     if (*str != '@') /* 空列でない場合 */
-	while (*str) {
-	    code = *(str)*256 + *(str+1);
-	    if (code >= ALPH && code < HIRAGANA) fputc(code-ALPH+0x21, fp);
-	    else {
-		fputc(*str, fp);
-		fputc(*(str+1), fp);
-	    }
-	    str += 2;
-	}
+	fprintf(fp, "%s", str);
     fputc(0x20, fp);
 }
 

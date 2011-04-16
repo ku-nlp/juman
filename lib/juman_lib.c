@@ -1370,20 +1370,9 @@ int numeral_decode2(char **str)
 
 void hiragana_decode(char **str, char *yomi)
 {
-    unsigned char *s;
-
-    s = *str;
-    while (*s != 0x20) {
-	if (*s < 0x80) {
-	    *(yomi++) = 0xa4;
-	    *(yomi++) = *s-0x21+0xa0;
-	    s++;
-	} else {
-	    *(yomi++) = *(s++);
-	    *(yomi++) = *(s++);
-	}
-    }
-    *str = s+1;
+    while (**str != 0x20)
+        *(yomi++) = *(*str)++;
+    (*str)++;
     *yomi = '\0';
 }
 

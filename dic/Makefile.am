@@ -13,7 +13,7 @@ nodist_dic_DATA = JUMAN.connect $(TBL_FILES) jumandic.dat jumandic.pat
 dist_dic_DATA = $(GRM_FILES)
 EXTRA_DIST = JUMAN.connect.c *.dic
 
-.dic.int:
+.dic.int: $(MAKEINT)
 	$(MAKEINT) $<
 
 clean:
@@ -22,17 +22,17 @@ clean:
 JUMAN.connect: JUMAN.connect.c
 	@CPP@ -P $< | sed "s/\(\#pragma\)/\;\1/" > $@
 
-jumandic.tab: $(GRM_FILES) JUMAN.connect
+jumandic.tab: $(GRM_FILES) JUMAN.connect $(MAKEMAT)
 	$(MAKEMAT)
 
 jumandic.mat: jumandic.tab
 
-$(INT_FILES): $(GRM_FILES) $(TBL_FILES)
+$(INT_FILES): $(GRM_FILES) $(TBL_FILES) $(MAKEINT)
 
-jumandic.dat: $(INT_FILES)
+jumandic.dat: $(INT_FILES) $(DICSORT)
 	cat $(INT_FILES) > jumandic.txt
 	$(DICSORT) jumandic.txt > $@
 	rm -f jumandic.txt
 
-jumandic.pat: jumandic.dat
+jumandic.pat: jumandic.dat $(MAKEPAT)
 	$(MAKEPAT)

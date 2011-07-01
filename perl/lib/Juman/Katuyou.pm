@@ -5,26 +5,27 @@ use Juman::Grammar qw/ $FORM /;
 use Juman::Hinsi qw/ get_form_id /;
 use Encode;
 use strict;
+use vars qw/ $ENCODING /;
 
 =head1 NAME
 
-Juman::Katuyou - �����ǥ��֥������Ȥγ��ѷ�������
+Juman::Katuyou - 形態素オブジェクトの活用形を操作する
 
 =head1 DESCRIPTION
 
-�����ǥ��֥������� L<Juman::Morpheme> �γ��ѷ�������᥽�åɤ��ɲ�
-���롥
+形態素オブジェクト L<Juman::Morpheme> の活用形を操作するメソッドを追加
+する．
 
 =head1 FILE
 
-���ѷ����� F<JUMAN.katuyou.db> �򻲾Ȥ��롥���μ���ϡ�Juman ���Τ���
-°���Ƥ��뼭�� F<JUMAN.katuyou> ���鵡��Ū���������졤F<Katuyou.pm> ��
-Ʊ���ǥ��쥯�ȥ�˥��󥹥ȡ��뤵��Ƥ���Ϥ��Ǥ��롥
+活用形辞書 F<JUMAN.katuyou.db> を参照する．この辞書は，Juman 本体に付
+属している辞書 F<JUMAN.katuyou> から機械的に生成され，F<Katuyou.pm> と
+同じディレクトリにインストールされているはずである．
 
-�ʤ������ѷ������ BerkeleyDB �����Ǻ������졤L<DB_File> �⥸�塼���
-�̤��ƥ�����������롥juman-perl �Υ��󥹥ȡ������ L<DB_File> �⥸�塼
-�뤬¸�ߤ��ʤ��ȡ�����κ����ϹԤ��ʤ��Τǡ��ܥ⥸�塼����󶡤����
-�᥽�åɤ����ѤǤ��ʤ���
+なお，活用形辞書は BerkeleyDB 形式で作成され，L<DB_File> モジュールを
+通じてアクセスされる．juman-perl のインストール時に L<DB_File> モジュー
+ルが存在しないと，辞書の作成は行われないので，本モジュールで提供される
+メソッドは利用できない．
 
 =head1 METHODS
 
@@ -32,25 +33,28 @@ Juman::Katuyou - �����ǥ��֥������Ȥγ��ѷ�������
 
 =item kihonkei
 
-�����Ǥδ��ܷ����֤���
+形態素の基本形を返す．
 
 =cut
+
+$ENCODING = $JUMAN::ENCODING ? $JUMAN::ENCODING : 'utf8';
+
 sub kihonkei {
     my( $this ) = @_;
-    $this->change_katuyou2( '���ܷ�' );
+    $this->change_katuyou2( '基本形' );
 }
 
 =item change_katuyou2 ( FORM )
 
-���ꤵ�줿���ѷ� I<FORM> (���ܷ���̿����ʤ�)����Ŀ����ʷ����ǥ��֥���
-���Ȥ��֤������ꤵ�줿���ѷ���¸�ߤ��ʤ�����̤����ͤ��֤���
+指定された活用形 I<FORM> (基本形，命令形など)を持つ新たな形態素オブジェ
+クトを返す．指定された活用形が存在しない場合は未定義値を返す．
 
 =cut
 sub change_katuyou2 {
     my( $this, $org_form ) = @_;
     my $form;
     if( utf8::is_utf8( $org_form ) ){
-	$form = encode( 'euc-jp', $org_form ); # euc-jp�ˤ�ɤ�
+	$form = encode( $ENCODING, $org_form ); # 元のエンコーディング(従来はeuc-jp)にもどす
     }
     else{
 	$form = $org_form;
@@ -58,33 +62,33 @@ sub change_katuyou2 {
 
     my $type = $this->katuyou1;
     if( utf8::is_utf8( $type ) ){
-	$type = encode( 'euc-jp', $type ); # euc-jp�ˤ�ɤ�
+	$type = encode( $ENCODING, $type ); # 元のエンコーディング(従来はeuc-jp)にもどす
     }
 
     my $id = &get_form_id( $type, $form );
     if( defined $id and $id > 0 ){
-	# �ѹ�����ѷ���¸�ߤ�����
+	# 変更先活用形が存在する場合
 	my $new = &_dup( $this );
-	my @oldgobi = @{ $FORM->{$type}->[$this->katuyou2_id] }; # euc-jp�Ǥ��Ȥ�
+	my @oldgobi = @{ $FORM->{$type}->[$this->katuyou2_id] }; # 元のエンコーディング(従来はeuc-jp)でやりとり
 	my @newgobi = @{ $FORM->{$type}->[$id] };
 	if ( utf8::is_utf8( $this->midasi ) ){
-	    map( { $_ = decode( 'euc-jp', $_ ) } @oldgobi ); # encode����Ƥ�ʤ�encode
-	    map( { $_ = decode( 'euc-jp', $_ ) } @newgobi );
+	    map( { $_ = decode( $ENCODING, $_ ) } @oldgobi ); # encodeされてるならdecode
+	    map( { $_ = decode( $ENCODING, $_ ) } @newgobi );
 	}
 	$new->{midasi} = &_change_gobi( $this->midasi, $oldgobi[1], $newgobi[1] );
 	$new->{yomi}   = &_change_gobi( $this->yomi,
 					( $oldgobi[2] || $oldgobi[1] ),
 					( $newgobi[2] || $newgobi[1] ) );
-	$new->{katuyou2} = $org_form; # ��Ȥ�encoding�ǳ�Ǽ
+	$new->{katuyou2} = $org_form; # もとのencodingで格納
 	$new->{katuyou2_id} = $id;
 	$new;
     } else {
-	# �ѹ�����ѷ���¸�ߤ��ʤ����
+	# 変更先活用形が存在しない場合
 	undef;
     }
 }
 
-# �������Ѳ������������ؿ�
+# 語尾を変化させる内部関数
 sub _change_gobi {
     my( $str, $cut, $add ) = @_;
 
@@ -97,7 +101,7 @@ sub _change_gobi {
     $str;
 }
 
-# �����ǥ��֥������Ȥ�ʣ�����������ؿ�
+# 形態素オブジェクトを複製する内部関数
 sub _dup {
     my( $this ) = @_;
     my $new = {};
@@ -123,25 +127,24 @@ L<Juman::Morpheme>
 
 =head1 HISTORY
 
-���Υ⥸�塼��ϡ�L<KULM::Juman::Katuyou> �⥸�塼��򸶷��Ȥ��ƺ�����
-�줿��
+このモジュールは，L<KULM::Juman::Katuyou> モジュールを原形として作成さ
+れた．
 
 =head1 AUTHORS
 
 =over 4
 
 =item
-��ƣ ���� <sato@i.kyoto-u.ac.jp>
+佐藤 理史 <sato@i.kyoto-u.ac.jp>
 
 =item
-�ڲ� ��̭ <tsuchiya@pine.kuee.kyoto-u.ac.jp>
+土屋 雅稔 <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 
 =cut
 
 __END__
 # Local Variables:
 # mode: perl
-# coding: euc-japan
 # use-kuten-for-period: nil
 # use-touten-for-comma: nil
 # End:

@@ -6,22 +6,22 @@ use English qw/ $LIST_SEPARATOR $WARNING /;
 use Juman::Grammar qw/ $HINSI $BUNRUI $TYPE $FORM /;
 use strict;
 use base qw/ Exporter /;
-use vars qw/ @EXPORT_OK %EXPORT_TAGS /;
+use vars qw/ @EXPORT_OK %EXPORT_TAGS $ENCODING /;
 @EXPORT_OK = qw/ get_hinsi get_hinsi_id get_bunrui get_bunrui_id get_type get_type_id get_form get_form_id /;
 %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 
 =head1 NAME
 
-Juman::Hinsi - Juman ÉÊ»ìÂÎ·Ï¤ò°·¤¦¥é¥¤¥Ö¥é¥ê
+Juman::Hinsi - Juman å“è©ä½“ç³»ã‚’æ‰±ã†ãƒ©ã‚¤ãƒ–ãƒ©ãƒª
 
 =head1 SYNOPSIS
 
  use Juman::Hinsi qw/ get_hinsi_id /;
- $id = &get_hinsi_id( 'Ì¾»ì' );
+ $id = &get_hinsi_id( 'åè©' );
 
 =head1 DESCRIPTION
 
-Juman ÉÊ»ìÂÎ·Ï¤Î¾ğÊó¤òÆÀ¤ë¤¿¤á¤Î´Ø¿ô¤òÄó¶¡¤¹¤ë¥é¥¤¥Ö¥é¥ê¤Ç¤¢¤ë¡¥
+Juman å“è©ä½“ç³»ã®æƒ…å ±ã‚’å¾—ã‚‹ãŸã‚ã®é–¢æ•°ã‚’æä¾›ã™ã‚‹ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã§ã‚ã‚‹ï¼
 
 =head1 FUNCTIONS
 
@@ -29,9 +29,12 @@ Juman ÉÊ»ìÂÎ·Ï¤Î¾ğÊó¤òÆÀ¤ë¤¿¤á¤Î´Ø¿ô¤òÄó¶¡¤¹¤ë¥é¥¤¥Ö¥é¥ê¤Ç¤¢¤ë¡¥
 
 =item get_hinsi ( ID )
 
-ÉÊ»ìÈÖ¹æ¤«¤éÉÊ»ì¤òÆÀ¤ë
+å“è©ç•ªå·ã‹ã‚‰å“è©ã‚’å¾—ã‚‹
 
 =cut
+
+$ENCODING = $JUMAN::ENCODING ? $JUMAN::ENCODING : 'utf8';
+
 sub _zerop {
     ( $_[0] =~ /\D/ )? $_[0] eq '*' : $_[0] == 0;
 }
@@ -60,7 +63,7 @@ sub get_hinsi {
 
 =item get_hinsi_id ( STR )
 
-ÉÊ»ì¤«¤éÉÊ»ìÈÖ¹æ¤òÆÀ¤ë
+å“è©ã‹ã‚‰å“è©ç•ªå·ã‚’å¾—ã‚‹
 
 =cut
 sub get_hinsi_id {
@@ -73,7 +76,7 @@ sub get_hinsi_id {
     my( $x ) = @_;
 
     if (utf8::is_utf8($x)) { # encode if the input has utf8_flag
-	$x = Encode::encode('euc-jp', $x);
+	$x = Encode::encode($ENCODING, $x);
     }
 
     if( exists $HINSI->[0]->{$x} ){
@@ -88,7 +91,7 @@ sub get_hinsi_id {
 
 =item get_bunrui ( HINSI, ID )
 
-ºÙÊ¬ÎàÈÖ¹æ¤«¤éºÙÊ¬Îà¤òÆÀ¤ë
+ç´°åˆ†é¡ç•ªå·ã‹ã‚‰ç´°åˆ†é¡ã‚’å¾—ã‚‹
 
 =cut
 sub get_bunrui {
@@ -116,7 +119,7 @@ sub get_bunrui {
 
 =item get_bunrui_id ( HINSI, STR )
 
-ºÙÊ¬Îà¤«¤éºÙÊ¬ÎàÈÖ¹æ¤òÆÀ¤ë
+ç´°åˆ†é¡ã‹ã‚‰ç´°åˆ†é¡ç•ªå·ã‚’å¾—ã‚‹
 
 =cut
 sub get_bunrui_id {
@@ -129,7 +132,7 @@ sub get_bunrui_id {
     my( $hinsi, $x ) = @_;
 
     if (utf8::is_utf8($x)) { # encode if the input has utf8_flag
-	$x = Encode::encode('euc-jp', $x);
+	$x = Encode::encode($ENCODING, $x);
     }
 
     if( defined( $hinsi = &get_hinsi($hinsi) ) ){
@@ -149,7 +152,7 @@ sub get_bunrui_id {
 
 =item get_type ( ID )
 
-³èÍÑ·¿ÈÖ¹æ¤«¤é³èÍÑ·¿¤òÆÀ¤ë
+æ´»ç”¨å‹ç•ªå·ã‹ã‚‰æ´»ç”¨å‹ã‚’å¾—ã‚‹
 
 =cut
 sub get_type {
@@ -174,7 +177,7 @@ sub get_type {
 
 =item get_type_id ( STR )
 
-³èÍÑ·¿¤«¤é³èÍÑ·¿ÈÖ¹æ¤òÆÀ¤ë
+æ´»ç”¨å‹ã‹ã‚‰æ´»ç”¨å‹ç•ªå·ã‚’å¾—ã‚‹
 
 =cut
 sub get_type_id {
@@ -187,7 +190,7 @@ sub get_type_id {
     my( $x ) = @_;
 
     if (utf8::is_utf8($x)) { # encode if the input has utf8_flag
-	$x = Encode::encode('euc-jp', $x);
+	$x = Encode::encode($ENCODING, $x);
     }
 
     if( &_zerop($x) ){
@@ -204,7 +207,7 @@ sub get_type_id {
 
 =item get_form ( TYPE, ID )
 
-³èÍÑ·¿¤È³èÍÑ·ÁÈÖ¹æ¤«¤é³èÍÑ·Á¤òÆÀ¤ë
+æ´»ç”¨å‹ã¨æ´»ç”¨å½¢ç•ªå·ã‹ã‚‰æ´»ç”¨å½¢ã‚’å¾—ã‚‹
 
 =cut
 sub get_form {
@@ -234,7 +237,7 @@ sub get_form {
 
 =item get_form_id ( TYPE, STR )
 
-³èÍÑ·¿¤È³èÍÑ·Á¤«¤é³èÍÑ·ÁÈÖ¹æ¤òÆÀ¤ë
+æ´»ç”¨å‹ã¨æ´»ç”¨å½¢ã‹ã‚‰æ´»ç”¨å½¢ç•ªå·ã‚’å¾—ã‚‹
 
 =cut
 sub get_form_id {
@@ -247,7 +250,7 @@ sub get_form_id {
     my( $type, $x ) = @_;
 
     if (utf8::is_utf8($x)) { # encode if the input has utf8_flag
-	$x = Encode::encode('euc-jp', $x);
+	$x = Encode::encode($ENCODING, $x);
     }
 
     if( defined( $type = &get_type($type) ) ){
@@ -273,13 +276,13 @@ sub get_form_id {
 
 =head1 NOTES
 
-C<Juman> ¥ª¥Ö¥¸¥§¥¯¥È¤Î¥á¥½¥Ã¥É¤È¤·¤ÆÍøÍÑ¤¹¤ë¤³¤È¤â¤Ç¤­¤ë¡¥
+C<Juman> ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ãƒ¡ã‚½ãƒƒãƒ‰ã¨ã—ã¦åˆ©ç”¨ã™ã‚‹ã“ã¨ã‚‚ã§ãã‚‹ï¼
 
   Example:
 
      use Juman;
      $juman = new Juman();
-     $id = $juman->get_hinsi_id( 'Ì¾»ì' );
+     $id = $juman->get_hinsi_id( 'åè©' );
 
 =head1 SEE ALSO
 
@@ -300,7 +303,7 @@ L<Juman::Grammar>
 =over 4
 
 =item
-ÅÚ²° ²íÌ­ <tsuchiya@pine.kuee.kyoto-u.ac.jp>
+åœŸå±‹ é›…ç¨” <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 
 =back
 
@@ -309,7 +312,6 @@ L<Juman::Grammar>
 __END__
 # Local Variables:
 # mode: perl
-# coding: euc-japan
 # use-kuten-for-period: nil
 # use-touten-for-comma: nil
 # End:

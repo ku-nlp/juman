@@ -1,4 +1,4 @@
-# -*- mode: perl; coding: euc-jp; -*-
+# -*- perl -*-
 
 use strict;
 use English qw/ $PERL_VERSION /;
@@ -31,8 +31,8 @@ my %hash;
 my $tie = tie %hash, 'Juman::DB_File', $dbname, &O_CREAT;
 ok( $tie );
 
-my $soeji = "Åº»ú";
-my $atai = "ÃÍ";
+my $soeji = "æ·»å­—";
+my $atai = "å€¤";
 
 $hash{$soeji} = $atai;
 ok( (keys %hash)[0] eq $soeji );

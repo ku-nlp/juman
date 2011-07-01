@@ -38,13 +38,13 @@ CELLTABLE	*CellTbl = NULL;
 CELLTABLE	CellTbl_save;
 
 /*
-  °Ê²¼¤ÎÄêµÁ¤Ïchasen¤Îlisp.c¤«¤éÎ®ÍÑ
-  chasen¤Î¥µ¡¼¥Ğ¡¼¥â¡¼¥É¤Ç¤Ï\n.\n¤òEOF¤È¸«¤Ê¤¹¡£¤½¤ì¤ËÂĞ±ş¤¹¤ë¤è¤¦¤Ëchasen¤Î
-  ¥³¡¼¥É¤òÎ®ÍÑ
-  ¤½¤ì¤Ë¤È¤â¤Ê¤¤fgetc´Ø¿ô¤ò¤¹¤Ù¤Æcha_fgetc´Ø¿ô¤ËÊÑ¹¹
-  ¤Ş¤¿¡¢juman¤Ç¤ÏÊ¸Ë¡¥Õ¥¡¥¤¥ë¤Ê¤É¤ò¥Õ¥¡¥¤¥ë¤«¤éÆÉ¤ß¹ş¤à¤¿¤áEOF.\n¤âEOF¤È
-  ¸«¤Ê¤¹¤è¤¦¤Ëis_bol¤ÎÀßÄêÉôÊ¬¤òÊÑ¹¹
-  NACSIS µÈ²¬
+  ä»¥ä¸‹ã®å®šç¾©ã¯chasenã®lisp.cã‹ã‚‰æµç”¨
+  chasenã®ã‚µãƒ¼ãƒãƒ¼ãƒ¢ãƒ¼ãƒ‰ã§ã¯\n.\nã‚’EOFã¨è¦‹ãªã™ã€‚ãã‚Œã«å¯¾å¿œã™ã‚‹ã‚ˆã†ã«chasenã®
+  ã‚³ãƒ¼ãƒ‰ã‚’æµç”¨
+  ãã‚Œã«ã¨ã‚‚ãªã„fgetcé–¢æ•°ã‚’ã™ã¹ã¦cha_fgetcé–¢æ•°ã«å¤‰æ›´
+  ã¾ãŸã€jumanã§ã¯æ–‡æ³•ãƒ•ã‚¡ã‚¤ãƒ«ãªã©ã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿è¾¼ã‚€ãŸã‚EOF.\nã‚‚EOFã¨
+  è¦‹ãªã™ã‚ˆã†ã«is_bolã®è¨­å®šéƒ¨åˆ†ã‚’å¤‰æ›´
+  NACSIS å‰å²¡
 */
 extern int fgetc(FILE *fp);
 extern int ungetc(int c, FILE *fp);
@@ -76,7 +76,7 @@ static int cha_getc(fp)
 	  c = getc(fp);
 	if (c == '\n')
 	  c = EOF;
-	/* \n¤ÎÂ³¤«¤Ê¤¤04¤¬¤¢¤Ã¤¿¾ì¹ç,04¤Ï¥¹¥­¥Ã¥×¤µ¤ì¤Æ¤·¤Ş¤¦ */
+	/* \nã®ç¶šã‹ãªã„04ãŒã‚ã£ãŸå ´åˆ,04ã¯ã‚¹ã‚­ãƒƒãƒ—ã•ã‚Œã¦ã—ã¾ã† */
     }
 
     if (c == '\n' || c == EOF)
@@ -485,9 +485,9 @@ CELL *s_read_atom(FILE *fp)
      CELL *cell;
      U_CHAR *c;
      int n;
-#ifdef _WIN32
+/* #ifdef _WIN32
     char *eucstr;
-#endif
+    #endif */
 
      comment(fp);
      
@@ -502,11 +502,11 @@ CELL *s_read_atom(FILE *fp)
 	  error_in_lisp();
      }
 
-#ifdef _WIN32
+/* #ifdef _WIN32
 	eucstr = toStringEUC(Buffer);
 	strcpy(Buffer, eucstr);
 	free(eucstr);
-#endif       
+	#endif */
 
      if (!strcmp(Buffer, NILSYMBOL)) {
 	  cell = NIL;
@@ -634,7 +634,7 @@ CELL *_s_print_cdr(FILE *fp, CELL *cell)
 /*
 ------------------------------------------------------------------------------
 	PROCEDURE			by yamaji
-	<lisp_alloc>: ¤¢¤é¤«¤¸¤á°ìÄêÎÎ°è¤ò³ÎÊİ¤·¤Æ¤ª¤¤¤Æ malloc ¤ò¹Ô¤¦
+	<lisp_alloc>: ã‚ã‚‰ã‹ã˜ã‚ä¸€å®šé ˜åŸŸã‚’ç¢ºä¿ã—ã¦ãŠã„ã¦ malloc ã‚’è¡Œã†
 ------------------------------------------------------------------------------
 */
 
@@ -645,7 +645,7 @@ void *lisp_alloc(int n)
 
      if (n % sizeof(CELL)) n = n/sizeof(CELL)+1; else n /= sizeof(CELL);
      if (CellTbl == NULL || CellTbl != NULL && CellTbl->n+n > CellTbl->max) {
-	 /* ¿·¤¿¤Ë°ìÄêÎÎ°è¤ò³ÎÊİ */
+	 /* æ–°ãŸã«ä¸€å®šé ˜åŸŸã‚’ç¢ºä¿ */
 	 if (CellTbl != NULL && CellTbl->next != NULL) {
 	     CellTbl = CellTbl->next;
 	     CellTbl->n = 0;
@@ -670,7 +670,7 @@ void *lisp_alloc(int n)
 /*
 ------------------------------------------------------------------------------
 	PROCEDURE			by yamaji
-	<lisp_alloc_push>: ¸½ºß¤Î¥á¥â¥ê¥¢¥í¥±¡¼¥È¾õÂÖ¤òµ­²±¤¹¤ë
+	<lisp_alloc_push>: ç¾åœ¨ã®ãƒ¡ãƒ¢ãƒªã‚¢ãƒ­ã‚±ãƒ¼ãƒˆçŠ¶æ…‹ã‚’è¨˜æ†¶ã™ã‚‹
 ------------------------------------------------------------------------------
 */
 
@@ -682,7 +682,7 @@ void lisp_alloc_push(void)
 /*
 ------------------------------------------------------------------------------
 	PROCEDURE			by yamaji
-	<lisp_alloc_pop>: µ­²±¤·¤¿¥á¥â¥ê¥¢¥í¥±¡¼¥È¾õÂÖ¤ËÌá¤¹
+	<lisp_alloc_pop>: è¨˜æ†¶ã—ãŸãƒ¡ãƒ¢ãƒªã‚¢ãƒ­ã‚±ãƒ¼ãƒˆçŠ¶æ…‹ã«æˆ»ã™
 ------------------------------------------------------------------------------
 */
 

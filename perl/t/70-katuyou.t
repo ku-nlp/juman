@@ -8,22 +8,22 @@ BEGIN { plan tests => 6 }
 
 use Juman::Morpheme;
 
-my $mrph = Juman::Morpheme->new( "Æ°¤« ¤¦¤´¤« Æ°¤¯ Æ°»ì 2 * 0 »Ò²»Æ°»ì¥«¹Ô 2 Ì¤Á³·Á 3\n" );
+my $mrph = Juman::Morpheme->new( "å‹•ã‹ ã†ã”ã‹ å‹•ã å‹•è© 2 * 0 å­éŸ³å‹•è©ã‚«è¡Œ 2 æœªç„¶å½¢ 3\n" );
 ok(defined $mrph);
 
 my $new;
 {
     local $WARNING = 0;
-    $new = $mrph->change_katuyou2( 'Â¸ºß¤·¤Ê¤¤³èÍÑ·Á' );
+    $new = $mrph->change_katuyou2( 'å­˜åœ¨ã—ãªã„æ´»ç”¨å½¢' );
 }
 ok(!defined $new);
 
-$new = $mrph->change_katuyou2( 'Ì¿Îá·Á' );
+$new = $mrph->change_katuyou2( 'å‘½ä»¤å½¢' );
 ok(defined $new);
-ok($new->midasi() eq 'Æ°¤±' );
+ok($new->midasi() eq 'å‹•ã‘' );
 #ok($new->katuyou2_id == 5);
 
 $new = $mrph->kihonkei();
 ok(defined $new);
-ok($new->midasi() eq 'Æ°¤¯' );
+ok($new->midasi() eq 'å‹•ã' );
 #ok($new->katuyou2_id == 2);

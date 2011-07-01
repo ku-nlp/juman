@@ -19,26 +19,26 @@ Juman::GDBM_File - Wrapper class of GDBM_File
  use Juman::GDBM_File;
  use encoding "euc-jp";
  tie( %hash, 'Juman::GDBM_File', $dbfile, &GDBM_WRCREAT, 0640 ) or die;
- $hash{"ź��"} = "��";
+ $hash{"添字"} = "値";
  while( my( $key, $value ) = each %hash ){
      print "$key:$value\n";
  }
 
 =head1 DESCRIPTION
 
-Perl-5.8.x ������ʸ�������ɤȤ��� Unicode ����Ѥ��Ƥ��롥���Τ��ᡤ��
-�ܸ� EUC �ǵ��Ҥ��줿�ǡ����١����ե�����򻲾Ȥ�����ˤϡ�ź������
-��񤭹�����ꡤ�ɤ߽Ф����ꤹ�����ˡ��������Ū�� encode/decode ���
-��ɬ�פ����롥
+Perl-5.8.x は内部文字コードとして Unicode を採用している．そのため，日
+本語 EUC で記述されたデータベースファイルを参照する場合には，添字や値
+を書き込んだり，読み出したりする前に，常に明示的に encode/decode を行
+う必要がある．
 
-���� C<Juman::GDBM_File> ���饹�ϡ������ʸ�������ɤ���¸����Ƥ���ǡ�
-���١����ե�����򰷤�����ˡ�Ʃ��Ū�� encode/decode ��Ԥ���
+この C<Juman::GDBM_File> クラスは，特定の文字コードで保存されているデー
+タベースファイルを扱うために，透過的に encode/decode を行う．
 
 =head1 ENCODING
 
-���Υ��饹�����Ѥ�����ϡ��ǡ����١����Ȥ������ϻ��˻Ȥ�ʸ�������ɤ�
-C<encoding> �ץ饰�ޤǻ��ꤹ�롥C<encoding> �ץ饰�ޤˤ����꤬¸�ߤ�
-�ʤ����ϡ��ޤä����Ѵ���Ԥ�ʤ���
+このクラスを利用する時は，データベースとの入出力時に使う文字コードを，
+C<encoding> プラグマで指定する．C<encoding> プラグマによる指定が存在し
+ない場合は，まったく変換を行わない．
 
 =cut
 BEGIN {
@@ -51,8 +51,8 @@ BEGIN {
     }
 }
 
-# �ǡ����١����˥�����������᥽�åɤ��񤭤��Ƥ��롥ɬ�פʥ᥽�åɤ�
-# �ܺ٤ˤĤ��Ƥϡ�perldoc perltie �򻲾ȡ�
+# データベースにアクセスするメソッドを上書きしている．必要なメソッドの
+# 詳細については，perldoc perltie を参照．
 sub FETCH {
     my( $this, $key ) = @_;
     &decode( $this->SUPER::FETCH( &encode( $key ) ) );
@@ -85,22 +85,22 @@ sub NEXTKEY {
 
 =head1 CONSTRUCTOR
 
-C<GDBM_File> ��Ʊ��ν񼰤ǡ�Ϣ�����������Ǥ��롥
+C<GDBM_File> と同一の書式で，連想配列を作成できる．
 
     tie( %hash, 'Juman::GDBM_File', $dbfile, &GDBM_WRCREAT, 0640 );
 
-��5�����ˤϡ��ǡ����١����ե�����򿷵�����������Υե�����°������
-�ꤵ��Ƥ��롥
+第5引数には，データベースファイルを新規作成する場合のファイル属性が指
+定されている．
 
-��5�������ά�������ϡ�C<DB_File> �ߴ��ν񼰤��Ȥ��Ƥ���ȸ��ʤ���
-�롥
+第5引数を省略した場合は，C<DB_File> 互換の書式が使われていると見なされ
+る．
 
     tie( %hash, 'Juman::GDBM_File', $dbfile, &O_CREAT );
 
-���ξ�硤�ǡ����١����ե�����򳫤��⡼�ɤ���ꤷ�Ƥ�����4�����ˤϡ�
-C<O_CREAT>, C<O_RDWR> �ʤ� C<DB_File> �����Υǡ����١����򳫤�����Ʊ��
-�����Ȥ����ǡ����١����ե�����򿷵�����������Υե�����°���ϡ�
-C<umask> ���֤��ͤ��鼫ưŪ�˻��Ф���롥
+この場合，データベースファイルを開くモードを指定している第4引数には，
+C<O_CREAT>, C<O_RDWR> など C<DB_File> 形式のデータベースを開く時と同じ
+指定を使う．データベースファイルを新規作成する場合のファイル属性は，
+C<umask> の返り値から自動的に算出される．
 
 =cut
 sub TIEHASH {
@@ -149,14 +149,13 @@ L<perltie>
 =over 4
 
 =item
-�ڲ� ��̭ <tsuchiya@pine.kuee.kyoto-u.ac.jp>
+土屋 雅稔 <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 
 =cut
 
 __END__
 # Local Variables:
 # mode: perl
-# coding: euc-japan
 # use-kuten-for-period: nil
 # use-touten-for-comma: nil
 # End:

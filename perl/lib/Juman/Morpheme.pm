@@ -4,19 +4,19 @@ require 5.004_04; # For base pragma.
 use Carp;
 use strict;
 use base qw/ Juman::Katuyou Juman::KULM::Morpheme /;
-use vars qw/ @ATTRS /;
+use vars qw/ @ATTRS $ENCODING /;
 use Encode;
 =head1 NAME
 
-Juman::Morpheme - ·ÁÂÖÁÇ¥ª¥Ö¥¸¥§¥¯¥È in Juman
+Juman::Morpheme - å½¢æ…‹ç´ ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ in Juman
 
 =head1 SYNOPSIS
 
-  $m = new Juman::Morpheme( "²òÀÏ ¤«¤¤¤»¤­ ²òÀÏ Ì¾»ì 6 ¥µÊÑÌ¾»ì 2 * 0 * 0" );
+  $m = new Juman::Morpheme( "è§£æ ã‹ã„ã›ã è§£æ åè© 6 ã‚µå¤‰åè© 2 * 0 * 0" );
 
 =head1 DESCRIPTION
 
-·ÁÂÖÁÇ¤Î³Æ¼ï¾ğÊó¤òÊİ»ı¤¹¤ë¥ª¥Ö¥¸¥§¥¯¥È¡¥
+å½¢æ…‹ç´ ã®å„ç¨®æƒ…å ±ã‚’ä¿æŒã™ã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆï¼
 
 =head1 CONSTRUCTOR
 
@@ -24,12 +24,15 @@ Juman::Morpheme - ·ÁÂÖÁÇ¥ª¥Ö¥¸¥§¥¯¥È in Juman
 
 =item new ( SPEC, ID )
 
-Âè1°ú¿ô I<SPEC> ¤Ë Juman ¤Î½ĞÎÏ¤òÂåÆş¤·¤Æ¸Æ¤Ó½Ğ¤¹¤È¡¤¤½¤Î¹Ô¤ÎÆâÍÆ¤ò²ò
-ÀÏ¤·¡¤ÁêÅö¤¹¤ë·ÁÂÖÁÇ¥ª¥Ö¥¸¥§¥¯¥È¤òÀ¸À®¤¹¤ë¡¥
+ç¬¬1å¼•æ•° I<SPEC> ã« Juman ã®å‡ºåŠ›ã‚’ä»£å…¥ã—ã¦å‘¼ã³å‡ºã™ã¨ï¼Œãã®è¡Œã®å†…å®¹ã‚’è§£
+æã—ï¼Œç›¸å½“ã™ã‚‹å½¢æ…‹ç´ ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆã™ã‚‹ï¼
 
 =back
 
 =cut
+
+$ENCODING = $JUMAN::ENCODING ? $JUMAN::ENCODING : 'utf8';
+
 @ATTRS = ( 'midasi',
 	   'yomi',
 	   'genkei',
@@ -50,8 +53,8 @@ sub new {
     my @value;
     my( @keys ) = @ATTRS;
     $spec =~ s/\s*$//;
-    if( $spec =~ s/^\\  \\  \\  ÆÃ¼ì 1 ¶õÇò 6// ){
-	@value = ( '\ ', '\ ', '\ ', 'ÆÃ¼ì', '1', '¶õÇò', '6' );
+    if( $spec =~ s/^\\  \\  \\  ç‰¹æ®Š 1 ç©ºç™½ 6// ){
+	@value = ( '\ ', '\ ', '\ ', 'ç‰¹æ®Š', '1', 'ç©ºç™½', '6' );
 	push( @value, split( / /, $spec, scalar(@keys) - 7 ) );
     } else {
 	@value = split( / /, $spec, scalar(@keys) );
@@ -70,7 +73,7 @@ sub new {
 
 =item midasi
 
-·ÁÂÖÁÇ¤Î¸«½Ğ¤·¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®è¦‹å‡ºã—ã‚’è¿”ã™ï¼
 
 =cut
 sub midasi {
@@ -79,7 +82,7 @@ sub midasi {
 
 =item yomi
 
-·ÁÂÖÁÇ¤ÎÆÉ¤ß¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®èª­ã¿ã‚’è¿”ã™ï¼
 
 =cut
 sub yomi {
@@ -88,7 +91,7 @@ sub yomi {
 
 =item genkei
 
-·ÁÂÖÁÇ¤Î¸¶·Á¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®åŸå½¢ã‚’è¿”ã™ï¼
 
 =cut
 sub genkei {
@@ -97,7 +100,7 @@ sub genkei {
 
 =item hinsi
 
-·ÁÂÖÁÇ¤ÎÉÊ»ì¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®å“è©ã‚’è¿”ã™ï¼
 
 =cut
 sub hinsi {
@@ -106,7 +109,7 @@ sub hinsi {
 
 =item hinsi_id
 
-·ÁÂÖÁÇ¤ÎÉÊ»ìÈÖ¹æ¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®å“è©ç•ªå·ã‚’è¿”ã™ï¼
 
 =cut
 sub hinsi_id {
@@ -115,7 +118,7 @@ sub hinsi_id {
 
 =item bunrui
 
-·ÁÂÖÁÇ¤ÎºÙÊ¬Îà¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®ç´°åˆ†é¡ã‚’è¿”ã™ï¼
 
 =cut
 sub bunrui {
@@ -124,7 +127,7 @@ sub bunrui {
 
 =item bunrui_id
 
-·ÁÂÖÁÇ¤ÎºÙÊ¬ÎàÈÖ¹æ¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®ç´°åˆ†é¡ç•ªå·ã‚’è¿”ã™ï¼
 
 =cut
 sub bunrui_id {
@@ -133,7 +136,7 @@ sub bunrui_id {
 
 =item katuyou1
 
-·ÁÂÖÁÇ¤Î³èÍÑ·¿¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®æ´»ç”¨å‹ã‚’è¿”ã™ï¼
 
 =cut
 sub katuyou1 {
@@ -142,7 +145,7 @@ sub katuyou1 {
 
 =item katuyou1_id
 
-·ÁÂÖÁÇ¤Î³èÍÑ·¿ÈÖ¹æ¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®æ´»ç”¨å‹ç•ªå·ã‚’è¿”ã™ï¼
 
 =cut
 sub katuyou1_id {
@@ -151,7 +154,7 @@ sub katuyou1_id {
 
 =item katuyou2
 
-·ÁÂÖÁÇ¤Î³èÍÑ·Á¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®æ´»ç”¨å½¢ã‚’è¿”ã™ï¼
 
 =cut
 sub katuyou2 {
@@ -160,7 +163,7 @@ sub katuyou2 {
 
 =item katuyou2_id
 
-·ÁÂÖÁÇ¤Î³èÍÑ·ÁÈÖ¹æ¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®æ´»ç”¨å½¢ç•ªå·ã‚’è¿”ã™ï¼
 
 =cut
 sub katuyou2_id {
@@ -169,8 +172,8 @@ sub katuyou2_id {
 
 =item imis
 
-·ÁÂÖÁÇ¤Î°ÕÌ£¾ğÊó¤òÊÖ¤¹¡¥°ÕÌ£¾ğÊó¤Ï¡¤Juman ¤Ë C<-e2> ¥ª¥×¥·¥ç¥ó¤ò»ØÄê¤·
-¤Æ¼Â¹Ô¤¹¤ë¤ÈÆÀ¤é¤ì¤ë¡¥
+å½¢æ…‹ç´ ã®æ„å‘³æƒ…å ±ã‚’è¿”ã™ï¼æ„å‘³æƒ…å ±ã¯ï¼ŒJuman ã« C<-e2> ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã‚’æŒ‡å®šã—
+ã¦å®Ÿè¡Œã™ã‚‹ã¨å¾—ã‚‰ã‚Œã‚‹ï¼
 
 =cut
 sub imis {
@@ -179,7 +182,7 @@ sub imis {
 
 =item push_imis
 
-°ÕÌ£¾ğÊó¤òÄÉ²Ã¤¹¤ë¡¥
+æ„å‘³æƒ…å ±ã‚’è¿½åŠ ã™ã‚‹ï¼
 
 =cut
 sub push_imis {
@@ -198,14 +201,14 @@ sub push_imis {
 
 =item repname
 
-·ÁÂÖÁÇ¤ÎÂåÉ½É½µ­¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®ä»£è¡¨è¡¨è¨˜ã‚’è¿”ã™ï¼
 
 =cut
 sub repname {
     my ( $this ) = @_;
-    my $pat = 'ÂåÉ½É½µ­';
+    my $pat = 'ä»£è¡¨è¡¨è¨˜';
     if( utf8::is_utf8( $this->midasi ) ){
-	$pat = decode('euc-jp', $pat);
+	$pat = decode($ENCODING, $pat);
     }
 
     if ( defined $this->{imis} ){
@@ -218,43 +221,43 @@ sub repname {
 
 =item repnames
 
-·ÁÂÖÁÇ¤ÎÂåÉ½É½µ­¡ÊÛ£ËæÀ­¤¬¤¢¤ë¾ì¹ç¤Ï¡Ö?¡×¤ÇÏ¢·ë¡Ë¤òÊÖ¤¹¡¥
-°ú¿ô(¡â0)¤òÍ¿¤¨¤ë¤È¡¢²»·±²ò¾Ã¤·¤¿¾ì¹ç¤ÎÛ£ËæÀ­¤ÏÌµ»ë¤¹¤ë.
+å½¢æ…‹ç´ ã®ä»£è¡¨è¡¨è¨˜ï¼ˆæ›–æ˜§æ€§ãŒã‚ã‚‹å ´åˆã¯ã€Œ?ã€ã§é€£çµï¼‰ã‚’è¿”ã™ï¼
+å¼•æ•°(â‰ 0)ã‚’ä¸ãˆã‚‹ã¨ã€éŸ³è¨“è§£æ¶ˆã—ãŸå ´åˆã®æ›–æ˜§æ€§ã¯ç„¡è¦–ã™ã‚‹.
 
 =cut
 sub repnames {
     my ( $this, $flag ) = @_;
 
-    my $pat = '²»·±²ò¾Ã';
+    my $pat = 'éŸ³è¨“è§£æ¶ˆ';
     if( utf8::is_utf8( $this->midasi ) ){
-	$pat = decode('euc-jp', $pat);
+	$pat = decode($ENCODING, $pat);
     }
 
     my ( @ret );
     my $org_rep = $this->repname();
-    my $rep = $org_rep ? $org_rep : $this->make_repname(); # ¤Ê¤±¤ì¤Ğºî¤ë
+    my $rep = $org_rep ? $org_rep : $this->make_repname(); # ãªã‘ã‚Œã°ä½œã‚‹
     push( @ret, $rep ) if $rep;
-    if ( $org_rep && # ºî¤Ã¤¿¾ì¹ç¤ÏÆ±·Á°ÛµÁ¸ì¤Ë¤Ä¤¤¤Æ¤âÆ±¤¸¤Ë¤Ê¤ë¤Î¤Ç¥¹¥­¥Ã¥×
-	 # $flag¤¬Î©¤Ã¤Æ¤¤¤ë¾ì¹ç¤Ï²»·±²ò¾Ã¤·¤¿¾ì¹ç¤ÎÛ£ËæÀ­¤ÏÌµ»ë
+    if ( $org_rep && # ä½œã£ãŸå ´åˆã¯åŒå½¢ç•°ç¾©èªã«ã¤ã„ã¦ã‚‚åŒã˜ã«ãªã‚‹ã®ã§ã‚¹ã‚­ãƒƒãƒ—
+	 # $flagãŒç«‹ã£ã¦ã„ã‚‹å ´åˆã¯éŸ³è¨“è§£æ¶ˆã—ãŸå ´åˆã®æ›–æ˜§æ€§ã¯ç„¡è¦–
 	 !( $flag && $this->spec =~ /<$pat>/ )) { 
 	push @ret, $this->get_doukei_reps;
     }
 
-    my ( %scan ); # ½ÅÊ£¤òºï½ü
+    my ( %scan ); # é‡è¤‡ã‚’å‰Šé™¤
     join( '?', grep(!$scan{$_}++, sort @ret) );
 
 }
 
 =item get_doukei_reps
 
-·ÁÂÖÁÇ¤ÎÆ±·¿°ÛµÁ¸ì¤ÎÂåÉ½É½µ­¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®åŒå‹ç•°ç¾©èªã®ä»£è¡¨è¡¨è¨˜ã‚’è¿”ã™ï¼
 
 =cut
 sub get_doukei_reps {
     my ( $this ) = @_;
 
     my ( @reps );
-    for my $doukei ( $this->doukei() ) { # Æ±·Á°ÛµÁ¸ì (@)
+    for my $doukei ( $this->doukei() ) { # åŒå½¢ç•°ç¾©èª (@)
 	my $rep = $doukei->repname();
 	$rep = $doukei->make_repname() unless $rep;
 	push( @reps, $rep ) if $rep;
@@ -265,20 +268,20 @@ sub get_doukei_reps {
 
 =item make_repname
 
-·ÁÂÖÁÇ¤ÎÂåÉ½É½µ­¤òºî¤ë¡¥
+å½¢æ…‹ç´ ã®ä»£è¡¨è¡¨è¨˜ã‚’ä½œã‚‹ï¼
 
 =cut
 sub make_repname {
     my ( $this ) = @_;
-    my $basic_form_str = '´ğËÜ·Á';
+    my $basic_form_str = 'åŸºæœ¬å½¢';
     if( utf8::is_utf8( $this->midasi ) ){
-	$basic_form_str = decode( 'euc-jp', $basic_form_str );
+	$basic_form_str = decode( $ENCODING, $basic_form_str );
     }
 
-    # ³èÍÑ¸ì¤Ê¤é´ğËÜ·Á¤ËÌá¤¹
+    # æ´»ç”¨èªãªã‚‰åŸºæœ¬å½¢ã«æˆ»ã™
 
     my $new_m = $this->change_katuyou2( $basic_form_str );
-    if ( $new_m ){ # ³èÍÑ¸ì
+    if ( $new_m ){ # æ´»ç”¨èª
 	return $new_m->genkei . '/' . $new_m->yomi;
     }
     else {
@@ -288,14 +291,14 @@ sub make_repname {
 
 =item kanou_dousi
 
-·ÁÂÖÁÇ¤Î²ÄÇ½Æ°»ì¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®å¯èƒ½å‹•è©ã‚’è¿”ã™ï¼
 
 =cut
 sub kanou_dousi {
     my ( $this ) = @_;
-    my $pat = '²ÄÇ½Æ°»ì';
+    my $pat = 'å¯èƒ½å‹•è©';
     if( utf8::is_utf8( $this->midasi ) ) {
-	$pat = decode('euc-jp', $pat);
+	$pat = decode($ENCODING, $pat);
     }
 
     if ( defined $this->{imis} ) {
@@ -308,7 +311,7 @@ sub kanou_dousi {
 
 =item push_doukei( DOUKEI )
 
-Æ±·Á°ÛµÁ¸ì I<DOUKEI> ¤òÅĞÏ¿¤¹¤ë¡¥
+åŒå½¢ç•°ç¾©èª I<DOUKEI> ã‚’ç™»éŒ²ã™ã‚‹ï¼
 
 =cut
 sub push_doukei {
@@ -319,7 +322,7 @@ sub push_doukei {
 
 =item doukei
 
-·ÁÂÖÁÇ¤ÎÆ±·Á°ÛµÁ¸ì¤Î¥ê¥¹¥È¤òÊÖ¤¹¡¥
+å½¢æ…‹ç´ ã®åŒå½¢ç•°ç¾©èªã®ãƒªã‚¹ãƒˆã‚’è¿”ã™ï¼
 
 =cut
 sub doukei {
@@ -333,7 +336,7 @@ sub doukei {
 
 =item id
 
-¥³¥ó¥¹¥È¥é¥¯¥¿¤ò¸Æ¤Ó½Ğ¤·¤¿¤È¤­¤Ë»ØÄê¤·¤¿ ID ¤òÊÖ¤¹¡¥
+ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã‚’å‘¼ã³å‡ºã—ãŸã¨ãã«æŒ‡å®šã—ãŸ ID ã‚’è¿”ã™ï¼
 
 =cut
 sub id {
@@ -343,7 +346,7 @@ sub id {
 
 =item spec
 
-·ÁÂÖÁÇ¥ª¥Ö¥¸¥§¥¯¥È¤òÊ¸»úÎó¤ËÊÑ´¹¤¹¤ë¡¥
+å½¢æ…‹ç´ ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’æ–‡å­—åˆ—ã«å¤‰æ›ã™ã‚‹ï¼
 
 =cut
 sub spec {
@@ -374,14 +377,13 @@ L<Juman::KULM::Morpheme>
 =over 4
 
 =item
-ÅÚ²° ²íÌ­ <tsuchiya@pine.kuee.kyoto-u.ac.jp>
+åœŸå±‹ é›…ç¨” <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 
 =cut
 
 __END__
 # Local Variables:
 # mode: perl
-# coding: euc-japan
 # use-kuten-for-period: nil
 # use-touten-for-comma: nil
 # End:

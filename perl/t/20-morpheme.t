@@ -7,30 +7,30 @@ BEGIN { plan tests => 18 }
 
 use Juman::Morpheme;
 
-my $spec = "¤Ç¤¢¤ê ¤Ç¤¢¤ê ¤À È½Äê»ì 4 * 0 È½Äê»ì 25 ¥Ç¥¢¥ëÎó´ğËÜÏ¢ÍÑ·Á 18\n";
+my $spec = "ã§ã‚ã‚Š ã§ã‚ã‚Š ã  åˆ¤å®šè© 4 * 0 åˆ¤å®šè© 25 ãƒ‡ã‚¢ãƒ«åˆ—åŸºæœ¬é€£ç”¨å½¢ 18\n";
 my $mrph = Juman::Morpheme->new( $spec );
 
 ok(defined $mrph);
-ok($mrph->midasi eq '¤Ç¤¢¤ê');
-ok($mrph->yomi eq '¤Ç¤¢¤ê');
-ok($mrph->genkei eq '¤À');
-ok($mrph->hinsi eq 'È½Äê»ì');
+ok($mrph->midasi eq 'ã§ã‚ã‚Š');
+ok($mrph->yomi eq 'ã§ã‚ã‚Š');
+ok($mrph->genkei eq 'ã ');
+ok($mrph->hinsi eq 'åˆ¤å®šè©');
 ok($mrph->hinsi_id == 4);
 ok($mrph->bunrui eq '*');
 ok($mrph->bunrui_id == 0);
-ok($mrph->katuyou1 eq 'È½Äê»ì');
+ok($mrph->katuyou1 eq 'åˆ¤å®šè©');
 ok($mrph->katuyou1_id == 25);
-ok($mrph->katuyou2 eq '¥Ç¥¢¥ëÎó´ğËÜÏ¢ÍÑ·Á');
+ok($mrph->katuyou2 eq 'ãƒ‡ã‚¢ãƒ«åˆ—åŸºæœ¬é€£ç”¨å½¢');
 ok($mrph->katuyou2_id == 18);
 ok($mrph->spec eq $spec );
 
-$spec = "¤Ç¤¢¤ê ¤Ç¤¢¤ê ¤À È½Äê»ì 4 * 0 È½Äê»ì 25 ¥Ç¥¢¥ëÎó´ğËÜÏ¢ÍÑ·Á 18 NIL\n";
+$spec = "ã§ã‚ã‚Š ã§ã‚ã‚Š ã  åˆ¤å®šè© 4 * 0 åˆ¤å®šè© 25 ãƒ‡ã‚¢ãƒ«åˆ—åŸºæœ¬é€£ç”¨å½¢ 18 NIL\n";
 $mrph = Juman::Morpheme->new( $spec );
 ok(defined $mrph);
 ok($mrph->imis eq "NIL");
 ok($mrph->spec eq $spec);
 
-$spec = "@ @ @ Ì¤ÄêµÁ¸ì 15 ¤½¤ÎÂ¾ 1 * 0 * 0";
+$spec = "@ @ @ æœªå®šç¾©èª 15 ãã®ä»– 1 * 0 * 0";
 $mrph = Juman::Morpheme->new( $spec );
 ok(defined $mrph);
 ok($mrph->midasi eq '@');

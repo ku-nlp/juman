@@ -9,7 +9,7 @@ use vars qw/ @EXPORT_OK /;
 
 =head1 NAME
 
-Juman::Sexp - S�����ɤ߹���⥸�塼��
+Juman::Sexp - S式を読み込むモジュール
 
 =head1 SYNOPSIS
 
@@ -19,8 +19,8 @@ Juman::Sexp - S�����ɤ߹���⥸�塼��
 
 =head1 DESCRIPTION
 
-C<Juman::Sexp> �ϡ�Juman ���������ե�������Ѥ����Ƥ���S�����ɤ߹�
-�ि��δؿ� C<parse> ��������Ƥ��롥
+C<Juman::Sexp> は，Juman 辞書や設定ファイルに用いられているS式を読み込
+むための関数 C<parse> を定義している．
 
 =head1 FUNCTIONS
 
@@ -28,22 +28,22 @@ C<Juman::Sexp> �ϡ�Juman ���������ե�������Ѥ����Ƥ���S�����ɤ߹�
 
 =item parse
 
-���ꤵ�줿�оݤ�S���Ȥ��Ʋ��Ϥ���ؿ����ʲ��Υ��ץ���������դ��롥
+指定された対象を，S式として解析する関数．以下のオプションを受け付ける．
 
 =over 4
 
 =item file => FILE
 
-���Ϥ���ե��������ꤹ�롥
+解析するファイルを指定する．
 
 =item string => STRING
 
-���Ϥ���ʸ�������ꤹ�롥
+解析する文字列を指定する．
 
 =item comment => STRING
 
-�����ȳ���ʸ�������ꤹ�롥�����Ȥ�ޤä����ޤޤʤ��оݤ���Ϥ���
-���ϡ��ʲ��Τ褦��̤����ͤ���ꤹ�롥
+コメント開始文字列を指定する．コメントをまったく含まない対象を解析する
+場合は，以下のように未定義値を指定する．
 
   Example:
 
@@ -51,25 +51,25 @@ C<Juman::Sexp> �ϡ�Juman ���������ե�������Ѥ����Ƥ���S�����ɤ߹�
 
 =item debug => BOOLEAN
 
-�ǥХå��Ѥξ������Ϥ���褦�˻ؼ����롥
+デバッグ用の情報を出力するように指示する．
 
 =back
 
 =back
 
-�㤨�С�ʸ������оݤȤ��Ʋ��Ϥ�����ϡ��ʲ��Τ褦�˻��ꤹ�롥
+例えば，文字列を対象として解析する場合は，以下のように指定する．
 
   Example:
 
     &parse( string =>
-            "(̾�� (����̾�� ((�ɤ� ����)(���Ф��� �� ���� ����))))" );
+            "(名詞 (普通名詞 ((読み かめ)(見出し語 亀 かめ カメ))))" );
 
-���ξ�硤���Τ褦�ʲ��Ϸ�̤��֤���롥
+この場合，次のような解析結果が返される．
 
-    ( [ '̾��',
-         [ '����̾��',
-           [ [ '�ɤ�', '����' ],
-             [ '���Ф���', '��', '����', '����' ]
+    ( [ '名詞',
+         [ '普通名詞',
+           [ [ '読み', 'かめ' ],
+             [ '見出し語', '亀', 'かめ', 'カメ' ]
            ]
          ]
        ] )
@@ -111,8 +111,8 @@ sub parse {
 sub _parse {
     my( $getline, $place, $comment, $debug ) = @_;
     my $str = "";
-    my @stack;		# shift-reduce ˡ�ǹ�ʸ���Ϥ��뤿��Υ����å� 
-    my @offset;		# reduce ���٤����ǿ���Ͽ���Ƥ���������
+    my @stack;		# shift-reduce 法で構文解析するためのスタック 
+    my @offset;		# reduce すべき要素数を記録しておくカウンタ
     while(1){
 	$str =~ s/\A\s*//;
 	$str =~ s/\A$comment[^\n]*\n\s*// if $comment;
@@ -127,12 +127,12 @@ sub _parse {
 		}
 	    }
 	}
-	# ����̤� shift ����
+	# 開括弧を shift する
 	elsif( $str =~ s/\A\(// ){
 	    $offset[0]-- if @offset;
 	    unshift( @offset, 0 );
 	}
-	# ʸ����� shift ����
+	# 文字列を shift する
 	elsif( $str =~ m/\A"/ ){
 	    while(1){
 		if( $str =~ s/\A("(?:[^"\\]+|\\.)*")// ){
@@ -146,12 +146,12 @@ sub _parse {
 		}
 	    }
 	}
-	# ����ܥ�� shift ����
+	# シンボルを shift する
 	elsif( $str =~ s/\A([^\s"()]+)// ){
 	    $offset[0]--;
 	    push( @stack, $1 );
 	}
-	# �ĳ��(= �ꥹ��)�� reduce ����
+	# 閉括弧(= リスト)を reduce する
 	elsif( $str =~ s/\A\)// ){
 	    unless( @offset ){
 		die( "Syntax error: too much close brackets ", &$place(), ".\n" );
@@ -184,14 +184,13 @@ TSUCHIYA Masatoshi <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 
 =head1 COPYRIGHT
 
-���ѵڤӺ����ۤˤĤ��Ƥ� GPL2 �ޤ��� Artistic License �˽��äƤ���������
+利用及び再配布については GPL2 または Artistic License に従ってください。
 
 =cut
 
 __END__
 # Local Variables:
 # mode: perl
-# coding: euc-japan
 # use-kuten-for-period: nil
 # use-touten-for-comma: nil
 # End:

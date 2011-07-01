@@ -4,32 +4,32 @@
 
 #include <juman.h>
 
-/* ¥Ï¥Ã¥·¥å¥Æ¡¼¥Ö¥ë¤ÎÀë¸À */
+/* ãƒãƒƒã‚·ãƒ¥ãƒ†ãƒ¼ãƒ–ãƒ«ã®å®£è¨€ */
 #ifdef USE_HASH
 th_hash_node hash_array[HASH_SIZE];
 #endif
 
-pat_node tree_top[MAX_DIC_NUMBER]; /* ÌÚ¤Î¤Í¤Ã¤³¢ö ¼­½ñ¤Î¿ô¤À¤±»È¤¦ */
-FILE *dic_file[MAX_DIC_NUMBER]; /* ÌÚ¤Î¤â¤È¥Ç¡¼¥¿(¼­½ñ¥Õ¥¡¥¤¥ë) */
+pat_node tree_top[MAX_DIC_NUMBER]; /* æœ¨ã®ã­ã£ã“â™ª è¾æ›¸ã®æ•°ã ã‘ä½¿ã† */
+FILE *dic_file[MAX_DIC_NUMBER]; /* æœ¨ã®ã‚‚ã¨ãƒ‡ãƒ¼ã‚¿(è¾æ›¸ãƒ•ã‚¡ã‚¤ãƒ«) */
 
-char line[50000]; /* ÆşÎÏ¹Ô */
-FILE *out_file, *in_file; /* ¥»¡¼¥Ö¥Õ¥¡¥¤¥ë¡¦¥í¡¼¥É¥Õ¥¡¥¤¥ë */
-char  inkey[10000]; /* ¸¡º÷¡¦ÁŞÆş¥­¡¼ */
+char line[50000]; /* å…¥åŠ›è¡Œ */
+FILE *out_file, *in_file; /* ã‚»ãƒ¼ãƒ–ãƒ•ã‚¡ã‚¤ãƒ«ãƒ»ãƒ­ãƒ¼ãƒ‰ãƒ•ã‚¡ã‚¤ãƒ« */
+char  inkey[10000]; /* æ¤œç´¢ãƒ»æŒ¿å…¥ã‚­ãƒ¼ */
 char            *ProgName;
 
-/*** JUMAN¼­½ñ°ú¤­´ØÏ¢ ***/
-int number_of_tree = 0; /* »ÈÍÑ¤¹¤ë¼­½ñ(¥Ñ¥ÈÌÚ)¤Î¿ô */
+/*** JUMANè¾æ›¸å¼•ãé–¢é€£ ***/
+int number_of_tree = 0; /* ä½¿ç”¨ã™ã‚‹è¾æ›¸(ãƒ‘ãƒˆæœ¨)ã®æ•° */
 
 
 /****************************************************
-*                      ¥á¥¤¥ó                       *
+*                      ãƒ¡ã‚¤ãƒ³                       *
 ****************************************************/
 main(int argc, char *argv[])
 {
   char comm;
   int i;
   pat_node *tmp;
-  char kugiri[2]; /* ¶èÀÚ¤êÊ¸»ú */
+  char kugiri[2]; /* åŒºåˆ‡ã‚Šæ–‡å­— */
   char rslt[50000];
   char	CurPath[FILENAME_MAX];
   char	JumanPath[FILENAME_MAX];
@@ -40,9 +40,9 @@ main(int argc, char *argv[])
   th_hash_initialize(hash_array,HASH_SIZE);
 #endif
 
-  sprintf(kugiri,"\t"); /* ¶èÀÚ¤êÊ¸»ú¤Î¥Ç¥Õ¥©¥ë¥È¤Ï¥¿¥Ö */
+  sprintf(kugiri,"\t"); /* åŒºåˆ‡ã‚Šæ–‡å­—ã®ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã¯ã‚¿ãƒ– */
 
-  /* ¥Õ¥¡¥¤¥ë¤«¤éÁŞÆş */
+  /* ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰æŒ¿å…¥ */
   getpath(CurPath, JumanPath);
   sprintf(inkey, "%s%s", CurPath, DICFILE);
 
@@ -57,11 +57,11 @@ main(int argc, char *argv[])
   (void)insert_dic_data(dic_file[number_of_tree],&tree_top[number_of_tree],kugiri);
   number_of_tree++;
 
-  /* ÌÚ¤Î¥»¡¼¥Ö */
+  /* æœ¨ã®ã‚»ãƒ¼ãƒ– */
   sprintf(inkey, "%s%s", CurPath, PATFILE);
   (void)com_s(inkey,&tree_top[0]);
 
-  /* ½ªÎ» */
+  /* çµ‚äº† */
 /*      th_show_hash(hash_array,HASH_SIZE);*/
   printf("QUIT\n");
   exit(0);
@@ -70,15 +70,15 @@ main(int argc, char *argv[])
 /****************************************************
 * insert_dic_data
 * 
-* ¥Ñ¥é¥á¡¼¥¿
-*   string --- Ê¸»úÎó
+* ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+*   string --- æ–‡å­—åˆ—
 ****************************************************/
 void insert_dic_data(FILE *f, pat_node *x_ptr, char *kugiri)
 {
   long i = 0; long entry_ctr = 0;
   int len = 0;
 
-  char corpus_buffer[50000]; /* ¥³¡¼¥Ñ¥¹¤«¤é¤Î¥Ç¡¼¥¿¤ò³ÊÇ¼¤¹¤ë¥Ğ¥Ã¥Õ¥¡ */
+  char corpus_buffer[50000]; /* ã‚³ãƒ¼ãƒ‘ã‚¹ã‹ã‚‰ã®ãƒ‡ãƒ¼ã‚¿ã‚’æ ¼ç´ã™ã‚‹ãƒãƒƒãƒ•ã‚¡ */
   char *c;
 
   while ((c = get_line(f, i)) != NULL) {
@@ -86,7 +86,7 @@ void insert_dic_data(FILE *f, pat_node *x_ptr, char *kugiri)
     len = strlen(corpus_buffer) + 1;
     OL(---------------------\n)
     OL(INSERT:)OI(i)OS(corpus_buffer);
-    (void)pat_insert(f,corpus_buffer, i, x_ptr, kugiri); /* ÁŞÆş*/
+    (void)pat_insert(f,corpus_buffer, i, x_ptr, kugiri); /* æŒ¿å…¥*/
     i += len;
     entry_ctr++;
     if(entry_ctr % 1000 == 0){

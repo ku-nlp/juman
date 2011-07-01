@@ -9,7 +9,7 @@
 #include <config.h>
 #endif
 
-#include	<juman.h>
+#include	"juman.h"
 
 /*
 ------------------------------------------------------------------------------
@@ -39,9 +39,9 @@ extern FORM	Form[TYPE_NO][FORM_NO];
 ------------------------------------------------------------------------------
 */
 
-static int             TBL_NUM;          /* Ï¢ÀÜÉ½¤Î¥µ¥¤¥º */
-static int             I_NUM;            /* Ï¢ÀÜ¹ÔÎó¤Î¹Ô   */
-static int             J_NUM;            /* Ï¢ÀÜ¹ÔÎó¤ÎÎó   */
+static int             TBL_NUM;          /* é€£æ¥è¡¨ã®ã‚µã‚¤ã‚º */
+static int             I_NUM;            /* é€£æ¥è¡Œåˆ—ã®è¡Œ   */
+static int             J_NUM;            /* é€£æ¥è¡Œåˆ—ã®åˆ—   */
 RENSETU_PAIR	       *rensetu_tbl;
 U_CHAR	               *rensetu_mtr;
 
@@ -251,7 +251,7 @@ int check_matrix(int postcon, int precon)
 			       + rensetu_tbl[precon].j_pos ]);
 }
 
-/* ¤½¤ÎÏ¢¸ì¤ËÆÃÍ­¤Îº¸Ï¢ÀÜµ¬Â§¤¬µ­½Ò¤µ¤ì¤Æ¤¤¤ë¤« */
+/* ãã®é€£èªã«ç‰¹æœ‰ã®å·¦é€£æ¥è¦å‰‡ãŒè¨˜è¿°ã•ã‚Œã¦ã„ã‚‹ã‹ */
 int check_matrix_left(int precon)
 {
     int i;
@@ -263,7 +263,7 @@ int check_matrix_left(int precon)
     return FALSE;
 }
 
-/* ¤½¤ÎÏ¢¸ì¤ËÆÃÍ­¤Î±¦Ï¢ÀÜµ¬Â§¤¬µ­½Ò¤µ¤ì¤Æ¤¤¤ë¤« */
+/* ãã®é€£èªã«ç‰¹æœ‰ã®å³é€£æ¥è¦å‰‡ãŒè¨˜è¿°ã•ã‚Œã¦ã„ã‚‹ã‹ */
 int check_matrix_right(int postcon)
 {
     int j;

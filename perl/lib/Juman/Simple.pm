@@ -9,18 +9,18 @@ use vars qw/ @EXPORT /;
 
 =head1 NAME
 
-Juman::Simple - �����ǲ��Ϥ�Ԥ��⥸�塼��
+Juman::Simple - 形態素解析を行うモジュール
 
 =head1 DESCRIPTION
 
-C<Juman::Simple> �ϡ�Juman ���Ѥ��Ʒ����ǲ��Ϥ�Ԥ��ؿ� C<juman> ����
-������⥸�塼��Ǥ��롥
+C<Juman::Simple> は，Juman を用いて形態素解析を行う関数 C<juman> を定
+義するモジュールである．
 
-���Υ⥸�塼���Ȥ��ȡ�C<Juman> �⥸�塼����ñ�ˡ����������¤��줿
-�������Ѥ��뤳�Ȥ��Ǥ��롥�㤨�С����Υ⥸�塼��ϡ��ǽ�˺������� 
-C<Juman> ���֥������Ȥ�����Ѥ���Τǡ����ץ����������ѹ��ʤɤϤǤ�
-�ʤ��������٤�����Ƿ����ǲ��Ϥ�Ԥ�ɬ�פ�������ϡ�C<Juman> �⥸�塼
-���ľ�ܸƤӽФ����ȡ�
+このモジュールを使うと，C<Juman> モジュールを簡単に，しかし制限された
+形で利用することができる．例えば，このモジュールは，最初に作成した 
+C<Juman> オブジェクトを再利用するので，オプションの途中変更などはでき
+ない．より高度な設定で形態素解析を行う必要がある場合は，C<Juman> モジュー
+ルを直接呼び出すこと．
 
 =head1 FUNCTION
 
@@ -28,25 +28,25 @@ C<Juman> ���֥������Ȥ�����Ѥ���Τǡ����ץ����������ѹ��ʤɤϤǤ�
 
 =item juman ($str)
 
-���ꤵ�줿ʸ������оݤȤ��Ʒ����ǲ��Ϥ�Ԥ��ؿ���C<Juman::Result> ��
-�֥������Ȥ��֤���
+指定された文字列を対象として形態素解析を行う関数．C<Juman::Result> オ
+ブジェクトを返す．
 
   Example:
 
     use Juman::Simple;
-    $result = &juman( "����ʸ������ǲ��Ϥ��Ƥ���������" );
+    $result = &juman( "この文を形態素解析してください．" );
     print $result->all();
 
-�����ǲ��ϤΥ��ץ������ѹ�������ϡ�C<use> �λ����ǻ��ꤷ�Ƥ�����
+形態素解析のオプションを変更する場合は，C<use> の時点で指定しておく．
 
   Example:
 
     use Juman::Simple -Option => "-B -e2";
-    $result = &juman( "����ʸ������ǲ��Ϥ��Ƥ���������" );
+    $result = &juman( "この文を形態素解析してください．" );
     print $result->all();
 
-���ץ����ˤϡ�C<Juman::new> �μ����դ��륪�ץ�����Ʊ����Τ������
-���롥
+オプションには，C<Juman::new> の受け付けるオプションと同じものが指定で
+きる．
 
 =cut
 my @OPTION;
@@ -87,14 +87,13 @@ L<Juman::Result>
 =over 4
 
 =item
-�ڲ� ��̭ <tsuchiya@pine.kuee.kyoto-u.ac.jp>
+土屋 雅稔 <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 
 =cut
 
 __END__
 # Local Variables:
 # mode: perl
-# coding: euc-japan
 # use-kuten-for-period: nil
 # use-touten-for-comma: nil
 # End:

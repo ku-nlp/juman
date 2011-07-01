@@ -7,7 +7,7 @@ BEGIN { plan tests => 11 }
 
 use Juman;
 
-my $str = "¤³¤ÎÊ¸¤ò²òÀÏ¤·¤Æ¤¯¤À¤µ¤¤¡£";
+my $str = "ã“ã®æ–‡ã‚’è§£æã—ã¦ãã ã•ã„ã€‚";
 my $juman = new Juman;
 ok( defined $juman );
 
@@ -20,14 +20,14 @@ ok( join('',map($_->midasi,$result->mrph)) eq $str );
 my @buf = split( "\n", $result->spec() );
 ok( @buf >= 7 );
 
-$result = $juman->analysis( "¡Ö ¡×¤ò´Ş¤àÊ¸" );
+$result = $juman->analysis( "ã€Œ ã€ã‚’å«ã‚€æ–‡" );
 ok( defined $result );
 ok( ( $result->mrph )[1]->midasi eq '\ ' );
 
-$result = $juman->analysis( "¡Ö\\¡×¤ò´Ş¤àÊ¸" );
+$result = $juman->analysis( "ã€Œ\\ã€ã‚’å«ã‚€æ–‡" );
 ok( defined $result );
 ok( ( $result->mrph )[1]->midasi eq '\\' );
 
-$result = $juman->analysis( "¡Ö@¡×¤ò´Ş¤àÊ¸" );
+$result = $juman->analysis( "ã€Œ@ã€ã‚’å«ã‚€æ–‡" );
 ok( defined $result );
 ok( ( $result->mrph )[1]->midasi eq '@' );

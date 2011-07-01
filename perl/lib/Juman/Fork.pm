@@ -13,7 +13,7 @@ use vars qw/ @EXPORT_OK $TIMEOUT /;
 
 =head1 NAME
 
-Juman::Fork - ��Ʊ���˼¹Ԥ����ҥץ���������������
+Juman::Fork - 非同期に実行される子プロセスを生成する
 
 =head1 SYNOPSIS
 
@@ -27,9 +27,9 @@ Juman::Fork - ��Ʊ���˼¹Ԥ����ҥץ���������������
 
 =head1 DESCRIPTION
 
-C<Juman::Fork> �ϡ����ꤵ�줿���ޥ�ɤ� fork ���ƻҥץ������Ȥ��Ƽ¹�
-��������ɸ�����Ϥؤν񤭹��ߤȡ�ɸ����ϵڤ�ɸ�२�顼���Ϥ�����ɤ߽�
-����Ԥ�����Υ⥸�塼��Ǥ���
+C<Juman::Fork> は，指定されたコマンドを fork して子プロセスとして実行
+し，その標準入力への書き込みと，標準出力及び標準エラー出力からの読み出
+しを行うためのモジュールです．
 
 =head1 CONSTRUCTOR
 
@@ -37,9 +37,9 @@ C<Juman::Fork> �ϡ����ꤵ�줿���ޥ�ɤ� fork ���ƻҥץ������Ȥ��Ƽ¹�
 
 =item new ( COMMAND [,ARGV] )
 
-C<Juman::Fork> ���֥������Ȥ��������ޤ����ҥץ������Ȥ��Ƽ¹Ԥ��륳��
-��ɤ���1�����˻��ꤷ����2�����ʹߤˤ��Υ��ޥ�ɤ��Ф��륳�ޥ�ɥ饤��
-���ץ�������ꤷ�ޤ���
+C<Juman::Fork> オブジェクトを生成します．子プロセスとして実行するコマ
+ンドを第1引数に指定し，第2引数以降にそのコマンドに対するコマンドライン
+オプションを指定します．
 
 Example:
 
@@ -53,47 +53,47 @@ Example:
 
 =item print( [STR,] )
 
-�����ˤ�äƻ��ꤵ�줿ʸ�����ҥץ�������ɸ�����Ϥ��Ϥ��᥽�åɤǤ���
+引数によって指定された文字列を子プロセスの標準入力に渡すメソッドです．
 
 =item printf( FORMAT [,ARG] )
 
-��1�����ˤ�äƻ��ꤵ�줿�񼰤˽��äơ����ꤵ�줿ʸ�����ҥץ�������
-ɸ�����Ϥ��Ϥ��᥽�åɤǤ���
+第1引数によって指定された書式に従って，指定された文字列を子プロセスの
+標準入力に渡すメソッドです．
 
 =item getline()
 
-�ҥץ�������ɸ����ϵڤ�ɸ�२�顼���Ϥ���1��ʬ�Υǡ�������Ф��᥽��
-�ɤǤ���C<timeout> �ˤ�ä����ꤵ�줿���ְ�����ɤ߽Ф���ʤ���С�
-C<undef> ���֤��ޤ���
+子プロセスの標準出力及び標準エラー出力から1行分のデータを取り出すメソッ
+ドです．C<timeout> によって設定された時間以内に読み出されなければ，
+C<undef> を返します．
 
 =item timeout( VAL )
 
-�ҥץ������ν��Ϥ� C<getline> �᥽�åɤˤ�äƼ��Ф����Υ����ॢ��
-�Ȼ��֤����ꤹ��᥽�åɤǤ��������ॢ���Ȼ��֤ν���ͤˤ��ѿ� 
-C<$Juman::Fork::TIMEOUT> ���ͤ��Ȥ��ޤ���
+子プロセスの出力を C<getline> メソッドによって取り出す場合のタイムアウ
+ト時間を設定するメソッドです．タイムアウト時間の初期値には変数 
+C<$Juman::Fork::TIMEOUT> の値が使われます．
 
 =item alive()
 
-�ҥץ��������ĤäƤ��뤫Ĵ�٤�᥽�åɤǤ���
+子プロセスが残っているか調べるメソッドです．
 
 =item pid()
 
-�ҥץ������� PID ���֤��᥽�åɤǤ���
+子プロセスの PID を返すメソッドです．
 
 =item close()
 
-�ҥץ�������ɸ�����Ϥ�Ϣ�뤵��Ƥ���ѥ��פ��Ĥ���᥽�åɤǤ���
+子プロセスの標準入力と連結されているパイプを閉じるメソッドです．
 
 =item kill()
 
-�ҥץ�����������λ����᥽�åɤǤ���
+子プロセスを強制終了するメソッドです．
 
 =back
 
 =head1 MEMO
 
-Perl-5.8 �ʹߤξ�硤�ҥץ������Ȥ��̿��ˤϡ� C<encoding> �ץ饰�ޤǻ�
-�ꤵ�줿ʸ�������ɤ��Ȥ��ޤ���
+Perl-5.8 以降の場合，子プロセスとの通信には， C<encoding> プラグマで指
+定された文字コードが使われます．
 
 =cut
 BEGIN {
@@ -111,10 +111,10 @@ TSUCHIYA Masatoshi <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 
 =cut
 
-# �ǥե���ȤΥ����ॢ���Ȼ���
+# デフォルトのタイムアウト時間
 $TIMEOUT = 60;
 
-# ���ꤵ�줿���ޥ�ɤ�ҥץ������Ȥ��� fork ����
+# 指定されたコマンドを子プロセスとして fork する
 sub new {
     my( $this, @argv ) = @_;
     ( @argv >= 1 ) || die 'Usage: $p = new Juman::Fork( command, [arguments] )';
@@ -124,7 +124,7 @@ sub new {
 
   FORK: {
 	if( my $pid = fork ){
-	    # �ƥץ�����¦�ν���
+	    # 親プロセス側の処理
 	    $read->reader;
 	    $write->writer;
 #	    &set_encoding( $read );
@@ -138,7 +138,7 @@ sub new {
 	    bless $this;
 	    return $this;
 	} elsif( defined $pid ){
-	    # �ҥץ�����¦�ν���
+	    # 子プロセス側の処理
 	    $write->reader;
 	    $read->writer;
 	    STDOUT->fdopen( $read, "w" );
@@ -156,43 +156,43 @@ sub new {
 }
 
 
-# �ҥץ�������ɸ�����Ϥ�ʸ�����񤭹���
+# 子プロセスの標準入力に文字列を書き込む
 sub print {
     my $this = shift;
     $this->{WRITE}->print( @_ );
-    $this->{WRITE}->flush;		# ����Ū�˥ե�å��夹��
+    $this->{WRITE}->flush;		# 明示的にフラッシュする
     1;
 }
 
 
-# �ҥץ�������ɸ�����Ϥ��Ф�����դ�����
+# 子プロセスの標準入力に対する書式付き出力
 sub printf {
     my $this = shift;
     my $fmt  = shift;
     $this->{WRITE}->print( sprintf( $fmt, @_ ) );
-    $this->{WRITE}->flush;		# ����Ū�˥ե�å��夹��
+    $this->{WRITE}->flush;		# 明示的にフラッシュする
     1;
 }
 
 
-# �ҥץ�������ɸ�����Ϥ��Ĥ���ؿ�
+# 子プロセスの標準入力を閉じる関数
 sub close {
     my( $this ) = @_;
     if( $this and $this->{WRITE} ){
-	$this->{WRITE}->print( "\004" ); # ��� Ctrl-D �����äƤ���
+	$this->{WRITE}->print( "\004" ); # 先に Ctrl-D を送っておく
 	$this->{WRITE}->close;
     }
 }
 
 
-# �����ॢ���Ȥλ��֤����ꤹ��ؿ�
+# タイムアウトの時間を設定する関数
 sub timeout {
     my( $this, $timeout ) = @_;
     $this->{TIMEOUT} = eval $timeout;
 }
 
 
-# �ҥץ�������ɸ����Ϥ�ɸ�२�顼���Ϥ��饿���ॢ���ȤĤ����ɤ߽Ф�
+# 子プロセスの標準出力と標準エラー出力からタイムアウトつきで読み出す
 sub getline {
     my( $this ) = @_;
     my $buf = "";
@@ -209,21 +209,21 @@ sub getline {
 }
 
 
-# �ҥץ������� PID ���֤��ؿ�
+# 子プロセスの PID を返す関数
 sub pid {
     my( $this ) = @_;
     $this->{PID};
 }
 
 
-# �ҥץ��������ޤ������Ƥ��뤫Ĵ�٤�ؿ�
+# 子プロセスがまだ生きているか調べる関数
 sub alive {
     my( $this ) = @_;
     ( waitpid( $this->{PID},&POSIX::WNOHANG ) == 0 ) && ( $? == -1 );
 }
 
 
-# �ҥץ�����������λ����ؿ�
+# 子プロセスを強制終了する関数
 sub kill {
     my( $this ) = @_;
     $this->close;
@@ -240,7 +240,6 @@ sub kill {
 __END__
 # Local Variables:
 # mode: perl
-# coding: euc-japan
 # use-kuten-for-period: nil
 # use-touten-for-comma: nil
 # End:

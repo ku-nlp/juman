@@ -6,15 +6,15 @@ use strict;
 
 =head1 NAME
 
-Juman::KULM::Morpheme - KULM ¸ß´¹ API
+Juman::KULM::Morpheme - KULM äº’æ› API
 
 =head1 SYNOPSIS
 
-¤³¤Î¥¯¥é¥¹¤ò¥ß¥­¥·¥ó¥°¤·¤Æ»ÈÍÑ¤¹¤ë¡¥
+ã“ã®ã‚¯ãƒ©ã‚¹ã‚’ãƒŸã‚­ã‚·ãƒ³ã‚°ã—ã¦ä½¿ç”¨ã™ã‚‹ï¼
 
 =head1 DESCRIPTION
 
-C<KULM::Juman::M> ¸ß´¹¤Î¥á¥½¥Ã¥É¤ò C<Juman::Morpheme> ¥¯¥é¥¹¤ËÄÉ²Ã¤¹¤ë¡¥
+C<KULM::Juman::M> äº’æ›ã®ãƒ¡ã‚½ãƒƒãƒ‰ã‚’ C<Juman::Morpheme> ã‚¯ãƒ©ã‚¹ã«è¿½åŠ ã™ã‚‹ï¼
 
 =head1 METHODS
 
@@ -22,7 +22,7 @@ C<KULM::Juman::M> ¸ß´¹¤Î¥á¥½¥Ã¥É¤ò C<Juman::Morpheme> ¥¯¥é¥¹¤ËÄÉ²Ã¤¹¤ë¡¥
 
 =item get ($attr)
 
-»ØÄê¤µ¤ì¤¿Â°À­¤òÊÖ¤¹¡¥
+æŒ‡å®šã•ã‚ŒãŸå±æ€§ã‚’è¿”ã™ï¼
 
 =cut
 my %KULM = ( M      => 'midasi',
@@ -51,7 +51,7 @@ sub get {
 
 =item gets (@attr)
 
-»ØÄê¤µ¤ì¤¿Â°À­¤Î¥ê¥¹¥È¤òÊÖ¤¹¡¥C<all> ¤È¤¤¤¦»ØÄê¤¬²ÄÇ½¤Ç¤¢¤ë¡¥
+æŒ‡å®šã•ã‚ŒãŸå±æ€§ã®ãƒªã‚¹ãƒˆã‚’è¿”ã™ï¼C<all> ã¨ã„ã†æŒ‡å®šãŒå¯èƒ½ã§ã‚ã‚‹ï¼
 
 =cut
 sub gets {
@@ -65,7 +65,7 @@ sub gets {
 
 =item string ($delimiter, @attr)
 
-»ØÄê¤µ¤ì¤¿Â°À­¤ò C<$delimiter> ¤Ç·ë¹ç¤·¤¿Ê¸»úÎó¤òÊÖ¤¹¡¥
+æŒ‡å®šã•ã‚ŒãŸå±æ€§ã‚’ C<$delimiter> ã§çµåˆã—ãŸæ–‡å­—åˆ—ã‚’è¿”ã™ï¼
 
 =cut
 sub string {
@@ -97,14 +97,13 @@ L<KULM::Juman::M>
 =over 4
 
 =item
-ÅÚ²° ²íÌ­ <tsuchiya@pine.kuee.kyoto-u.ac.jp>
+åœŸå±‹ é›…ç¨” <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 
 =cut
 
 __END__
 # Local Variables:
 # mode: perl
-# coding: euc-japan
 # use-kuten-for-period: nil
 # use-touten-for-comma: nil
 # End:

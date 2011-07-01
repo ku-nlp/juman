@@ -75,8 +75,8 @@ static void output_mrph(FILE *fp, MRPH *mrph_p)
 {
     long       imiptr;
 
-    /*ÅĞÏ¿¥Ç¡¼¥¿¤Î¥Õ¥©¡¼¥Ş¥Ã¥È
-      [ÉÊ»ì¡¤ºÙÊ¬Îà¡¤³èÍÑ·¿¡¤³èÍÑ·Á¡¤½Å¤ß¡¤¥¢¥É¥ì¥¹¡¤°ÕÌ£(¸å²ó¤·)¡¤ÆÉ¤ß] */
+    /*ç™»éŒ²ãƒ‡ãƒ¼ã‚¿ã®ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆ
+      [å“è©ï¼Œç´°åˆ†é¡ï¼Œæ´»ç”¨å‹ï¼Œæ´»ç”¨å½¢ï¼Œé‡ã¿ï¼Œã‚¢ãƒ‰ãƒ¬ã‚¹ï¼Œæ„å‘³(å¾Œå›ã—)ï¼Œèª­ã¿] */
 	
     numeral_encode(fp, mrph_p->hinsi);
     numeral_encode(fp, mrph_p->bunrui);
@@ -86,7 +86,7 @@ static void output_mrph(FILE *fp, MRPH *mrph_p)
     numeral_encode2(fp, mrph_p->con_tbl);
     hiragana_encode(fp, mrph_p->yomi);
 
-    /* °ÕÌ£¾ğÊó¤Î½ñ¤­¹ş¤ß */
+    /* æ„å‘³æƒ…å ±ã®æ›¸ãè¾¼ã¿ */
     if (!Null(mrph_p->imi))
 	imi_print(fp, mrph_p->imi);
 }
@@ -109,7 +109,7 @@ static void numeral_encode2(FILE *fp, int num)
 
 static void hiragana_encode(FILE *fp, unsigned char *str)
 {
-    if (*str != '@') /* ¶õÎó¤Ç¤Ê¤¤¾ì¹ç */
+    if (*str != '@') /* ç©ºåˆ—ã§ãªã„å ´åˆ */
 	fprintf(fp, "%s", str);
     fputc(0x20, fp);
 }
@@ -271,7 +271,7 @@ static U_CHAR *midasi(CELL *x)
      CELL	*y;
      U_CHAR	*s;
 
-     if (Null(y = assoc(tmp_atom((U_CHAR *)"¸«½Ğ¤·¸ì"), x)))
+     if (Null(y = assoc(tmp_atom((U_CHAR *)"è¦‹å‡ºã—èª"), x)))
 	  error_in_trans(NoMidasi, x);
      if (!Atomp(car(cdr(y)))) 
 	  error_in_trans(IllegalForm, y);
@@ -297,7 +297,7 @@ static CELL *midasi_list(CELL *x)
      CELL	*y;
      U_CHAR	*s;
 
-     if (Null(y = assoc(tmp_atom((U_CHAR *)"¸«½Ğ¤·¸ì"), x)))
+     if (Null(y = assoc(tmp_atom((U_CHAR *)"è¦‹å‡ºã—èª"), x)))
 	  error_in_trans(NoMidasi, x);
 
      return cdr(y);
@@ -315,7 +315,7 @@ static U_CHAR *yomi(CELL *x)
      CELL	*y;
      U_CHAR	*s;
 
-     if (Null(y = assoc(tmp_atom((U_CHAR *)"ÆÉ¤ß"), x)))
+     if (Null(y = assoc(tmp_atom((U_CHAR *)"èª­ã¿"), x)))
 	  error_in_trans(NoYomi, x);
      if (!Atomp(car(cdr(y))))
 	  error_in_trans(IllegalForm, y);
@@ -341,7 +341,7 @@ static int katuyou1(CELL *x)
     CELL	*y;
     int	i;
 
-    if (Null(y = assoc(tmp_atom((U_CHAR *)"³èÍÑ·¿"), x)))
+    if (Null(y = assoc(tmp_atom((U_CHAR *)"æ´»ç”¨å‹"), x)))
       error_in_trans(NoKatuyou, x);
     if (!Atomp(car(cdr(y))))
       error_in_trans(IllegalForm, y);
@@ -361,7 +361,7 @@ static int katuyou2(CELL *x , int type)
     CELL	*y;
     int	i;
 
-    if (Null(y = assoc(tmp_atom((U_CHAR *)"³èÍÑ·Á"), x)))
+    if (Null(y = assoc(tmp_atom((U_CHAR *)"æ´»ç”¨å½¢"), x)))
       error_in_trans(NoKatuyou, x);
     if (!Atomp(car(cdr(y))))
       error_in_trans(IllegalForm, y);
@@ -381,7 +381,7 @@ static CELL *edrconnect(CELL *x)
 {
      CELL       *y;
 
-     y = assoc(tmp_atom((U_CHAR *)"Ï¢ÀÜÂ°À­"), x);
+     y = assoc(tmp_atom((U_CHAR *)"é€£æ¥å±æ€§"), x);
      return car(cdr(y));
 }
 
@@ -396,7 +396,7 @@ static CELL *imi(CELL *x)
 {
      CELL	*y;
 
-     y = assoc(tmp_atom((U_CHAR *)"°ÕÌ£¾ğÊó"), x);
+     y = assoc(tmp_atom((U_CHAR *)"æ„å‘³æƒ…å ±"), x);
      return car(cdr(y));
 }
 
@@ -409,7 +409,7 @@ static CELL *imi(CELL *x)
 
 static void trim_yomi_gobi(MRPH *mrph_p)
 {
-     U_CHAR	*str = (U_CHAR *)"´ğËÜ·Á";
+     U_CHAR	*str = (U_CHAR *)"åŸºæœ¬å½¢";
      int	i;
 
      for (i = 1; strcmp(Form[mrph_p->katuyou1][i].name, str); i++);
@@ -420,7 +420,7 @@ static void trim_yomi_gobi(MRPH *mrph_p)
 
 static void trim_midasi_gobi(MRPH *mrph_p)
 {
-    U_CHAR	*str = (U_CHAR *)"´ğËÜ·Á";
+    U_CHAR	*str = (U_CHAR *)"åŸºæœ¬å½¢";
     int	i;
     
     for (i = 1; strcmp(Form[mrph_p->katuyou1][i].name, str); i++);
@@ -481,10 +481,10 @@ void trans(FILE *fp_in, FILE *fp_out)
 	if (!Atomp(car(cell))) error_in_trans(IllegalForm, car(cell));
 	
 	if (get_hinsi_id(_Atom(car(cell))) == atoi(RENGO_ID)) {
-            /* Ï¢¸ì¤Î¾ì¹ç */
+            /* é€£èªã®å ´åˆ */
 	    keitaiso_num = mrph_buffer_num = 0;
 	    cell1 = car(cdr(cell));
-	    while (!Null(car(cell1))) {  /* ·ÁÂÖÁÇ¾ğÊó¤òÁ´¤ÆÆÉ¤ß¹ş¤à */
+	    while (!Null(car(cell1))) {  /* å½¢æ…‹ç´ æƒ…å ±ã‚’å…¨ã¦èª­ã¿è¾¼ã‚€ */
 		keitaiso_p[keitaiso_num] = mrph_buffer_num;
 		_trans(car(cell1) , TRUE);
 		if (++keitaiso_num >= KEITAISO_NUM_MAX)
@@ -505,7 +505,7 @@ void trans(FILE *fp_in, FILE *fp_out)
 		    error_in_trans(IllegalWeight, cell);
 	    }
 
-	    /* Ï¢¸ì¾ğÊó¤ò½ĞÎÏ¤¹¤ë */
+	    /* é€£èªæƒ…å ±ã‚’å‡ºåŠ›ã™ã‚‹ */
 	    for (i = 0; i < keitaiso_num; i++) keitaiso_c[i] = keitaiso_p[i];
 	    f = 1;
 	    while (f) {
@@ -515,8 +515,8 @@ void trans(FILE *fp_in, FILE *fp_out)
 		    if (strcmp(mrph_p->midasi , "@")) {
 			strcat(str_midasi , mrph_p->midasi);
 			strcat(str_yomi , mrph_p->yomi);
-		    } /* ¸ì´´¤Ê¤·¤Ê¤é²¿¤â¤Ä¤±¤Ê¤¤ */
-		    if (Class[mrph_p->hinsi][mrph_p->bunrui].kt) { /* ³èÍÑÍ­ */
+		    } /* èªå¹¹ãªã—ãªã‚‰ä½•ã‚‚ã¤ã‘ãªã„ */
+		    if (Class[mrph_p->hinsi][mrph_p->bunrui].kt) { /* æ´»ç”¨æœ‰ */
 			if (mrph_p->katuyou2 == 0) {
 			    if (i < keitaiso_num-1)
 				error_in_trans(NoKatuyoukei , mrph_p->midasi);
@@ -533,14 +533,14 @@ void trans(FILE *fp_in, FILE *fp_out)
 			error_in_trans(LongYomi, str_yomi);
 		}
 
-		/* Ï¢¸ì¤È¤·¤ÆÏ¢ÀÜµ¬Â§¤¬µ­½Ò¤µ¤ì¤Æ¤¤¤ë¤«Ä´¤Ù¤ë */
+		/* é€£èªã¨ã—ã¦é€£æ¥è¦å‰‡ãŒè¨˜è¿°ã•ã‚Œã¦ã„ã‚‹ã‹èª¿ã¹ã‚‹ */
 		mrph_p = &mrph_buffer[keitaiso_c[keitaiso_num-1]];
 		mrph.katuyou1 = mrph_p->katuyou1;
 		strcpy(mrph.midasi , str_midasi);
 		if (Class[mrph_p->hinsi][mrph_p->bunrui].kt != 0 &&
 		    mrph_p->katuyou2 == 0) {
 		    for (i = 1;
-			 strcmp(Form[mrph_p->katuyou1][i].name,"´ğËÜ·Á");i++);
+			 strcmp(Form[mrph_p->katuyou1][i].name,"åŸºæœ¬å½¢");i++);
 		    strcat(mrph.midasi , Form[mrph_p->katuyou1][i].gobi);
 		}
 		check_table_for_rengo(&mrph);
@@ -554,7 +554,7 @@ void trans(FILE *fp_in, FILE *fp_out)
 		numeral_encode2(fp_out, mrph.con_tbl);
 		hiragana_encode(fp_out, str_yomi);
 
-		/* Ãæ¿È¤Î·ÁÂÖÁÇ¾ğÊó¤ò½ĞÎÏ¤¹¤ë */
+		/* ä¸­èº«ã®å½¢æ…‹ç´ æƒ…å ±ã‚’å‡ºåŠ›ã™ã‚‹ */
 		for (i = 0 ; i < keitaiso_num ; i++) {
 		    if (!strcmp(mrph_buffer[keitaiso_c[i]].midasi, "@"))
 			fprintf(fp_out, "  ");
@@ -566,7 +566,7 @@ void trans(FILE *fp_in, FILE *fp_out)
 		fprintf(fp_out, "\n");
 		
 		i = 0;
-		while (1) { /* ¼¡¤ÎÁÈ¤ß¹ç¤ï¤»Êı¤ÇÏ¢¸ì¤ò¹½À®¤¹¤ë */
+		while (1) { /* æ¬¡ã®çµ„ã¿åˆã‚ã›æ–¹ã§é€£èªã‚’æ§‹æˆã™ã‚‹ */
 		    if (++keitaiso_c[i] == keitaiso_p[i+1]) {
 			keitaiso_c[i] = keitaiso_p[i];
 			if (++i == keitaiso_num) {f = 0; break;}
@@ -574,7 +574,7 @@ void trans(FILE *fp_in, FILE *fp_out)
 		}
 	    }
 	} else {
-            /* ·ÁÂÖÁÇ¤Î¾ì¹ç */
+            /* å½¢æ…‹ç´ ã®å ´åˆ */
 	    mrph_buffer_num = 0;
 	    _trans(cell , FALSE);
 	    for (i = 0 ; i < mrph_buffer_num ; i++) {
@@ -595,12 +595,12 @@ static void _trans(CELL *cell , int rengo_p)
     mrph_p = &mrph;
     init_mrph(mrph_p);
 
-    mrph_p->hinsi = get_hinsi_id(_Atom(car(cell)));	/* ·ÁÂÖÉÊ»ì */
+    mrph_p->hinsi = get_hinsi_id(_Atom(car(cell)));	/* å½¢æ…‹å“è© */
 	  
     main_loop = cdr(cell);
     while (!Null(main_block = car(main_loop))) {
 
-	/* ºÙÊ¬Îà¤¬¤¢¤ë¾ì¹ç */
+	/* ç´°åˆ†é¡ãŒã‚ã‚‹å ´åˆ */
 	if (Atomp(car(main_block))) {
 	    mrph_p->bunrui =
 		get_bunrui_id(_Atom(car(main_block)), mrph_p->hinsi);
@@ -611,7 +611,7 @@ static void _trans(CELL *cell , int rengo_p)
 	    }
 	} 
 
-	/* ºÙÊ¬Îà¤¬¤Ê¤¤¾ì¹ç */
+	/* ç´°åˆ†é¡ãŒãªã„å ´åˆ */
 	else {
 	    mrph_p->bunrui = 0;
 	    __trans(main_block, mrph_p, rengo_p);
@@ -629,28 +629,28 @@ static void __trans(CELL *block, MRPH *mrph_p, int rengo_p)
     int 	int_weight;
     CELL        *connect_cell;                    /* EDRdic '94.Mar */
 
-    strcpy(mrph_p->yomi, yomi(block))  ;		/* ÆÉ¤ß     */
-    mrph_p->imi = imi(block);				/* °ÕÌ£¾ğÊó */
+    strcpy(mrph_p->yomi, yomi(block))  ;		/* èª­ã¿     */
+    mrph_p->imi = imi(block);				/* æ„å‘³æƒ…å ± */
     if (Class[mrph_p->hinsi][mrph_p->bunrui].kt) {
-	mrph_p->katuyou1 = katuyou1(block);		/* ³èÍÑ·¿   */
+	mrph_p->katuyou1 = katuyou1(block);		/* æ´»ç”¨å‹   */
 	if (rengo_p) mrph_p->katuyou2 = katuyou2(block , mrph_p->katuyou1);
-	else mrph_p->katuyou2 = 0;	             	/* ³èÍÑ */
+	else mrph_p->katuyou2 = 0;	             	/* æ´»ç”¨ */
     } else
 	mrph_p->katuyou1 = 0;
     
     if (Class[mrph_p->hinsi][mrph_p->bunrui].kt)
 	trim_yomi_gobi(mrph_p);
 
-    loop = midasi_list(block);				/* ¸«½Ğ¤·¸ì */
+    loop = midasi_list(block);				/* è¦‹å‡ºã—èª */
     while (!Null(midasi_cell = car(loop))) {
 
-	/* (¸«½Ğ¤·¸ì ¡ß¡ß¡ß) ¤Î¾ì¹ç */
+	/* (è¦‹å‡ºã—èª Ã—Ã—Ã—) ã®å ´åˆ */
 	if (Atomp(midasi_cell)) {
 	    midasi_cp = _Atom(midasi_cell);
 	    mrph_p->weight = MRPH_DEFAULT_WEIGHT;
 	} 
 	
-	/* (¸«½Ğ¤·¸ì (¡ß¡ß¡ß weight)) ¤Î¾ì¹ç */
+	/* (è¦‹å‡ºã—èª (Ã—Ã—Ã— weight)) ã®å ´åˆ */
 	else if (Atomp(car(midasi_cell))) {
 	    midasi_cp = _Atom(car(midasi_cell));
 
@@ -677,7 +677,7 @@ static void __trans(CELL *block, MRPH *mrph_p, int rengo_p)
 	strcpy(mrph_p->midasi, midasi_cp);
 
 	if ( Null(connect_cell = edrconnect(block)) ){
-            check_table(mrph_p);                            /* Ï¢ÀÜ¾ğÊó */
+            check_table(mrph_p);                            /* é€£æ¥æƒ…å ± */
         }
         else {                                        /* for EDRdic '94.Mar */
             check_edrtable(mrph_p, connect_cell);
@@ -694,7 +694,7 @@ static void __trans(CELL *block, MRPH *mrph_p, int rengo_p)
 		    print_mrph(mrph_p);
 		} else
 		    print_mrph_loop(mrph_p);
-		/* ¸ì´´¤¬Ìµ¤¯¤Ê¤ë¾ì¹ç¤ÏÁ´¤Æ¤Î³èÍÑ·Á¤òÅĞÏ¿ */
+		/* èªå¹¹ãŒç„¡ããªã‚‹å ´åˆã¯å…¨ã¦ã®æ´»ç”¨å½¢ã‚’ç™»éŒ² */
 	    }
 	} else
 	    print_mrph(mrph_p);

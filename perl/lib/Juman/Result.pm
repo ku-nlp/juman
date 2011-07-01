@@ -8,15 +8,15 @@ use vars qw/ %DEFAULT /;
 
 =head1 NAME
 
-Juman::Result - �����ǲ��Ϸ�̥��֥������� in Juman
+Juman::Result - 形態素解析結果オブジェクト in Juman
 
 =head1 SYNOPSIS
 
-  $result = new Juman::Result( "����...\n...\nEOS\n" );
+  $result = new Juman::Result( "解析...\n...\nEOS\n" );
 
 =head1 DESCRIPTION
 
-Juman �ˤ������ǲ��Ϥη�̤��ݻ����륪�֥������ȡ�
+Juman による形態素解析の結果を保持するオブジェクト．
 
 =head1 CONSTRUCTOR
 
@@ -24,28 +24,28 @@ Juman �ˤ������ǲ��Ϥη�̤��ݻ����륪�֥������ȡ�
 
 =item new ( RESULT )
 
-Juman �ν��Ϥ�Ԥ�ñ�̤Ȥ��Ƴ�Ǽ���줿�ꥹ�Ȥ��Ф����ե���� RESULT
-������Ȥ��ƸƤӽФ��ȡ����η����ǲ��Ϸ�̤�ɽ�����֥������Ȥ��������롥
+Juman の出力を行を単位として格納されたリストに対するリファレンス RESULT
+を引数として呼び出すと，その形態素解析結果を表すオブジェクトを生成する．
 
 =item new ( OPTIONS )
 
-�ʲ��γ�ĥ���ץ�������ꤷ�ƥ��󥹥ȥ饯����ƤӽФ���
+以下の拡張オプションを指定してコンストラクタを呼び出す．
 
 =over 4
 
 =item result => RESULT
 
-Juman �ν���ʸ���󡤤ޤ��ϡ�����ʸ�����Ԥ�ñ�̤Ȥ��Ƴ�Ǽ���줿�ꥹ��
-���Ф����ե���󥹤���ꤹ�롥
+Juman の出力文字列，または，その文字列を行を単位として格納されたリスト
+に対するリファレンスを指定する．
 
 =item pattern => STRING
 
-���Ϸ�̤�ü���뤿��Υѥ��������ꤹ�롥
+解析結果を終端するためのパターンを指定する．
 
 =item mclass => NAME
 
-�����ǥ��֥������Ȥ���ꤹ�롥̵����ξ��ϡ�C<Juman::Morpheme> ����
-���롥
+形態素オブジェクトを指定する．無指定の場合は，C<Juman::Morpheme> を用
+いる．
 
 =cut
 %DEFAULT = ( pattern => '^EOS$',
@@ -70,7 +70,7 @@ sub new {
     my $mclass  = $opt{mclass};
     return undef unless( $result and $pattern and $mclass );
 
-    # ʸ����ľ�ܻ��ꤵ�줿���
+    # 文字列が直接指定された場合
     $result = [ map( "$_\n", split( /\n/, $result ) ) ] unless ref $result;
 
     my $this = {};
@@ -82,10 +82,10 @@ sub new {
 	    $this->{_eos} = $str;
 	    last;
 	} elsif ( $str =~ m!\A\@ \@ \@ [^\@]! ){
-	    # ��@�פΤߤ���ʤ�̤�������������
+	    # 「@」のみからなる未定義語を処理する
 	    $this->push_mrph( $mclass->new( $str, scalar($this->mrph) ) );
 	} elsif ( $str =~ s!\A\@ !! ) {
-	    # ��@�פ���Ƭ�ˤ����Ʊ����
+	    # 「@」が先頭にあれば同形語
 	    ( $this->mrph )[-1]->push_doukei( $mclass->new( $str, scalar($this->mrph) ) );
 	} else {
 	    $this->push_mrph( $mclass->new( $str, scalar($this->mrph) ) );
@@ -100,9 +100,9 @@ sub new {
 
 =head1 METHODS
 
-�ܥ��֥������Ȥϡ��������󥪥֥������� C<Juman::MList> ��Ѿ�����褦
-��������Ƥ��롥�������äơ��������󥪥֥������Ȥ��Ф���ͭ���ʰʲ��Υ�
-���åɤ����Ѳ�ǽ�Ǥ��롥
+本オブジェクトは，形態素列オブジェクト C<Juman::MList> を継承するよう
+実装されている．したがって，形態素列オブジェクトに対して有効な以下のメ
+ソッドが利用可能である．
 
 =over 4
 
@@ -112,7 +112,7 @@ sub new {
 
 =item spec
 
-�����������ʸ������֤���Juman �ˤ����Ϥ�Ʊ�������η�̤������롥
+形態素列の全文字列を返す．Juman による出力と同じ形式の結果が得られる．
 
 =cut
 sub spec {
@@ -144,11 +144,11 @@ L<Juman::MList>
 =over 4
 
 =item
-�ڲ� ��̭ <tsuchiya@pine.kuee.kyoto-u.ac.jp>
+土屋 雅稔 <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 
 =cut
 
-# �����ߴ������ݤĤ���Υ᥽�å�
+# 後方互換性を保つためのメソッド
 sub all {
     my( $this ) = @_;
     $this->spec();
@@ -158,7 +158,6 @@ sub all {
 __END__
 # Local Variables:
 # mode: perl
-# coding: euc-japan
 # use-kuten-for-period: nil
 # use-touten-for-comma: nil
 # End:

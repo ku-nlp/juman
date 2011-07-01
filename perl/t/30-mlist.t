@@ -11,11 +11,11 @@ use Juman::MList;
 my $mlist = Juman::MList->new();
 ok( defined $mlist );
 
-$mlist->push_mrph( Juman::Morpheme->new( "¹½Ê¸ ¤³¤¦¤Ö¤ó ¹½Ê¸ Ì¾»ì 6 ÉáÄÌÌ¾»ì 1 * 0 * 0\n") );
-$mlist->push_mrph( Juman::Morpheme->new( "²òÀÏ ¤«¤¤¤»¤­ ²òÀÏ Ì¾»ì 6 ¥µÊÑÌ¾»ì 2 * 0 * 0\n" ) );
+$mlist->push_mrph( Juman::Morpheme->new( "æ§‹æ–‡ ã“ã†ã¶ã‚“ æ§‹æ–‡ åè© 6 æ™®é€šåè© 1 * 0 * 0\n") );
+$mlist->push_mrph( Juman::Morpheme->new( "è§£æ ã‹ã„ã›ã è§£æ åè© 6 ã‚µå¤‰åè© 2 * 0 * 0\n" ) );
 
 ok( $mlist->mrph == 2 );
-ok( $mlist->mrph(0)->midasi eq '¹½Ê¸' );
-ok( $mlist->mrph(-1)->midasi eq '²òÀÏ' );
-ok( join('',map($_->midasi,$mlist->mrph(0,1))) eq '¹½Ê¸²òÀÏ' );
-ok( join('',map($_->midasi,$mlist->mrph_list)) eq '¹½Ê¸²òÀÏ' );
+ok( $mlist->mrph(0)->midasi eq 'æ§‹æ–‡' );
+ok( $mlist->mrph(-1)->midasi eq 'è§£æ' );
+ok( join('',map($_->midasi,$mlist->mrph(0,1))) eq 'æ§‹æ–‡è§£æ' );
+ok( join('',map($_->midasi,$mlist->mrph_list)) eq 'æ§‹æ–‡è§£æ' );

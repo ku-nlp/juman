@@ -124,10 +124,10 @@ void make_rensetu_tbl(FILE *fp)
 {
      CELL       *cell;
      int         i, j;
-     int         tbl_count = 1;     /* tbl_count = 0 ¤Ï¡¢Ê¸Æ¬¡¦Ê¸Ëö ÍÑ */
+     int         tbl_count = 1;     /* tbl_count = 0 ã¯ã€æ–‡é ­ãƒ»æ–‡æœ« ç”¨ */
 
 
-     /* ¸ì×Ã¤ò»ØÄê¤·¤Æ¤¤¤ë¤â¤Î¤ò¥Æ¡¼¥Ö¥ë¤ËÅĞÏ¿ */
+     /* èªå½™ã‚’æŒ‡å®šã—ã¦ã„ã‚‹ã‚‚ã®ã‚’ãƒ†ãƒ¼ãƒ–ãƒ«ã«ç™»éŒ² */
 
      LineNo = 1;
      while (! s_feof(fp)) {
@@ -139,7 +139,7 @@ void make_rensetu_tbl(FILE *fp)
      }
 
 
-     /* ³èÍÑ¤òÅ¸³«¤·¤Æ¥Æ¡¼¥Ö¥ë¤ËÅĞÏ¿ */
+     /* æ´»ç”¨ã‚’å±•é–‹ã—ã¦ãƒ†ãƒ¼ãƒ–ãƒ«ã«ç™»éŒ² */
 
      for ( i=1; Class[i][0].id; i++ ) {
 	  for ( j=0; Class[i][j].id; j++ )
@@ -206,7 +206,7 @@ void _make_rensetu_tbl2(int hinsi, int bunrui, int *cnt)
 {
      int i, j;
 
-     if ( Class[hinsi][bunrui].kt ) {                  /* ³èÍÑ¤¢¤ê */
+     if ( Class[hinsi][bunrui].kt ) {                  /* æ´»ç”¨ã‚ã‚Š */
 	  i = 0;
 	  while ( kankei_tbl[i].hinsi != -1 ) {
 	       if ( kankei_tbl[i].hinsi == hinsi &&
@@ -225,7 +225,7 @@ void _make_rensetu_tbl2(int hinsi, int bunrui, int *cnt)
 	       }
 	       i++;
 	  }
-     } else {                                         /* ³èÍÑ¤Ê¤· */
+     } else {                                         /* æ´»ç”¨ãªã— */
 	  rensetu_tbl[*cnt].hinsi  = hinsi;
 	  rensetu_tbl[*cnt].bunrui = bunrui;
 	  rensetu_tbl[*cnt].type   = 0;
@@ -296,7 +296,7 @@ void fill_matrix(RENSETU_PAIR2 *pair_p1, RENSETU_PAIR2 *pair_p2, U_CHAR c_weight
     
     tmp_tbl = (int *)my_alloc(sizeof(int) * TBL_NUM);
     
-    if ( pair_p2->hinsi == -1 ) {        /* hinsi = -1 : Ê¸Ëö */
+    if ( pair_p2->hinsi == -1 ) {        /* hinsi = -1 : æ–‡æœ« */
 	tmp_tbl[0] = 1;
 	for ( j=1; j<TBL_NUM; j++ )
 	  tmp_tbl[j] = 0;
@@ -309,9 +309,9 @@ void fill_matrix(RENSETU_PAIR2 *pair_p1, RENSETU_PAIR2 *pair_p2, U_CHAR c_weight
 	}
     }
     
-    if ( pair_p1->hinsi == -1 ) {       /* hinsi = -1 : Ê¸Æ¬ */
+    if ( pair_p1->hinsi == -1 ) {       /* hinsi = -1 : æ–‡é ­ */
 	for ( j=0; j<TBL_NUM; j++ )
-	  if ( tmp_tbl[j] ) {    	/* ¸å¤Ë¤¢¤ë¥ë¡¼¥ë¤Î½Å¤ß¤òÍ¥Àè */
+	  if ( tmp_tbl[j] ) {    	/* å¾Œã«ã‚ã‚‹ãƒ«ãƒ¼ãƒ«ã®é‡ã¿ã‚’å„ªå…ˆ */
 	      rensetu_mtr1[0][j] = c_weight;
 	      flag ++;
 	  }
@@ -319,7 +319,7 @@ void fill_matrix(RENSETU_PAIR2 *pair_p1, RENSETU_PAIR2 *pair_p2, U_CHAR c_weight
 	for ( i=0; i<TBL_NUM; i++ )
 	  if ( pair_match2(pair_p1, &rensetu_tbl[i]) )
 	    for ( j=0; j<TBL_NUM; j++ )
-	      if ( tmp_tbl[j] ) {	/* ¸å¤Ë¤¢¤ë¥ë¡¼¥ë¤Î½Å¤ß¤òÍ¥Àè */
+	      if ( tmp_tbl[j] ) {	/* å¾Œã«ã‚ã‚‹ãƒ«ãƒ¼ãƒ«ã®é‡ã¿ã‚’å„ªå…ˆ */
 		  rensetu_mtr1[i][j] = c_weight;
 		  flag ++;
 	      }
@@ -386,8 +386,8 @@ void get_pair_id2(CELL *cell, RENSETU_PAIR2 *pair)
      pair->goi    = NULL;
 
      if ( !Null(cell_p = car(cell) ) ) {
-	  if ( strcmp("Ê¸Æ¬", _Atom(cell_p)) == 0 ||
-	       strcmp("Ê¸Ëö", _Atom(cell_p)) == 0 ) {
+	  if ( strcmp("æ–‡é ­", _Atom(cell_p)) == 0 ||
+	       strcmp("æ–‡æœ«", _Atom(cell_p)) == 0 ) {
 	       pair->hinsi = -1;
 	       return;
 	  } else 
@@ -442,7 +442,7 @@ int pair_match2(RENSETU_PAIR2 *pair, RENSETU_PAIR *tbl)
        return 0;
 
      if ( pair->hinsi == 0 && tbl->hinsi == atoi(RENGO_ID))
-       return 0; /* Àµµ¬É½¸½¤ÏÏ¢¸ì¤Ë¤ÏÄÌÍÑ¤·¤Ê¤¤ */
+       return 0; /* æ­£è¦è¡¨ç¾ã¯é€£èªã«ã¯é€šç”¨ã—ãªã„ */
 
      return 1;
 }
@@ -618,8 +618,8 @@ int main(int argc, char **argv)
      
     getpath(CurPath, JumanPath);
     
-    /* ½ĞÎÏ¥Õ¥¡¥¤¥ë¤Î¥ª¡¼¥×¥ó 
-       JumanPath¤«¤éCurPath¤ØÊÑ¹¹ (2002/11/08)
+    /* å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚ªãƒ¼ãƒ—ãƒ³ 
+       JumanPathã‹ã‚‰CurPathã¸å¤‰æ›´ (2002/11/08)
      */
     
     if ( (fp_t = pathfopen(TABLEFILE, "w", CurPath, file_path)) != NULL );
@@ -628,27 +628,27 @@ int main(int argc, char **argv)
     if ( (fp_m = pathfopen(MATRIXFILE, "w", CurPath, file_path)) != NULL );
     else error(OpenError, "can't open", MATRIXFILE, ".", EOA);
     
-    /* ³èÍÑ¥Õ¥¡¥¤¥ë¤Î¥ª¡¼¥×¥ó */
+    /* æ´»ç”¨ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚ªãƒ¼ãƒ—ãƒ³ */
 
     if ( (fp_k = pathfopen(KANKEIFILE, "r", ""     , file_path)) != NULL );
     else if ((fp_k= pathfopen(KANKEIFILE, "r", CurPath, file_path)) != NULL );
     else if ((fp_k= pathfopen(KANKEIFILE, "r", JumanPath, file_path)) != NULL );
     else error(OpenError, "can't open", KANKEIFILE, ".", EOA);
 
-    /* ³èÍÑ¥Õ¥¡¥¤¥ë¤Î½èÍı */
+    /* æ´»ç”¨ãƒ•ã‚¡ã‚¤ãƒ«ã®å‡¦ç† */
 	
     fprintf(stderr, "%s parsing... ", file_path);
     read_h_b_t_kankei(fp_k);     
     fprintf(stderr, "done.\n\n");
     
-    /* Ï¢ÀÜµ¬Â§¥Õ¥¡¥¤¥ë¤Î¥ª¡¼¥×¥ó */
+    /* é€£æ¥è¦å‰‡ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚ªãƒ¼ãƒ—ãƒ³ */
        
     if ( (fp_c = pathfopen(CONNECTFILE, "r", ""     , file_path)) != NULL );
     else if ((fp_c= pathfopen(CONNECTFILE, "r", CurPath, file_path))!= NULL );
     else if ((fp_c= pathfopen(CONNECTFILE, "r", JumanPath, file_path))!= NULL );
     else error(OpenError, "can't open", CONNECTFILE, ".", EOA);
 
-    /* Ï¢ÀÜµ¬Â§¥Õ¥¡¥¤¥ë¤Î½èÍı */
+    /* é€£æ¥è¦å‰‡ãƒ•ã‚¡ã‚¤ãƒ«ã®å‡¦ç† */
        
     fprintf(stderr, "%s parsing... ", file_path);
     make_rensetu_tbl(fp_c);
@@ -656,7 +656,7 @@ int main(int argc, char **argv)
     read_rensetu(fp_c);
     fprintf(stderr, "done.\n\n");
     
-    /* Ï¢ÀÜ¹ÔÎó¤Î°µ½Ì */
+    /* é€£æ¥è¡Œåˆ—ã®åœ§ç¸® */
 
     condense_matrix();
     

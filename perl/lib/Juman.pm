@@ -5,33 +5,33 @@ require 5.004_04; # For base pragma.
 use Carp;
 use Juman::Result;
 use strict;
-use vars qw/ $VERSION %DEFAULT /;
+use vars qw/ $VERSION %DEFAULT $ENCODING /;
 use base qw/ Juman::Process Juman::Hinsi /;
 
 =head1 NAME
 
-Juman -	�����ǲ��Ϥ�Ԥ��⥸�塼��
+Juman -	形態素解析を行うモジュール
 
 =head1 SYNOPSIS
 
  use Juman;
  $juman = new Juman;
- $result = $juman->analysis( "����ʸ������ǲ��Ϥ��Ƥ���������" );
+ $result = $juman->analysis( "この文を形態素解析してください．" );
  print $result->all();
 
 =head1 DESCRIPTION
 
-C<Juman> �ϡ������ǲ��ϴ� JUMAN �� Perl �������Ѥ��뤿��Υ⥸�塼���
-���롥
+C<Juman> は，形態素解析器 JUMAN を Perl から利用するためのモジュールで
+ある．
 
-ñ��˷����ǲ��Ϥ�Ԥ������ʤ�С�C<Juman::Simple> �����ѤǤ��롥
-C<Juman::Simple> �ϡ�C<Juman> �⥸�塼��Υ�åѡ��Ǥ��ꡤ����ñ�˷�
-���ǲ��ϴ�����ѤǤ���褦���߷פ���Ƥ��롥
+単純に形態素解析を行うだけならば、C<Juman::Simple> が利用できる．
+C<Juman::Simple> は，C<Juman> モジュールのラッパーであり，より簡単に形
+態素解析器を利用できるように設計されている．
 
 =head1 CONSTRUCTOR
 
-C<Juman> ���֥������Ȥ��������륳�󥹥ȥ饯���ϡ��ʲ��ΰ���������դ�
-�롥
+C<Juman> オブジェクトを生成するコンストラクタは，以下の引数を受け付け
+る．
 
 =head2 Synopsis
 
@@ -48,46 +48,46 @@ C<Juman> ���֥������Ȥ��������륳�󥹥ȥ饯���ϡ��ʲ��ΰ���������դ�
 
 =over 4
 
-�ư����ΰ�̣�ϼ����̤ꡥ
+各引数の意味は次の通り．
 
 =item -Server
 
-JUMAN �����С��Υۥ���̾����ά���줿���ϡ��Ķ��ѿ� C<JUMANSERVER> ��
-���ꤵ�줿�����С������Ѥ���롥�Ķ��ѿ�����ꤵ��Ƥ��ʤ����ϡ�
-Juman ��ҥץ������Ȥ��ƸƤӽФ���
+JUMAN サーバーのホスト名．省略された場合は，環境変数 C<JUMANSERVER> で
+指定されたサーバーが利用される．環境変数も指定されていない場合は，
+Juman を子プロセスとして呼び出す．
 
 =item -Port
 
-�����С��Υݡ����ֹ桥
+サーバーのポート番号．
 
 =item -Command
 
-Juman �μ¹ԥե�����̾��Juman �����С������Ѥ��ʤ����˻��Ȥ���롥
+Juman の実行ファイル名．Juman サーバーを利用しない場合に参照される．
 
 =item -Timeout
 
-�����С��ޤ��ϻҥץ��������̿���������Ԥ����֡�
+サーバーまたは子プロセスと通信する時の待ち時間．
 
 =item -Option
 
-JUMAN ��¹Ԥ���ݤΥ��ޥ�ɥ饤���������ά�������ϡ�
-C<$Juman::DEFAULT{option}> ���ͤ��Ѥ����롥
+JUMAN を実行する際のコマンドライン引数．省略した場合は，
+C<$Juman::DEFAULT{option}> の値が用いられる．
 
-������������ե��������ꤹ�� C<-r> ���ץ����ȡ�KNP �ˤ�ä�̵�뤵
-����Ƭ�ѥ��������ꤹ�� C<-i> ���ץ����ˤĤ��Ƥϡ����줾����̤� 
-C<-Rcfile>, C<-IgnorePattern> �ˤ�äƻ��ꤹ��٤��Ǥ��롥
+ただし，設定ファイルを指定する C<-r> オプションと，KNP によって無視さ
+れる行頭パターンを指定する C<-i> オプションについては，それぞれ個別に 
+C<-Rcfile>, C<-IgnorePattern> によって指定するべきである．
 
 =item -Rcfile
 
-JUMAN ������ե��������ꤹ�륪�ץ����
+JUMAN の設定ファイルを指定するオプション．
 
-���Υ��ץ����ȡ�Juman �����С������Ѥ�ξΩ���ʤ����Ȥ�¿�����äˡ�����
-�С������Ѥ��Ƥ��뼭��Ȱ㤦�������ꤷ�Ƥ�������ե�����ϡ��տޤ���
-�̤�ˤ�ư��ʤ���
+このオプションと，Juman サーバーの利用は両立しないことが多い．特に，サー
+バーが利用している辞書と違う辞書を指定している設定ファイルは，意図した
+通りには動作しない．
 
 =item -IgnorePattern
 
-JUMAN �ˤ�ä�̵�뤵����Ƭ�ѥ�����
+JUMAN によって無視される行頭パターン．
 
 =back
 
@@ -97,12 +97,12 @@ JUMAN �ˤ�ä�̵�뤵����Ƭ�ѥ�����
 
 =item analysis( STR )
 
-���ꤵ�줿ʸ���� STR ������ǲ��Ϥ������η�̤� C<Juman::Result> ����
-�������ȤȤ����֤���
+指定された文字列 STR を形態素解析し，その結果を C<Juman::Result> オブ
+ジェクトとして返す．
 
 =item juman ( STR )
 
-C<analysis> ����̾��
+C<analysis> の別名．
 
 =back
 
@@ -112,8 +112,8 @@ C<analysis> ����̾��
 
 =item JUMANSERVER
 
-�Ķ��ѿ� C<JUMANSERVER> �����ꤵ��Ƥ�����ϡ����ꤵ��Ƥ���ۥ��Ȥ� 
-Juman �����С��Ȥ������Ѥ��롥
+環境変数 C<JUMANSERVER> が設定されている場合は，指定されているホストを 
+Juman サーバーとして利用する．
 
 =back
 
@@ -147,27 +147,30 @@ TSUCHIYA Masatoshi <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 
 =head1 COPYRIGHT
 
-���ѵڤӺ����ۤˤĤ��Ƥ� GPL2 �ޤ��� Artistic License �˽��äƤ���������
+利用及び再配布については GPL2 または Artistic License に従ってください。
 
 =cut
 
-# �С������ɽ��
+# バージョン表示
 $VERSION = '0.5.7';
 
-# �������ޥ������ѿ�
+# JUMANコマンドの入出力エンコーディング
+$ENCODING = 'utf8';
+
+# カスタマイズ用変数
 %DEFAULT =
     ( command => &Juman::Process::which_command('juman'),
-      server  => $ENV{JUMANSERVER} || '',	# Juman �����С��Υۥ���̾
-      port    => 32000,				# Juman �����С��Υݡ����ֹ�
-      timeout => 30,				# Juman �����С��α������Ԥ�����
+      server  => $ENV{JUMANSERVER} || '',	# Juman サーバーのホスト名
+      port    => 32000,				# Juman サーバーのポート番号
+      timeout => 30,				# Juman サーバーの応答の待ち時間
       option  => '-e2 -B',
       rcfile  => (exists($ENV{HOME}) ? $ENV{HOME} : '') . '/.jumanrc',
       mclass  => $Juman::Result::DEFAULT{mclass},
       ignorepattern => '',
     );
 
-# Juman ��ҥץ������Ȥ��Ƽ¹Ԥ����硤ɸ����ϤΥХåե���󥰤ˤ��
-# �ƽ��Ϥ���Ťˤʤ�ʤ��褦�ˤ��뤿��Τ��ޤ��ʤ�
+# Juman を子プロセスとして実行する場合，標準出力のバッファリングによっ
+# て出力が二重にならないようにするためのおまじない
 sub BEGIN {
     unless( $DEFAULT{server} ){
 	require FileHandle or die "Juman.pm (BEGIN): Can't load module: FileHandle\n";
@@ -181,12 +184,12 @@ sub new {
     bless $this, $class;
 
     if( @_ == 1 ){
-	# ��С������η����ǸƤӽФ��줿���ν���
+	# 旧バージョンの形式で呼び出された場合の処理
 	my( $argv ) = @_;
 	$this->setup( $argv, \%DEFAULT );
 #	$this->setup( { 'option' => $argv }, \%DEFAULT );
     } else {
-	# �����������ǸƤӽФ��줿���ν���
+	# 新しい形式で呼び出された場合の処理
 	my( %option ) = @_;
 	$this->setup( \%option, \%DEFAULT );
     }
@@ -198,7 +201,7 @@ sub new {
     $this;
 }
 
-# EUC-JP��3�Х��ȥ����ɤ򢮤��Ѵ�
+# EUC-JPの3バイトコードを〓に変換
 sub conv_3bytecode_to_geta {
     my ($buf) = @_;
     my ($ret_buf);
@@ -206,7 +209,7 @@ sub conv_3bytecode_to_geta {
     while ($buf =~ /([^\x80-\xfe]|[\x80-\x8e\x90-\xfe][\x80-\xfe]|\x8f[\x80-\xfe][\x80-\xfe])/g) {
 	my $chr = $1;
 	if ($chr =~ /^\x8f/) { # 3byte code (JISX0212)
-	    $ret_buf .= '��';
+	    $ret_buf .= '〓';
 	}
 	else {
 	    $ret_buf .= $chr;
@@ -222,24 +225,26 @@ sub juman_lines {
     my $pattern = $this->pattern();
     my @buf;
 
-    # UTF�ե饰������å�����
+    # UTFフラグをチェックする
     if (utf8::is_utf8($str)) {
 	require Encode;
-	# euc-jp�ˤʤ�ʸ����JISX0212�������(3�Х���)�Ϣ����Ѵ�
-	$str = &conv_3bytecode_to_geta(Encode::encode('euc-jp', $str, sub {'��'}));
+	if ($JUMAN::ENCODING eq 'euc-jp') {
+	    # euc-jpにない文字とJISX0212補助漢字(3バイト)は〓に変換
+	    $str = &conv_3bytecode_to_geta(Encode::encode($JUMAN::ENCODING, $str, sub {'〓'}));
+	}
 	$this->{input_is_utf8} = 1;
     }
     else {
 	$this->{input_is_utf8} = 0;
     }
 
-    # �ץ�������ʸ����������
+    # プロセスに文を送信する
     $str =~ s/[\r\n\f\t]*$/\n/s;
     $socket->print( $str );
-    # ���Ϸ�̤��ɤ߽Ф�
+    # 解析結果を読み出す
     while( defined( $str = $socket->getline ) ){
 	if ($this->{input_is_utf8}) {
-	    $str = Encode::decode('euc-jp', $str);
+	    $str = Encode::decode($JUMAN::ENCODING, $str);
 	}
 	push( @buf, $str );
 	last if $str =~ /$pattern/;
@@ -247,7 +252,7 @@ sub juman_lines {
     \@buf;
 }
     
-# �����ǲ��Ϥ�Ԥ��᥽�å�
+# 形態素解析を行うメソッド
 sub analysis { &juman(@_); }
 sub juman {
     my( $this, $str ) = @_;
@@ -260,7 +265,6 @@ sub juman {
 __END__
 # Local Variables:
 # mode: perl
-# coding: euc-japan
 # use-kuten-for-period: nil
 # use-touten-for-comma: nil
 # End:

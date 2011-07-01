@@ -7,7 +7,7 @@ BEGIN { plan tests => 4 }
 
 use Juman::Simple;
 
-my $str = "¤³¤ÎÊ¸¤ò²òÀÏ¤·¤Æ¤¯¤À¤µ¤¤¡£";
+my $str = "ã“ã®æ–‡ã‚’è§£æã—ã¦ãã ã•ã„ã€‚";
 my $result = &juman( $str );
 ok( defined $result );
 

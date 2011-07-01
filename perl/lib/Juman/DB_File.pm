@@ -17,26 +17,26 @@ Juman::DB_File - Wrapper class of DB_File
  use Juman::DB_File;
  use encoding "euc-jp";
  tie( %hash, 'Juman::DB_File', $dbfile, &O_CREAT ) or die;
- $hash{"ź��"} = "��";
+ $hash{"添字"} = "値";
  while( my( $key, $value ) = each %hash ){
      print "$key:$value\n";
  }
 
 =head1 DESCRIPTION
 
-Perl-5.8.x ������ʸ�������ɤȤ��� Unicode ����Ѥ��Ƥ��롥���Τ��ᡤ��
-�ܸ� EUC �ǵ��Ҥ��줿�ǡ����١����ե�����򻲾Ȥ�����ˤϡ�ź������
-��񤭹�����ꡤ�ɤ߽Ф����ꤹ�����ˡ��������Ū�� encode/decode ���
-��ɬ�פ����롥
+Perl-5.8.x は内部文字コードとして Unicode を採用している．そのため，日
+本語 EUC で記述されたデータベースファイルを参照する場合には，添字や値
+を書き込んだり，読み出したりする前に，常に明示的に encode/decode を行
+う必要がある．
 
-���� C<Juman::DB_File> ���饹�ϡ������ʸ�������ɤ���¸����Ƥ���ǡ�
-���١����ե�����򰷤�����ˡ�Ʃ��Ū�� encode/decode ��Ԥ���
+この C<Juman::DB_File> クラスは，特定の文字コードで保存されているデー
+タベースファイルを扱うために，透過的に encode/decode を行う．
 
 =head1 ENCODING
 
-���Υ��饹�����Ѥ�����ϡ��ǡ����١����Ȥ������ϻ��˻Ȥ�ʸ�������ɤ�
-C<encoding> �ץ饰�ޤǻ��ꤹ�롥C<encoding> �ץ饰�ޤˤ����꤬¸�ߤ�
-�ʤ����ϡ��ޤä����Ѵ���Ԥ�ʤ���
+このクラスを利用する時は，データベースとの入出力時に使う文字コードを，
+C<encoding> プラグマで指定する．C<encoding> プラグマによる指定が存在し
+ない場合は，まったく変換を行わない．
 
 =cut
 BEGIN {
@@ -49,8 +49,8 @@ BEGIN {
     }
 }
 
-# �ǡ����١����˥�����������᥽�åɤ��񤭤��Ƥ��롥ɬ�פʥ᥽�åɤ�
-# �ܺ٤ˤĤ��Ƥϡ�perldoc perltie �򻲾ȡ�
+# データベースにアクセスするメソッドを上書きしている．必要なメソッドの
+# 詳細については，perldoc perltie を参照．
 sub FETCH {
     my( $this, $key ) = @_;
     &decode( $this->SUPER::FETCH( &encode( $key ) ) );
@@ -102,14 +102,13 @@ L<perltie>
 =over 4
 
 =item
-�ڲ� ��̭ <tsuchiya@pine.kuee.kyoto-u.ac.jp>
+土屋 雅稔 <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 
 =cut
 
 __END__
 # Local Variables:
 # mode: perl
-# coding: euc-japan
 # use-kuten-for-period: nil
 # use-touten-for-comma: nil
 # End:

@@ -11,12 +11,12 @@ Juman::Encode - character encoding functions
 
 =head1 DESCRIPTION
 
-Perl-5.8.x ������ʸ�������ɤȤ��� Unicode ����Ѥ��Ƥ��롥���Τ��ᡤ��
-�ܸ� EUC ��ȤäƤ���ץ������Ȥ������Ϥ�Ԥ����䡤���ܸ� EUC �ǵ���
-���줿�ǡ����򻲾Ȥ�����ˤϡ��������Ū�� encode/decode ��Ԥ�ɬ��
-�����롥
+Perl-5.8.x は内部文字コードとして Unicode を採用している．そのため，日
+本語 EUC を使っているプロセスとの入出力を行う場合や，日本語 EUC で記述
+されたデータを参照する場合には，常に明示的に encode/decode を行う必要
+がある．
 
-���Υ饤�֥��Ǥϡ����Τ���δؿ���������Ƥ��롥
+このライブラリでは，そのための関数を定義している．
 
 =head1 FUNCTIONS
 
@@ -24,8 +24,8 @@ Perl-5.8.x ������ʸ�������ɤȤ��� Unicode ����Ѥ��Ƥ��롥���Τ��ᡤ��
 
 =item $octets = encode ( $string )
 
-ʸ�����C<encoding> �ץ饰�ޤǻ��ꤵ��Ƥ���ʸ�������ɤ� encode ���ơ�
-�Х���������롥
+文字列を，C<encoding> プラグマで指定されている文字コードで encode して，
+バイト列を得る．
 
 =cut
 sub encode {
@@ -39,8 +39,8 @@ sub encode {
 
 =item $string = decode ( $octets )
 
-�Х������C<encoding> �ץ饰�ޤǻ��ꤵ��Ƥ���ʸ�������ɤ� decode ��
-�ơ�ʸ��������롥
+バイト列を，C<encoding> プラグマで指定されている文字コードで decode し
+て，文字列を得る．
 
 =cut
 sub decode {
@@ -54,8 +54,8 @@ sub decode {
 
 =item set_encoding ( $handle )
 
-���ꤵ�줿�ե�����ϥ�ɥ�Ȥ��̿��ˡ�C<encoding> �ץ饰�ޤǻ��ꤵ���
-����ʸ�������ɤ�Ȥ��褦�����ꤹ�롥
+指定されたファイルハンドルとの通信に，C<encoding> プラグマで指定されて
+いる文字コードを使うように設定する．
 
 =cut
 sub set_encoding {
@@ -70,15 +70,15 @@ sub set_encoding {
 
 =back
 
-������δؿ��⡤C<encoding> �ץ饰�ޤ����ꤵ��Ƥ��ʤ����ˤϡ����⤷
-�ʤ���
+いずれの関数も，C<encoding> プラグマが指定されていない場合には，何もし
+ない．
 
 =head1 MEMO
 
-���Υ饤�֥��ϡ��ѿ� C<${^ENCODING}> �򻲾Ȥ���ɬ�פΤ���ؿ������
-�򡤰����ˤޤȤ�뤿���Ƴ���������ʤ��ʤ�С��ѿ� C<${^ENCODING}> 
-�򻲾Ȥ��褦�Ȥ��륳���ɤϡ�Jperl-5.005 �Ǥ� syntax error �Ȥʤ뤿���
-���롥
+このライブラリは，変数 C<${^ENCODING}> を参照する必要のある関数の定義
+を，一ヶ所にまとめるために導入した．なぜならば，変数 C<${^ENCODING}> 
+を参照しようとするコードは，Jperl-5.005 では syntax error となるためで
+ある．
 
   Sample Script:
     use English qw/ $PERL_VERSION /;
@@ -108,14 +108,13 @@ L<Encode>
 =over 4
 
 =item
-�ڲ� ��̭ <tsuchiya@pine.kuee.kyoto-u.ac.jp>
+土屋 雅稔 <tsuchiya@pine.kuee.kyoto-u.ac.jp>
 
 =cut
 
 __END__
 # Local Variables:
 # mode: perl
-# coding: euc-japan
 # use-kuten-for-period: nil
 # use-touten-for-comma: nil
 # End:

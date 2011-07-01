@@ -14,7 +14,7 @@ unless( eval { require KULM::Juman::M; } ){
 }
 use Juman::Morpheme;
 
-my $spec = "¤Ç¤¢¤ê ¤Ç¤¢¤ê ¤À È½Äê»ì 4 * 0 È½Äê»ì 25 ¥Ç¥¢¥ëÎó´ðËÜÏ¢ÍÑ·Á 18 NIL\n";
+my $spec = "ã§ã‚ã‚Š ã§ã‚ã‚Š ã  åˆ¤å®šè©ž 4 * 0 åˆ¤å®šè©ž 25 ãƒ‡ã‚¢ãƒ«åˆ—åŸºæœ¬é€£ç”¨å½¢ 18 NIL\n";
 my $x = Juman::Morpheme->new( $spec );
 my $y = KULM::Juman::M->new( string => $spec );
 

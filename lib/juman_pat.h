@@ -1,7 +1,7 @@
 #define DEBUGn
 
 #ifdef DEBUG
-#define OI(x) {printf("< %d >\n",x);fflush(stdout);} /* Output Integer */ /*¥Ç¥Ğ¥°¤ËÊØÍø*/
+#define OI(x) {printf("< %d >\n",x);fflush(stdout);} /* Output Integer */ /*ãƒ‡ãƒã‚°ã«ä¾¿åˆ©*/
 #define OS(x) {printf("[ %s ]\n",x);fflush(stdout);} /* Output String */
 #define OS2(x) {printf("%s\n",x);fflush(stdout);} /* Output String */
 #define OM(x) {printf("Message: " #x "\n");fflush(stdout);} /* Output Message */
@@ -14,70 +14,75 @@
 #define OL(x)  /* */
 #endif
 
-/* ¤¿¤Ä¤ò¥Ï¥Ã¥·¥å */
+/* ãŸã¤ã‚’ãƒãƒƒã‚·ãƒ¥ */
 #ifdef USE_HASH
 #include "t-hash.h"
 #endif
 
-/* ¥¤¥ó¥Ç¥Ã¥¯¥¹ÍÑ¤Î¥ê¥¹¥È·¿¤ÎÄêµÁ */
+/* ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ç”¨ã®ãƒªã‚¹ãƒˆå‹ã®å®šç¾© */
 typedef struct pat_index_list {
-  struct pat_index_list *next; /* ¤Ä¤® */
-  long index; /* ¥Õ¥¡¥¤¥ë¤Î¥¤¥ó¥Ç¥Ã¥¯¥¹ */
+  struct pat_index_list *next; /* ã¤ã */
+  long index; /* ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ */
 } pat_index_list;
 
-/* ¥Î¡¼¥É¤Î¥Ç¡¼¥¿¹½Â¤¤ÎÄêµÁ */
+/* ãƒãƒ¼ãƒ‰ã®ãƒ‡ãƒ¼ã‚¿æ§‹é€ ã®å®šç¾© */
 typedef struct pat_node {
-  pat_index_list il; /* ¥¤¥ó¥Ç¥Ã¥¯¥¹¤Î¥ê¥¹¥È */
-  short checkbit; /* ¥Á¥§¥Ã¥¯¤¹¤ë¥Ó¥Ã¥È¤Î»ØÄê¡£(²¿ÈÖÌÜ¤Î¥Ó¥Ã¥È?) */
+  pat_index_list il; /* ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã®ãƒªã‚¹ãƒˆ */
+  short checkbit; /* ãƒã‚§ãƒƒã‚¯ã™ã‚‹ãƒ“ãƒƒãƒˆã®æŒ‡å®šã€‚(ä½•ç•ªç›®ã®ãƒ“ãƒƒãƒˆ?) */
 #if 0
-  char *str; /* ¥È¥é¥¤¤È¤·¤Æ¤Ä¤«¤¦¤¿¤á¤ËºÇÄã¸ÂÉ¬Í×¤ÊÊ¸»úÎó¤òÊİÂ¸ 960919 */
+  char *str; /* ãƒˆãƒ©ã‚¤ã¨ã—ã¦ã¤ã‹ã†ãŸã‚ã«æœ€ä½é™å¿…è¦ãªæ–‡å­—åˆ—ã‚’ä¿å­˜ 960919 */
 #endif
-  struct pat_node *right; /* ±¦¤Ø¤Ş¤¤¤ê¤Ş¡Á¤¹ */
-  struct pat_node *left; /* º¸¤Ø¤Ş¤¤¤ê¤Ş¡Á¤¹ */
+  struct pat_node *right; /* å³ã¸ã¾ã„ã‚Šã¾ã€œã™ */
+  struct pat_node *left; /* å·¦ã¸ã¾ã„ã‚Šã¾ã€œã™ */
 } pat_node;
 
 
-#define HASH_SIZE 131071 /* 107653  ¥Ï¥Ã¥·¥å¥Æ¡¼¥Ö¥ë¤Î¥µ¥¤¥º 1162213*/
+#define HASH_SIZE 131071 /* 107653  ãƒãƒƒã‚·ãƒ¥ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã‚µã‚¤ã‚º 1162213*/
 
 
 #ifndef MAX_DIC_NUMBER 
-#define MAX_DIC_NUMBER 5 /* Æ±»ş¤Ë»È¤¨¤ë¼­½ñ¤Î¿ô¤Î¾å¸Â (JUMAN) */
+#define MAX_DIC_NUMBER 5 /* åŒæ™‚ã«ä½¿ãˆã‚‹è¾æ›¸ã®æ•°ã®ä¸Šé™ (JUMAN) */
 #endif
-extern pat_node tree_top[MAX_DIC_NUMBER]; /* ÌÚ¤Î¤Í¤Ã¤³¢ö ¼­½ñ¤Î¿ô¤À¤±»È¤¦ */
-extern FILE *dic_file[MAX_DIC_NUMBER]; /* ÌÚ¤Î¤â¤È¥Ç¡¼¥¿(¼­½ñ¥Õ¥¡¥¤¥ë) */
+extern pat_node tree_top[MAX_DIC_NUMBER]; /* æœ¨ã®ã­ã£ã“â™ª è¾æ›¸ã®æ•°ã ã‘ä½¿ã† */
+extern FILE *dic_file[MAX_DIC_NUMBER]; /* æœ¨ã®ã‚‚ã¨ãƒ‡ãƒ¼ã‚¿(è¾æ›¸ãƒ•ã‚¡ã‚¤ãƒ«) */
 
-#define SIKII_BIT 16  /* Ê¸»ú¤ÈÊ¸»ú¤Î¶èÀÚ¤ê¤Ï²¿¥Ó¥Ã¥ÈÌÜ? (8 or 16) */
+/* æ–‡å­—ã¨æ–‡å­—ã®åŒºåˆ‡ã‚Šã¯ä½•ãƒ“ãƒƒãƒˆç›®? (8 or 16(EUC-JP) or 24(UTF-8) */
+#ifdef IO_ENCODING_EUC
+#define SIKII_BIT 16
+#else
+#define SIKII_BIT 24
+#endif
 
-extern char line[50000]; /* ÆşÎÏ¹Ô */
-extern FILE *out_file, *in_file; /* ¥»¡¼¥Ö¥Õ¥¡¥¤¥ë¡¦¥í¡¼¥É¥Õ¥¡¥¤¥ë */
-extern char  inkey[10000]; /* ¸¡º÷¡¦ÁŞÆş¥­¡¼ */
+extern char line[50000]; /* å…¥åŠ›è¡Œ */
+extern FILE *out_file, *in_file; /* ã‚»ãƒ¼ãƒ–ãƒ•ã‚¡ã‚¤ãƒ«ãƒ»ãƒ­ãƒ¼ãƒ‰ãƒ•ã‚¡ã‚¤ãƒ« */
+extern char  inkey[10000]; /* æ¤œç´¢ãƒ»æŒ¿å…¥ã‚­ãƒ¼ */
 
-/*** JUMAN¼­½ñ°ú¤­´ØÏ¢ ***/
-extern int number_of_tree; /* »ÈÍÑ¤¹¤ë¼­½ñ(¥Ñ¥ÈÌÚ)¤Î¿ô */
+/*** JUMANè¾æ›¸å¼•ãé–¢é€£ ***/
+extern int number_of_tree; /* ä½¿ç”¨ã™ã‚‹è¾æ›¸(ãƒ‘ãƒˆæœ¨)ã®æ•° */
 
-/*** get_item()ÍÑ ***/
-extern char partition_char; /* ¶èÀÚ¤êÊ¸»ú */
-extern int column; /* ²¿¥³¥é¥àÌÜ¤« */
+/*** get_item()ç”¨ ***/
+extern char partition_char; /* åŒºåˆ‡ã‚Šæ–‡å­— */
+extern int column; /* ä½•ã‚³ãƒ©ãƒ ç›®ã‹ */
 
 /**************************
- * ´Ø¿ô¤Î¥×¥í¥È¥¿¥¤¥×Àë¸À *
+ * é–¢æ•°ã®ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€ *
  **************************/ 
 /* pat.c */
-extern void pat_init_tree_top(pat_node*); /* ¥Ñ¥È¥ê¥·¥¢ÌÚ¤Îº¬¤Î½é´ü²½ */
-extern pat_node *pat_search(FILE*,char*,pat_node*,char*); /* ¥Ñ¥È¥ê¥·¥¢ÌÚ¤Ç¸¡º÷ */
-extern pat_node *pat_search4insert(char*,pat_node*); /* ÁŞÆşÍÑ¸¡º÷ */
-extern void pat_insert(FILE*,char*,long,pat_node*,char*); /* ¥Ñ¥È¥ê¥·¥¢ÌÚ¤ËÁŞÆş */
+extern void pat_init_tree_top(pat_node*); /* ãƒ‘ãƒˆãƒªã‚·ã‚¢æœ¨ã®æ ¹ã®åˆæœŸåŒ– */
+extern pat_node *pat_search(FILE*,char*,pat_node*,char*); /* ãƒ‘ãƒˆãƒªã‚·ã‚¢æœ¨ã§æ¤œç´¢ */
+extern pat_node *pat_search4insert(char*,pat_node*); /* æŒ¿å…¥ç”¨æ¤œç´¢ */
+extern void pat_insert(FILE*,char*,long,pat_node*,char*); /* ãƒ‘ãƒˆãƒªã‚·ã‚¢æœ¨ã«æŒ¿å…¥ */
 extern int pat_bits(char*,int,int); 
-         /* Ê¸»úÎóÃæ¤Î»ØÄê¤µ¤ì¤¿°ÌÃÖ¤Î¥Ó¥Ã¥È¤òÊÖ¤¹ */
-         /* 960918  ÆâÉô¤Çstrlrn()¤ò¤ä¤ë¤Î¤ÏÌµÂÌ¤Ç¤¢¤ë¤³¤È¤¬È½ÌÀ */
-extern void show_pat(pat_node*,FILE*,char*); /* ¥Ñ¥È¥ê¥·¥¢ÌÚ¥Ç¡¼¥¿¤ò½ĞÎÏ */
-extern char *get_line(FILE*,long); /* »ØÄê¤µ¤ì¤¿¾ì½ê¤«¤é'\n'¤Ş¤ÇÆÉ¤à */
+         /* æ–‡å­—åˆ—ä¸­ã®æŒ‡å®šã•ã‚ŒãŸä½ç½®ã®ãƒ“ãƒƒãƒˆã‚’è¿”ã™ */
+         /* 960918  å†…éƒ¨ã§strlrn()ã‚’ã‚„ã‚‹ã®ã¯ç„¡é§„ã§ã‚ã‚‹ã“ã¨ãŒåˆ¤æ˜ */
+extern void show_pat(pat_node*,FILE*,char*); /* ãƒ‘ãƒˆãƒªã‚·ã‚¢æœ¨ãƒ‡ãƒ¼ã‚¿ã‚’å‡ºåŠ› */
+extern char *get_line(FILE*,long); /* æŒ‡å®šã•ã‚ŒãŸå ´æ‰€ã‹ã‚‰'\n'ã¾ã§èª­ã‚€ */
 
 /* file.c */
-extern void com_s(char*,pat_node*); /* ¥»¡¼¥Ö´ØÏ¢ */
+extern void com_s(char*,pat_node*); /* ã‚»ãƒ¼ãƒ–é–¢é€£ */
 extern void save_pat(pat_node*);
 extern void eputc(unsigned char, int);
-extern void com_l(char*,pat_node*); /* ¥í¡¼¥É´ØÏ¢ */
+extern void com_l(char*,pat_node*); /* ãƒ­ãƒ¼ãƒ‰é–¢é€£ */
 extern pat_node *load_anode(pat_node*);
 extern unsigned char egetc(int);
 extern void dummy(void);
@@ -85,36 +90,36 @@ extern pat_node *malloc_pat_node(void); /* Matomete malloc */
 extern pat_index_list *malloc_pat_index_list(void); /* Matomete malloc */
 
 /* morph.c */
-extern void jisyohiki(char*,pat_node*); /* ¼­½ñ°ú¤­ */
-extern void insert_dic_data(FILE*,pat_node*,char*); /* ¼­½ñ¥Ç¡¼¥¿¤òÁŞÆş*/
+extern void jisyohiki(char*,pat_node*); /* è¾æ›¸å¼•ã */
+extern void insert_dic_data(FILE*,pat_node*,char*); /* è¾æ›¸ãƒ‡ãƒ¼ã‚¿ã‚’æŒ¿å…¥*/
 
 /************************************************************************
 * 
-* pat --- ¥Ñ¥È¥ê¥·¥¢ÌÚ¤ÎÃµº÷¤ÈÁŞÆş
+* pat --- ãƒ‘ãƒˆãƒªã‚·ã‚¢æœ¨ã®æ¢ç´¢ã¨æŒ¿å…¥
 * 
-* ºî¼Ô: ¤¿¤Ä¤ò(tatuo-y@is.aist-nara.ac.jp)
+* ä½œè€…: ãŸã¤ã‚’(tatuo-y@is.aist-nara.ac.jp)
 * 
-* ÌÜÅª: ¥Ñ¥È¥ê¥·¥¢ÌÚ¤ÎÃµº÷¤ÈÁŞÆş¤ò¹Ô¤¦
+* ç›®çš„: ãƒ‘ãƒˆãƒªã‚·ã‚¢æœ¨ã®æ¢ç´¢ã¨æŒ¿å…¥ã‚’è¡Œã†
 * 
-* »²¹ÍÊ¸¸¥: 
-*   ¥¢¥ë¥´¥ê¥º¥à¤ÎÍı²ò¤Î¤¿¤á¤ËÊ¸¸¥[1]¤ò»²¾È¤·¤¿¡£C¸À¸ì¤Ç¤Î¼ÂÁõ¤Ï
-*   Ê¸¸¥[2]¤Î¥×¥í¥°¥é¥à¤ò»²¹Í¤Ë¤·¤¿¡£
-* [1] R. Sedgewick Ãø Ìî²¼¹ÀÊ¿¡¢À±¼é¡¢º´Æ£ÁÏ¡¢ÅÄ¸ıÅì ¶¦Ìõ
-*     ¥¢¥ë¥´¥ê¥º¥à (Algorithms) ¸¶½ñÂè2ÈÇ Âè2´¬ Ãµº÷¡¦Ê¸»úÎó¡¦·×»»´ö²¿
-*     ¶áÂå²Ê³Ø¼Ò,1992. (B195-2,pp.68-72)
-* [2] ÅçÆâ¹ä°ì¡¢Í­ß·À¿¡¢Ìî²¼¹ÀÊ¿¡¢ÉÍÅÄÊæÀÑ¡¢Éú¸«ÀµÂ§ ÊÔ½¸°Ñ°÷
-*     ¥¢¥ë¥´¥ê¥º¥à¼­Åµ
-*     ¶¦Î©½ĞÈÇ³ô¼°²ñ¼Ò,1994. (D74,pp.624-625)
+* å‚è€ƒæ–‡çŒ®: 
+*   ã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ ã®ç†è§£ã®ãŸã‚ã«æ–‡çŒ®[1]ã‚’å‚ç…§ã—ãŸã€‚Cè¨€èªã§ã®å®Ÿè£…ã¯
+*   æ–‡çŒ®[2]ã®ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã‚’å‚è€ƒã«ã—ãŸã€‚
+* [1] R. Sedgewick è‘— é‡ä¸‹æµ©å¹³ã€æ˜Ÿå®ˆã€ä½è—¤å‰µã€ç”°å£æ± å…±è¨³
+*     ã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ  (Algorithms) åŸæ›¸ç¬¬2ç‰ˆ ç¬¬2å·» æ¢ç´¢ãƒ»æ–‡å­—åˆ—ãƒ»è¨ˆç®—å¹¾ä½•
+*     è¿‘ä»£ç§‘å­¦ç¤¾,1992. (B195-2,pp.68-72)
+* [2] å³¶å†…å‰›ä¸€ã€æœ‰æ¾¤èª ã€é‡ä¸‹æµ©å¹³ã€æµœç”°ç©‚ç©ã€ä¼è¦‹æ­£å‰‡ ç·¨é›†å§”å“¡
+*     ã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ è¾å…¸
+*     å…±ç«‹å‡ºç‰ˆæ ªå¼ä¼šç¤¾,1994. (D74,pp.624-625)
 * 
-* ÍúÎò:
-*   1996/04/09  Æ°¤¯! (¤¿¤À¤·°·¤¨¤ë¥Ç¡¼¥¿¤ÎºÇÂçÄ¹¤Ï8bit¡£[2]¤òÌÏÊï¡£)
-*           10  ½ĞÎÏ¥ë¡¼¥Á¥ó¤òºÆµ¢¤Ë²şÎÉ¡£Ê¸»úÎó¥Ç¡¼¥¿ÂĞ±ş(ºÇÂçÄ¹ÌµÀ©¸Â)¡£
-*           30  ¥»¡¼¥Ö/¥í¡¼¥Éµ¡Ç½¡£¥Î¡¼¥É¤Î¥Ç¡¼¥¿¹½Â¤¤ËIDÈÖ¹æ¤òÄÉ²Ã(²¾)¡£
-*         5/06  ÉôÊ¬ÌÚ¤ÎÁ´¥Ç¡¼¥¿½ĞÎÏ½èÍı¡£
-*         6/11  JUMAN¤Î¼­½ñ°ú¤­ÍÑ¤Ë²şÂ¤¡¥
-*           21  Ï¢ÁÛÇÛÎó¤òÆ³Æş(INDEX¤ò¥­¥ã¥Ã¥·¥å¤¹¤ë)
-*         7/01  Ê£¿ô¤Î¼­½ñ¥Õ¥¡¥¤¥ë(¥Ñ¥ÈÌÚ)¤«¤é¸¡º÷¤Ç¤­¤ë¤è¤¦¤Ë¤·¤¿¡¥
+* å±¥æ­´:
+*   1996/04/09  å‹•ã! (ãŸã ã—æ‰±ãˆã‚‹ãƒ‡ãƒ¼ã‚¿ã®æœ€å¤§é•·ã¯8bitã€‚[2]ã‚’æ¨¡å€£ã€‚)
+*           10  å‡ºåŠ›ãƒ«ãƒ¼ãƒãƒ³ã‚’å†å¸°ã«æ”¹è‰¯ã€‚æ–‡å­—åˆ—ãƒ‡ãƒ¼ã‚¿å¯¾å¿œ(æœ€å¤§é•·ç„¡åˆ¶é™)ã€‚
+*           30  ã‚»ãƒ¼ãƒ–/ãƒ­ãƒ¼ãƒ‰æ©Ÿèƒ½ã€‚ãƒãƒ¼ãƒ‰ã®ãƒ‡ãƒ¼ã‚¿æ§‹é€ ã«IDç•ªå·ã‚’è¿½åŠ (ä»®)ã€‚
+*         5/06  éƒ¨åˆ†æœ¨ã®å…¨ãƒ‡ãƒ¼ã‚¿å‡ºåŠ›å‡¦ç†ã€‚
+*         6/11  JUMANã®è¾æ›¸å¼•ãç”¨ã«æ”¹é€ ï¼
+*           21  é€£æƒ³é…åˆ—ã‚’å°å…¥(INDEXã‚’ã‚­ãƒ£ãƒƒã‚·ãƒ¥ã™ã‚‹)
+*         7/01  è¤‡æ•°ã®è¾æ›¸ãƒ•ã‚¡ã‚¤ãƒ«(ãƒ‘ãƒˆæœ¨)ã‹ã‚‰æ¤œç´¢ã§ãã‚‹ã‚ˆã†ã«ã—ãŸï¼
 * 
-* ¥á¥â: JUMAN¤Î¼­½ñ°ú¤­¤ËÍøÍÑ¤¹¤ë
+* ãƒ¡ãƒ¢: JUMANã®è¾æ›¸å¼•ãã«åˆ©ç”¨ã™ã‚‹
 * 
 ************************************************************************/

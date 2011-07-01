@@ -11,8 +11,8 @@ use Juman::Morpheme;
 
 my $juman = new Juman;
 ok( defined $juman );
-ok( $juman->get_hinsi_id( '̾��' ) == 6 );
-ok( &get_hinsi( 6 ) eq '̾��' );
+ok( $juman->get_hinsi_id( '名詞' ) == 6 );
+ok( &get_hinsi( 6 ) eq '名詞' );
 
 for( <DATA> ){
     if( $_ !~ m/\A\#/ and $_ =~ /\S/ ){
@@ -30,8 +30,8 @@ for( <DATA> ){
 }
 
 __DATA__
-�֤� ������ �֤� ���ƻ� 3 * 0 �����ƻ쥢������ 18 ���ܷ� 2 NIL
-�� �Ϥ� �� ̾�� 6 ����̾�� 1 * 0 * 0 NIL
-�� �� �� ���� 9 �ʽ��� 1 * 0 * 0 NIL
-�餤�� ������ �餯 ư�� 2 * 0 �Ҳ�ư�쥫�� 2 ���� 8 NIL
-�Τ� �Τ� �Τ� ��ư�� 5 * 0 �ʷ��ƻ� 21 ���ܷ� 2 NIL
+赤い あかい 赤い 形容詞 3 * 0 イ形容詞アウオ段 18 基本形 2 NIL
+花 はな 花 名詞 6 普通名詞 1 * 0 * 0 NIL
+が が が 助詞 9 格助詞 1 * 0 * 0 NIL
+咲いた さいた 咲く 動詞 2 * 0 子音動詞カ行 2 タ形 8 NIL
+のだ のだ のだ 助動詞 5 * 0 ナ形容詞 21 基本形 2 NIL

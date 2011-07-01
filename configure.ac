@@ -25,7 +25,7 @@ AC_SUBST(NET_LIBS)
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdlib.h string.h regex.h sys/file.h sys/socket.h unistd.h windows.h winsock2.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdio.h stdlib.h string.h regex.h sys/file.h sys/socket.h unistd.h windows.h winsock2.h])
 # link ws2_32 on Windows
 AC_CHECK_HEADER(winsock2.h, NET_LIBS="-lws2_32 $NET_LIBS")
 

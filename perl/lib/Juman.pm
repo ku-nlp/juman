@@ -228,9 +228,12 @@ sub juman_lines {
     # UTFフラグをチェックする
     if (utf8::is_utf8($str)) {
 	require Encode;
-	if ($JUMAN::ENCODING eq 'euc-jp') {
+	if ($ENCODING eq 'euc-jp') {
 	    # euc-jpにない文字とJISX0212補助漢字(3バイト)は〓に変換
-	    $str = &conv_3bytecode_to_geta(Encode::encode($JUMAN::ENCODING, $str, sub {'〓'}));
+	    $str = &conv_3bytecode_to_geta(Encode::encode($ENCODING, $str, sub {'〓'}));
+	}
+	else { # UTF-8のはず
+	    $str = Encode::encode($ENCODING, $str);
 	}
 	$this->{input_is_utf8} = 1;
     }
@@ -244,7 +247,7 @@ sub juman_lines {
     # 解析結果を読み出す
     while( defined( $str = $socket->getline ) ){
 	if ($this->{input_is_utf8}) {
-	    $str = Encode::decode($JUMAN::ENCODING, $str);
+	    $str = Encode::decode($ENCODING, $str);
 	}
 	push( @buf, $str );
 	last if $str =~ /$pattern/;

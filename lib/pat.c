@@ -33,13 +33,13 @@ typedef char *	caddr_t;
 
 #include "juman_pat.h"
 
-/* ¥Ï¥Ã¥·¥å¥Æ¡¼¥Ö¥ë¤ÎÀë¸À */
+/* ãƒãƒƒã‚·ãƒ¥ãƒ†ãƒ¼ãƒ–ãƒ«ã®å®£è¨€ */
 #ifdef USE_HASH
 th_hash_node hash_array[HASH_SIZE];
 #endif
 
-pat_node tree_top[MAX_DIC_NUMBER]; /* ÌÚ¤Î¤Í¤Ã¤³¢ö ¼­½ñ¤Î¿ô¤À¤±»È¤¦ */
-FILE *dic_file[MAX_DIC_NUMBER]; /* ÌÚ¤Î¤â¤È¥Ç¡¼¥¿(¼­½ñ¥Õ¥¡¥¤¥ë) */
+pat_node tree_top[MAX_DIC_NUMBER]; /* æœ¨ã®ã­ã£ã“â™ª è¾æ›¸ã®æ•°ã ã‘ä½¿ã† */
+FILE *dic_file[MAX_DIC_NUMBER]; /* æœ¨ã®ã‚‚ã¨ãƒ‡ãƒ¼ã‚¿(è¾æ›¸ãƒ•ã‚¡ã‚¤ãƒ«) */
 
 static struct _dic_t {
   int used;
@@ -49,13 +49,13 @@ static struct _dic_t {
 } dicinfo[MAX_DIC_NUMBER];
 
 /******************************************************
-* pat_strcmp_prefix --- ¥×¥ì¥Õ¥£¥¯¥¹¥Ş¥Ã¥Á
+* pat_strcmp_prefix --- ãƒ—ãƒ¬ãƒ•ã‚£ã‚¯ã‚¹ãƒãƒƒãƒ
 *
-* ¥Ñ¥é¥á¡¼¥¿
+* ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
 *   s1 --- Prefix String
-*   s2 --- Ä´¤Ù¤é¤ì¤ë String
+*   s2 --- èª¿ã¹ã‚‰ã‚Œã‚‹ String
 *
-* ÊÖ¤·ÃÍ  À®¸ù 1¡¢¼ºÇÔ 0
+* è¿”ã—å€¤  æˆåŠŸ 1ã€å¤±æ•— 0
 ******************************************************/
 static int pat_strcmp_prefix(char *s1, char *s2)
 {
@@ -66,12 +66,12 @@ static int pat_strcmp_prefix(char *s1, char *s2)
 }
 
 /******************************************************
-* pat_strcpy --- Ê¸»úÎó¥³¥Ô¡¼
+* pat_strcpy --- æ–‡å­—åˆ—ã‚³ãƒ”ãƒ¼
 *
-* ¥Ñ¥é¥á¡¼¥¿
+* ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
 *   s1, s2
 *
-* ÊÖ¤·ÃÍ
+* è¿”ã—å€¤
 ******************************************************/
 static char *pat_strcpy(char *s1, char *s2)
 {
@@ -81,28 +81,28 @@ static char *pat_strcpy(char *s1, char *s2)
 
 
 /******************************************************
-* pat_init_tree_top --- ¥Ñ¥È¥ê¥·¥¢ÌÚ¤Îº¬¤Î½é´ü²½
+* pat_init_tree_top --- ãƒ‘ãƒˆãƒªã‚·ã‚¢æœ¨ã®æ ¹ã®åˆæœŸåŒ–
 *
-* ¥Ñ¥é¥á¡¼¥¿
-*   ptr --- ½é´ü²½¤¹¤ëÌÚ¤Îº¬¤Ø¤Î¥İ¥¤¥ó¥¿
+* ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+*   ptr --- åˆæœŸåŒ–ã™ã‚‹æœ¨ã®æ ¹ã¸ã®ãƒã‚¤ãƒ³ã‚¿
 ******************************************************/
 void pat_init_tree_top(pat_node *ptr) {
-  (ptr->il).index = -1; /* ¥¤¥ó¥Ç¥Ã¥¯¥¹¤Î¥ê¥¹¥È */
+  (ptr->il).index = -1; /* ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã®ãƒªã‚¹ãƒˆ */
   ptr->checkbit = -1;
   ptr->right = ptr;
   ptr->left = ptr;
 }
 
 /****************************************************
-* pat_search --- ¥Ñ¥È¥ê¥·¥¢ÌÚ¤ò¸¡º÷
+* pat_search --- ãƒ‘ãƒˆãƒªã‚·ã‚¢æœ¨ã‚’æ¤œç´¢
 * 
-* ¥Ñ¥é¥á¡¼¥¿
-*   key --- ¸¡º÷¥­¡¼
-*   x_ptr --- ¸¡º÷³«»Ï°ÌÃÖ(¥İ¥¤¥ó¥¿)
-*   rslt --- ·ë²Ì¤òÆş¤ì¤ë¡¥
+* ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+*   key --- æ¤œç´¢ã‚­ãƒ¼
+*   x_ptr --- æ¤œç´¢é–‹å§‹ä½ç½®(ãƒã‚¤ãƒ³ã‚¿)
+*   rslt --- çµæœã‚’å…¥ã‚Œã‚‹ï¼
 * 
-* ÊÖ¤·ÃÍ
-*   ¸¡º÷½ªÎ»°ÌÃÖ(¥İ¥¤¥ó¥¿)
+* è¿”ã—å€¤
+*   æ¤œç´¢çµ‚äº†ä½ç½®(ãƒã‚¤ãƒ³ã‚¿)
 *
 ****************************************************/
 pat_node *pat_search(FILE *f, char *key, pat_node *x_ptr, char *rslt)
@@ -111,9 +111,9 @@ pat_node *pat_search(FILE *f, char *key, pat_node *x_ptr, char *rslt)
   int in_hash = 0;
   pat_index_list *tmp_l_ptr;
   int i;
-  int key_length = strlen(key); /* ¥­¡¼¤ÎÊ¸»ú¿ô¤ò¿ô¤¨¤Æ¤ª¤¯ */
-  char buffer[50000]; /* ÈÆÍÑ¥Ğ¥Ã¥Õ¥¡ */
-  int totyu_match_len = 0; /* ÅÓÃæ¤Ç¥Ş¥Ã¥Á¤·¤¿Prefix¤ÎÊ¸»ú¿ô */
+  int key_length = strlen(key); /* ã‚­ãƒ¼ã®æ–‡å­—æ•°ã‚’æ•°ãˆã¦ãŠã */
+  char buffer[50000]; /* æ±ç”¨ãƒãƒƒãƒ•ã‚¡ */
+  int totyu_match_len = 0; /* é€”ä¸­ã§ãƒãƒƒãƒã—ãŸPrefixã®æ–‡å­—æ•° */
   char *r;
 
   rslt += strlen(rslt);
@@ -124,22 +124,22 @@ pat_node *pat_search(FILE *f, char *key, pat_node *x_ptr, char *rslt)
   /* OL(pat_search:\n); */
   do {
     ptr = x_ptr;
-    /* Éßµï¥Ó¥Ã¥È¤Ê¤é¤Ğ */
+    /* æ•·å±…ãƒ“ãƒƒãƒˆãªã‚‰ã° */
     OL(checkbit:)OI(ptr->checkbit);
-    if(ptr->checkbit%SIKII_BIT==0 && ptr->checkbit!=0){ /* ÅÓÃæÃ±¸ì¤òÃµ¤¹ */
+    if(ptr->checkbit%SIKII_BIT==0 && ptr->checkbit!=0){ /* é€”ä¸­å˜èªã‚’æ¢ã™ */
       tmp_x_ptr = ptr;
-      do { /* º¸ÉôÊ¬ÌÚ¤Î°ìÈÖº¸¤Î¥Î¡¼¥É¤òÄ´¤Ù¤ë¡¥ */
+      do { /* å·¦éƒ¨åˆ†æœ¨ã®ä¸€ç•ªå·¦ã®ãƒãƒ¼ãƒ‰ã‚’èª¿ã¹ã‚‹ï¼ */
 	tmp_ptr = tmp_x_ptr;
 	tmp_x_ptr = tmp_x_ptr->left;
       } while(tmp_ptr->checkbit < tmp_x_ptr->checkbit);
 
-      /* ¥Ï¥Ã¥·¥å¤ò¥Á¥§¥Ã¥¯ */
+      /* ãƒãƒƒã‚·ãƒ¥ã‚’ãƒã‚§ãƒƒã‚¯ */
       in_hash = hash_check_proc(f,(tmp_x_ptr->il).index,buffer);
-      strtok(buffer,"\t"); /* ºÇ½é¤Î '\t' ¤ò '\0' ¤Ë¤¹¤ë¡¥*/
-      /* buffer¤ÎÀèÆ¬¤Î¡Ö¸«½Ğ¤·¸ì¡×ÉôÊ¬¤À¤±¤Ç¥Ş¥Ã¥Á¥ó¥°¤ò¹Ô¤Ê¤¦ */
-      if(strncmp(key,buffer,ptr->checkbit/8) == 0) { /* ¸«¤Ä¤±¤¿ */
-	totyu_match_len = ptr->checkbit/8; /* ÅÓÃæ¤Ç¥Ş¥Ã¥Á¤·¤¿Prefix¤ÎÊ¸»ú¿ô */
-	tmp_l_ptr = &(tmp_x_ptr->il); /* Á´¥ê¥¹¥ÈÍ×ÁÇ¤Î¼è¤ê½Ğ¤· */
+      strtok(buffer,"\t"); /* æœ€åˆã® '\t' ã‚’ '\0' ã«ã™ã‚‹ï¼*/
+      /* bufferã®å…ˆé ­ã®ã€Œè¦‹å‡ºã—èªã€éƒ¨åˆ†ã ã‘ã§ãƒãƒƒãƒãƒ³ã‚°ã‚’è¡Œãªã† */
+      if(strncmp(key,buffer,ptr->checkbit/8) == 0) { /* è¦‹ã¤ã‘ãŸ */
+	totyu_match_len = ptr->checkbit/8; /* é€”ä¸­ã§ãƒãƒƒãƒã—ãŸPrefixã®æ–‡å­—æ•° */
+	tmp_l_ptr = &(tmp_x_ptr->il); /* å…¨ãƒªã‚¹ãƒˆè¦ç´ ã®å–ã‚Šå‡ºã— */
 	while(tmp_l_ptr != NULL){
 	  in_hash = hash_check_proc(f,tmp_l_ptr->index,buffer);
 	  r = pat_strcpy(r, buffer);
@@ -148,32 +148,32 @@ pat_node *pat_search(FILE *f, char *key, pat_node *x_ptr, char *rslt)
 
 	  tmp_l_ptr = tmp_l_ptr->next;
 	}
-      } else { /* ÅÓÃæ¤Ç¼ºÇÔ¤òÈ¯¸« */
+      } else { /* é€”ä¸­ã§å¤±æ•—ã‚’ç™ºè¦‹ */
 	return x_ptr;
       }
     }
 
-    /* key ¤Î checkbit¥Ó¥Ã¥ÈÌÜ¤Çº¸±¦¤Ë¿¶¤êÊ¬¤± */
+    /* key ã® checkbitãƒ“ãƒƒãƒˆç›®ã§å·¦å³ã«æŒ¯ã‚Šåˆ†ã‘ */
     if(pat_bits(key,x_ptr->checkbit,key_length)==1){x_ptr = x_ptr->right;}
     else {x_ptr = x_ptr->left;}
 
   } while(ptr->checkbit < x_ptr->checkbit);
   
 
-  if(tmp_x_ptr != x_ptr || top_ptr == x_ptr) { /* ½ªÎ»¥Î¡¼¥É¤ò¥Á¥§¥Ã¥¯¤¹¤ë */
+  if(tmp_x_ptr != x_ptr || top_ptr == x_ptr) { /* çµ‚äº†ãƒãƒ¼ãƒ‰ã‚’ãƒã‚§ãƒƒã‚¯ã™ã‚‹ */
     char *s;
     int tmp_len;
-    /* ¥Ï¥Ã¥·¥å¤ò¥Á¥§¥Ã¥¯ */
+    /* ãƒãƒƒã‚·ãƒ¥ã‚’ãƒã‚§ãƒƒã‚¯ */
     in_hash = hash_check_proc(f,(x_ptr->il).index,buffer);
 
-    s = strchr(buffer,'\t'); /* ºÇ½é¤Î '\t' ¤ò '\0' ¤Ë¤¹¤ë¡¥*/
+    s = strchr(buffer,'\t'); /* æœ€åˆã® '\t' ã‚’ '\0' ã«ã™ã‚‹ï¼*/
     *s = '\0';
-    tmp_len = s - buffer;/*³«»Ï */
+    tmp_len = s - buffer;/*é–‹å§‹ */
 
-    /* buffer¤ÎÀèÆ¬¤Î¡Ö¸«½Ğ¤·¸ì¡×ÉôÊ¬¤À¤±¤Ç¥Ş¥Ã¥Á¥ó¥°¤ò¹Ô¤Ê¤¦ */
-    if(strncmp(key,buffer,tmp_len) == 0){ /* ¤¤¤­¤É¤Ş¤êÃ±¸ì¤ÎPrefix¥Á¥§¥Ã¥¯ */
-      if(totyu_match_len != key_length){ /* ¿·ÅĞ¾ì¤ÎÃ±¸ì¤«Èİ¤«¤Î¥Á¥§¥Ã¥¯ */
-	tmp_l_ptr = &(x_ptr->il); /* Á´¥ê¥¹¥ÈÍ×ÁÇ¤Î¼è¤ê½Ğ¤· */
+    /* bufferã®å…ˆé ­ã®ã€Œè¦‹å‡ºã—èªã€éƒ¨åˆ†ã ã‘ã§ãƒãƒƒãƒãƒ³ã‚°ã‚’è¡Œãªã† */
+    if(strncmp(key,buffer,tmp_len) == 0){ /* ã„ãã©ã¾ã‚Šå˜èªã®Prefixãƒã‚§ãƒƒã‚¯ */
+      if(totyu_match_len != key_length){ /* æ–°ç™»å ´ã®å˜èªã‹å¦ã‹ã®ãƒã‚§ãƒƒã‚¯ */
+	tmp_l_ptr = &(x_ptr->il); /* å…¨ãƒªã‚¹ãƒˆè¦ç´ ã®å–ã‚Šå‡ºã— */
 	while(tmp_l_ptr != NULL){
 	  in_hash = hash_check_proc(f,tmp_l_ptr->index,buffer);
 	  r = pat_strcpy(r, buffer);
@@ -191,15 +191,15 @@ pat_node *pat_search(FILE *f, char *key, pat_node *x_ptr, char *rslt)
 
 
 /****************************************************
-* pat_search_exact --- ¥Ñ¥È¥ê¥·¥¢ÌÚ¤ò¸¡º÷(exact match)
+* pat_search_exact --- ãƒ‘ãƒˆãƒªã‚·ã‚¢æœ¨ã‚’æ¤œç´¢(exact match)
 * 
-* ¥Ñ¥é¥á¡¼¥¿
-*   key --- ¸¡º÷¥­¡¼
-*   x_ptr --- ¸¡º÷³«»Ï°ÌÃÖ(¥İ¥¤¥ó¥¿)
-*   rslt --- ·ë²Ì¤òÆş¤ì¤ë¡¥
+* ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+*   key --- æ¤œç´¢ã‚­ãƒ¼
+*   x_ptr --- æ¤œç´¢é–‹å§‹ä½ç½®(ãƒã‚¤ãƒ³ã‚¿)
+*   rslt --- çµæœã‚’å…¥ã‚Œã‚‹ï¼
 * 
-* ÊÖ¤·ÃÍ
-*   ¸¡º÷½ªÎ»°ÌÃÖ(¥İ¥¤¥ó¥¿)
+* è¿”ã—å€¤
+*   æ¤œç´¢çµ‚äº†ä½ç½®(ãƒã‚¤ãƒ³ã‚¿)
 ****************************************************/
 pat_node *pat_search_exact(FILE *f, char *key, pat_node *x_ptr, char *rslt)
 {
@@ -207,8 +207,8 @@ pat_node *pat_search_exact(FILE *f, char *key, pat_node *x_ptr, char *rslt)
   pat_index_list *tmp_l_ptr;
   int in_hash;
   int i;
-  int key_length = strlen(key); /* ¥­¡¼¤ÎÊ¸»ú¿ô¤ò¿ô¤¨¤Æ¤ª¤¯ */
-  char buffer[50000]; /* ÈÆÍÑ¥Ğ¥Ã¥Õ¥¡ */
+  int key_length = strlen(key); /* ã‚­ãƒ¼ã®æ–‡å­—æ•°ã‚’æ•°ãˆã¦ãŠã */
+  char buffer[50000]; /* æ±ç”¨ãƒãƒƒãƒ•ã‚¡ */
   char *r;
 
   rslt += strlen(rslt);
@@ -217,21 +217,21 @@ pat_node *pat_search_exact(FILE *f, char *key, pat_node *x_ptr, char *rslt)
   /*  printf("##");*/
   do {
     ptr = x_ptr;
-    /* key ¤Î checkbit¥Ó¥Ã¥ÈÌÜ¤Çº¸±¦¤Ë¿¶¤êÊ¬¤± */
+    /* key ã® checkbitãƒ“ãƒƒãƒˆç›®ã§å·¦å³ã«æŒ¯ã‚Šåˆ†ã‘ */
     if(pat_bits(key,x_ptr->checkbit,key_length)==1){x_ptr = x_ptr->right;}
     else {x_ptr = x_ptr->left;}
 
   } while(ptr->checkbit < x_ptr->checkbit);
 
-  /* ¥Õ¥¡¥¤¥ë¤«¤é¼è¤Ã¤ÆÍè¤ë */
+  /* ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰å–ã£ã¦æ¥ã‚‹ */
   in_hash = hash_check_proc(f,(x_ptr->il).index,buffer);
   /*buffer = get_line(f,x_ptr->il_ptr->index);*/
 
-  strtok(buffer,"\t"); /* ºÇ½é¤Î '\t' ¤ò '\0' ¤Ë¤¹¤ë¡¥*/
+  strtok(buffer,"\t"); /* æœ€åˆã® '\t' ã‚’ '\0' ã«ã™ã‚‹ï¼*/
 
-  /* buffer¤ÎÀèÆ¬¤Î¡Ö¸«½Ğ¤·¸ì¡×ÉôÊ¬¤À¤±¤Ç¥Ş¥Ã¥Á¥ó¥°¤ò¹Ô¤Ê¤¦ */
-  if(strcmp(key,buffer) == 0){ /* ¤¤¤­¤É¤Ş¤êÃ±¸ì¤Î¥Á¥§¥Ã¥¯ */
-    tmp_l_ptr = &(x_ptr->il); /* Á´¥ê¥¹¥ÈÍ×ÁÇ¤Î¼è¤ê½Ğ¤· */
+  /* bufferã®å…ˆé ­ã®ã€Œè¦‹å‡ºã—èªã€éƒ¨åˆ†ã ã‘ã§ãƒãƒƒãƒãƒ³ã‚°ã‚’è¡Œãªã† */
+  if(strcmp(key,buffer) == 0){ /* ã„ãã©ã¾ã‚Šå˜èªã®ãƒã‚§ãƒƒã‚¯ */
+    tmp_l_ptr = &(x_ptr->il); /* å…¨ãƒªã‚¹ãƒˆè¦ç´ ã®å–ã‚Šå‡ºã— */
     while(tmp_l_ptr != NULL){
       in_hash = hash_check_proc(f,tmp_l_ptr->index,buffer);
       r = pat_strcpy(r, buffer);
@@ -246,27 +246,27 @@ pat_node *pat_search_exact(FILE *f, char *key, pat_node *x_ptr, char *rslt)
 }
 
 /****************************************************
-* pat_search4insert --- ÁŞÆşÍÑ¤Ë¸¡º÷
+* pat_search4insert --- æŒ¿å…¥ç”¨ã«æ¤œç´¢
 * 
-* ¥Ñ¥é¥á¡¼¥¿
-*   key --- ¸¡º÷¥­¡¼
-*   x_ptr --- ¸¡º÷³«»Ï°ÌÃÖ(¥İ¥¤¥ó¥¿)
+* ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+*   key --- æ¤œç´¢ã‚­ãƒ¼
+*   x_ptr --- æ¤œç´¢é–‹å§‹ä½ç½®(ãƒã‚¤ãƒ³ã‚¿)
 * 
-* ÊÖ¤·ÃÍ
-*   ¸¡º÷½ªÎ»°ÌÃÖ(¥İ¥¤¥ó¥¿)
+* è¿”ã—å€¤
+*   æ¤œç´¢çµ‚äº†ä½ç½®(ãƒã‚¤ãƒ³ã‚¿)
 *
-* ¥á¥â
-*   Âç°èÊÑ¿ô prefix_str ¤Î»Ø¤¹Àè¤Ë¥×¥ì¥Õ¥£¥Ã¥¯¥¹Ê¸»úÎó¤òÆş¤ì¤ë¡£
+* ãƒ¡ãƒ¢
+*   å¤§åŸŸå¤‰æ•° prefix_str ã®æŒ‡ã™å…ˆã«ãƒ—ãƒ¬ãƒ•ã‚£ãƒƒã‚¯ã‚¹æ–‡å­—åˆ—ã‚’å…¥ã‚Œã‚‹ã€‚
 ****************************************************/
 pat_node *pat_search4insert(char *key, pat_node *x_ptr)
 {
   pat_node *ptr,*tmp_ptr,*tmp_x_ptr;
-  int checked_char = 0; /* ²¿Ê¸»úÌÜ¤Ş¤Ç¥Á¥§¥Ã¥¯¤·¤¿¤« patrie 960919 */
-  int key_length = strlen(key); /* ¥­¡¼¤ÎÊ¸»ú¿ô¤ò¿ô¤¨¤Æ¤ª¤¯ */
+  int checked_char = 0; /* ä½•æ–‡å­—ç›®ã¾ã§ãƒã‚§ãƒƒã‚¯ã—ãŸã‹ patrie 960919 */
+  int key_length = strlen(key); /* ã‚­ãƒ¼ã®æ–‡å­—æ•°ã‚’æ•°ãˆã¦ãŠã */
 
   do {
     ptr = x_ptr;
-    /* key ¤Î checkbit¥Ó¥Ã¥ÈÌÜ¤Çº¸±¦¤Ë¿¶¤êÊ¬¤± */
+    /* key ã® checkbitãƒ“ãƒƒãƒˆç›®ã§å·¦å³ã«æŒ¯ã‚Šåˆ†ã‘ */
     if(pat_bits(key,x_ptr->checkbit,key_length)==1){
       x_ptr = x_ptr->right; OL(R);}
     else {x_ptr = x_ptr->left; OL(L);}
@@ -277,17 +277,17 @@ pat_node *pat_search4insert(char *key, pat_node *x_ptr)
 
 
 /****************************************************
-* pat_insert --- ¥Ñ¥È¥ê¥·¥¢ÌÚ¤Ë¥Ç¡¼¥¿¤òÁŞÆş
+* pat_insert --- ãƒ‘ãƒˆãƒªã‚·ã‚¢æœ¨ã«ãƒ‡ãƒ¼ã‚¿ã‚’æŒ¿å…¥
 * 
-* ¥Ñ¥é¥á¡¼¥¿
-*   f --- ¥Õ¥¡¥¤¥ë
-*   line --- ¥Ç¡¼¥¿(ÁŞÆş¥­¡¼¤ÈÆâÍÆ¤¬¶èÀÚ¤êÊ¸»ú¤Ç¶èÀÚ¤é¤ì¤Æ¤¤¤ë¹½Â¤)
-*   index --- ¥Ç¡¼¥¿¤Î¥Õ¥¡¥¤¥ë¾å¤Î¥¤¥ó¥Ç¥Ã¥¯¥¹
-*   x_ptr --- ÁŞÆş¤Î¤¿¤á¤Î¸¡º÷¤Î³«»Ï°ÌÃÖ
-*   kugiri --- ¥­¡¼¤ÈÆâÍÆ¤Î¶èÀÚ¤êÊ¸»ú
+* ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+*   f --- ãƒ•ã‚¡ã‚¤ãƒ«
+*   line --- ãƒ‡ãƒ¼ã‚¿(æŒ¿å…¥ã‚­ãƒ¼ã¨å†…å®¹ãŒåŒºåˆ‡ã‚Šæ–‡å­—ã§åŒºåˆ‡ã‚‰ã‚Œã¦ã„ã‚‹æ§‹é€ )
+*   index --- ãƒ‡ãƒ¼ã‚¿ã®ãƒ•ã‚¡ã‚¤ãƒ«ä¸Šã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹
+*   x_ptr --- æŒ¿å…¥ã®ãŸã‚ã®æ¤œç´¢ã®é–‹å§‹ä½ç½®
+*   kugiri --- ã‚­ãƒ¼ã¨å†…å®¹ã®åŒºåˆ‡ã‚Šæ–‡å­—
 * 
-* ÊÖ¤·ÃÍ
-*   Ìµ¤·!
+* è¿”ã—å€¤
+*   ç„¡ã—!
 ****************************************************/
 void pat_insert(FILE *f,char *line, long index, pat_node *x_ptr, char *kugiri)
 {
@@ -299,79 +299,79 @@ void pat_insert(FILE *f,char *line, long index, pat_node *x_ptr, char *kugiri)
   int buffer_length;
   int key_length;
   char key[1000];
-  char buffer[50000]; /* ÈÆÍÑ¥Ğ¥Ã¥Õ¥¡ */
+  char buffer[50000]; /* æ±ç”¨ãƒãƒƒãƒ•ã‚¡ */
 
   OL(line:)OS(line);
   strcpy(key,line);
-  strtok(key,kugiri);  /* ºÇ½é¤Î¶èÀÚ¤êÊ¸»ú¤ò '\0' ¤Ë¤¹¤ë¡¥*/
-  key_length = strlen(key); /* ¥­¡¼¤ÎÊ¸»ú¿ô¤ò¿ô¤¨¤Æ¤ª¤¯ */
+  strtok(key,kugiri);  /* æœ€åˆã®åŒºåˆ‡ã‚Šæ–‡å­—ã‚’ '\0' ã«ã™ã‚‹ï¼*/
+  key_length = strlen(key); /* ã‚­ãƒ¼ã®æ–‡å­—æ•°ã‚’æ•°ãˆã¦ãŠã */
 
   OL(key:)OS(key);
 
-  /* ¥­¡¼¤ÎÃµº÷ */
+  /* ã‚­ãƒ¼ã®æ¢ç´¢ */
   t_ptr = (pat_node*)pat_search4insert(key,x_ptr);
 
   if((t_ptr->il).index >= 0) {
-    /* ¥Ï¥Ã¥·¥å¤ò¥Á¥§¥Ã¥¯ */
+    /* ãƒãƒƒã‚·ãƒ¥ã‚’ãƒã‚§ãƒƒã‚¯ */
     in_hash = hash_check_proc(f,(t_ptr->il).index,buffer);
 
-    if(strncmp(key,buffer,strlen(key)) == 0){ /* ¥­¡¼¤¬°ìÃ× */
-      /* printf("%s: ¥­¡¼¤¬°ìÃ×¤¹¤ë¤â¤Î¤¬¤¢¤ë\n",buffer);fflush(stdout); */
+    if(strncmp(key,buffer,strlen(key)) == 0){ /* ã‚­ãƒ¼ãŒä¸€è‡´ */
+      /* printf("%s: ã‚­ãƒ¼ãŒä¸€è‡´ã™ã‚‹ã‚‚ã®ãŒã‚ã‚‹\n",buffer);fflush(stdout); */
 
       tmp_l_ptr = &(t_ptr->il);
 
       while(tmp_l_ptr !=NULL){
 	in_hash = hash_check_proc(f,tmp_l_ptr->index,buffer);
 	if(strcmp(buffer,line)==0){
-	  /* Á´¤¯Æ±¤¸¤Î¤¬¤¢¤ë¤Î¤ÇÁŞÆş¤»¤º¤Ë¥ê¥¿¡¼¥ó */
-/*	  printf("%s: Á´¤¯Æ±¤¸¤Î¤¬¤¢¤ë¤Î¤ÇÌµ»ë\n",buffer);*/
+	  /* å…¨ãåŒã˜ã®ãŒã‚ã‚‹ã®ã§æŒ¿å…¥ã›ãšã«ãƒªã‚¿ãƒ¼ãƒ³ */
+/*	  printf("%s: å…¨ãåŒã˜ã®ãŒã‚ã‚‹ã®ã§ç„¡è¦–\n",buffer);*/
 	  return;
 	}
 	mae_wo_sasu_ptr = tmp_l_ptr;
 	tmp_l_ptr = tmp_l_ptr->next;
-      }  /* ¤³¤Î»şÅÀ¤Ç tmp_l_ptr ¤Ï¥ê¥¹¥È¤ÎËöÈø¤ò»Ø¤¹ */
+      }  /* ã“ã®æ™‚ç‚¹ã§ tmp_l_ptr ã¯ãƒªã‚¹ãƒˆã®æœ«å°¾ã‚’æŒ‡ã™ */
 
-      /* ´û¤Ë¤¢¤ë¥­¡¼¤ËÆâÍÆ¤ò¤µ¤é¤ËÁŞÆş¤¹¤ë */
-      new_l_ptr = (pat_index_list*)malloc_pat_index_list(); /* index¤Îlist */
+      /* æ—¢ã«ã‚ã‚‹ã‚­ãƒ¼ã«å†…å®¹ã‚’ã•ã‚‰ã«æŒ¿å…¥ã™ã‚‹ */
+      new_l_ptr = (pat_index_list*)malloc_pat_index_list(); /* indexã®list */
       new_l_ptr->index = index;
       new_l_ptr->next = NULL;
       mae_wo_sasu_ptr->next = new_l_ptr;
 
       return;
-    } else { /* ¥­¡¼¤¬°ìÃ×¤·¤Ê¤«¤Ã¤¿¾ì¹ç buffer ¤Ë¤½¤Î°ìÃ×¤·¤Ê¤«¤Ã¤¿¥­¡¼ */
+    } else { /* ã‚­ãƒ¼ãŒä¸€è‡´ã—ãªã‹ã£ãŸå ´åˆ buffer ã«ãã®ä¸€è‡´ã—ãªã‹ã£ãŸã‚­ãƒ¼ */
     }
-  } else { /* ¥Ç¡¼¥¿¤ÎÌµ¤¤¥Î¡¼¥É¤ËÍî¤Á¤¿¾ì¹ç: ºÇ½é¤Ë¥Ç¡¼¥¿¤ò¤¤¤ì¤¿¤È¤­ */
+  } else { /* ãƒ‡ãƒ¼ã‚¿ã®ç„¡ã„ãƒãƒ¼ãƒ‰ã«è½ã¡ãŸå ´åˆ: æœ€åˆã«ãƒ‡ãƒ¼ã‚¿ã‚’ã„ã‚ŒãŸã¨ã */
     *(buffer) = 0;*(buffer+1) = '\0';
   }
 
 
-  /* ÁŞÆş¥­¡¼¤È¾×ÆÍ¤¹¤ë¥­¡¼¤È¤Î´Ö¤ÇºÇ½é¤Ë°Û¤Ê¤ë bit ¤Î°ÌÃÖ(diff_bit)¤òµá¤á¤ë */
+  /* æŒ¿å…¥ã‚­ãƒ¼ã¨è¡çªã™ã‚‹ã‚­ãƒ¼ã¨ã®é–“ã§æœ€åˆã«ç•°ãªã‚‹ bit ã®ä½ç½®(diff_bit)ã‚’æ±‚ã‚ã‚‹ */
   buffer_length = strlen(buffer);
   for(diff_bit=0; pat_bits(key,diff_bit,key_length) == pat_bits(buffer,diff_bit,buffer_length); diff_bit++)
-    ;/* ¶õÊ¸ */
+    ;/* ç©ºæ–‡ */
 
   OL(diff_bit:)OI(diff_bit);
 
-  /* ¥­¡¼¤òÃÖ¤¯°ÌÃÖ(x_ptr)¤òµá¤á¤ë¡£ */
+  /* ã‚­ãƒ¼ã‚’ç½®ãä½ç½®(x_ptr)ã‚’æ±‚ã‚ã‚‹ã€‚ */
   do {
     p_ptr = x_ptr;
-    /* key ¤Î checkbit¥Ó¥Ã¥ÈÌÜ¤Çº¸±¦¤Ë¿¶¤êÊ¬¤± */
+    /* key ã® checkbitãƒ“ãƒƒãƒˆç›®ã§å·¦å³ã«æŒ¯ã‚Šåˆ†ã‘ */
     if(pat_bits(key,x_ptr->checkbit,key_length)==1) {x_ptr = x_ptr->right;}
     else {x_ptr = x_ptr->left;}
   } while((x_ptr->checkbit < diff_bit)&&(p_ptr->checkbit < x_ptr->checkbit));
 
-  /* ÁŞÆş¤¹¤ë¥Î¡¼¥É¤òÀ¸À®¤·¥­¡¼¡¦¸¡ºº¥Ó¥Ã¥ÈÅù¤òÀßÄê¤¹¤ë¡£ */
-  new_ptr = (pat_node*)malloc_pat_node(); /* ¥Î¡¼¥ÉËÜÂÎ */
-  new_ptr->checkbit = diff_bit; /* ¥Á¥§¥Ã¥¯¥Ó¥Ã¥È */
+  /* æŒ¿å…¥ã™ã‚‹ãƒãƒ¼ãƒ‰ã‚’ç”Ÿæˆã—ã‚­ãƒ¼ãƒ»æ¤œæŸ»ãƒ“ãƒƒãƒˆç­‰ã‚’è¨­å®šã™ã‚‹ã€‚ */
+  new_ptr = (pat_node*)malloc_pat_node(); /* ãƒãƒ¼ãƒ‰æœ¬ä½“ */
+  new_ptr->checkbit = diff_bit; /* ãƒã‚§ãƒƒã‚¯ãƒ“ãƒƒãƒˆ */
   (new_ptr->il).index = index;
   (new_ptr->il).next = NULL;
 
-  /* »ÒÀá¤È¿ÆÀá¤òÀßÄê¤¹¤ë¡£ */
-  /* ¥Ó¥Ã¥È¤¬1¤Ê¤é±¦¥ê¥ó¥¯¤¬¥­¡¼¤Î¤¢¤ë°ÌÃÖ¤ò»Ø¤¹¡£0¤Ê¤éº¸¥ê¥ó¥¯¡£ */
+  /* å­ç¯€ã¨è¦ªç¯€ã‚’è¨­å®šã™ã‚‹ã€‚ */
+  /* ãƒ“ãƒƒãƒˆãŒ1ãªã‚‰å³ãƒªãƒ³ã‚¯ãŒã‚­ãƒ¼ã®ã‚ã‚‹ä½ç½®ã‚’æŒ‡ã™ã€‚0ãªã‚‰å·¦ãƒªãƒ³ã‚¯ã€‚ */
   if(pat_bits(key,new_ptr->checkbit,key_length)==1){
     new_ptr->right = new_ptr; new_ptr->left = x_ptr;
   } else {new_ptr->left = new_ptr; new_ptr->right = x_ptr;}
-  /* ¥Ó¥Ã¥È¤¬1¤Ê¤é¡¢¿Æ¤Î±¦¤Ë¤Ä¤Ê¤°¡£0¤Ê¤éº¸¡£ */
+  /* ãƒ“ãƒƒãƒˆãŒ1ãªã‚‰ã€è¦ªã®å³ã«ã¤ãªãã€‚0ãªã‚‰å·¦ã€‚ */
   if(pat_bits(key,p_ptr->checkbit,key_length)==1) p_ptr->right = new_ptr;
   else p_ptr->left = new_ptr;
 
@@ -380,56 +380,56 @@ void pat_insert(FILE *f,char *line, long index, pat_node *x_ptr, char *kugiri)
 
 
 /****************************************************
-* pat_bits --- Ê¸»úÎóÃæ¤Î»ØÄê¤µ¤ì¤¿°ÌÃÖ¤Î¥Ó¥Ã¥È¤òÊÖ¤¹
+* pat_bits --- æ–‡å­—åˆ—ä¸­ã®æŒ‡å®šã•ã‚ŒãŸä½ç½®ã®ãƒ“ãƒƒãƒˆã‚’è¿”ã™
 * 
-* ¥Ñ¥é¥á¡¼¥¿
-*   string --- Ê¸»úÎó
-*   cbit --- »ØÄê¤µ¤ì¤¿°ÌÃÖ¡£Ê¸»úÎóÁ´ÂÎ¤ò°ì¤Ä¤Î¥Ó¥Ã¥ÈÎó¤È¹Í¤¨¡¢
-*           ÀèÆ¬(º¸)bit¤«¤é 0,1,2,3... ¤Ç»ØÄê¤¹¤ë¡£
-*   len --- Ê¸»úÎó¤ÎÄ¹¤µ¡¥strlen¤ò¤¤¤Á¤¤¤Á¤ä¤Ã¤Æ¤¿¤ó¤¸¤ãÂçÊÑ¤À¤«¤é 900918
+* ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+*   string --- æ–‡å­—åˆ—
+*   cbit --- æŒ‡å®šã•ã‚ŒãŸä½ç½®ã€‚æ–‡å­—åˆ—å…¨ä½“ã‚’ä¸€ã¤ã®ãƒ“ãƒƒãƒˆåˆ—ã¨è€ƒãˆã€
+*           å…ˆé ­(å·¦)bitã‹ã‚‰ 0,1,2,3... ã§æŒ‡å®šã™ã‚‹ã€‚
+*   len --- æ–‡å­—åˆ—ã®é•·ã•ï¼strlenã‚’ã„ã¡ã„ã¡ã‚„ã£ã¦ãŸã‚“ã˜ã‚ƒå¤§å¤‰ã ã‹ã‚‰ 900918
 *
-* ÊÖ¤·ÃÍ
-*   0,1(¥Ó¥Ã¥È),2(Ê¸»úÎó¤ÎÄ¹¤µ¤¬»ØÄê¤µ¤ì¤¿°ÌÃÖ¤è¤êÂç¤­¤¤¤È¤­)
+* è¿”ã—å€¤
+*   0,1(ãƒ“ãƒƒãƒˆ),2(æ–‡å­—åˆ—ã®é•·ã•ãŒæŒ‡å®šã•ã‚ŒãŸä½ç½®ã‚ˆã‚Šå¤§ãã„ã¨ã)
 ****************************************************/
 int pat_bits(char *string, int cbit, int len)
 {
-  int moji_idx = cbit / 8; /* »ØÄê¤µ¤ì¤¿°ÌÃÖ¤¬²¿Ê¸»úÌÜ¤« (for DEBUG)*/
-  char moji = *(string+moji_idx); /* ¤½¤ÎÊ¸»ú */
-  int idx_in_moji = cbit % 8; /* ¤½¤ÎÊ¸»ú¤Î²¿¥Ó¥Ã¥ÈÌÜ¤« */
-  if(cbit == -1) return 1; /* ¥È¥Ã¥×¥Î¡¼¥É¤Î¤È¤­¤Ï1¤òÊÖ¤¹(top¤«¤é¤ÏÉ¬¤º±¦) */
-  if(len-1 < moji_idx) return 0;  /* Ê¸»úÎó¤ÎÄ¹¤µ < »ØÄê¤µ¤ì¤¿°ÌÃÖ¤Î¥Á¥§¥Ã¥¯ */
-  return(((moji << idx_in_moji) & 0x80) >> 7); /* 0 or 1 ¤òÊÖ¤¹¡£ */
+  int moji_idx = cbit / 8; /* æŒ‡å®šã•ã‚ŒãŸä½ç½®ãŒä½•æ–‡å­—ç›®ã‹ (for DEBUG)*/
+  char moji = *(string+moji_idx); /* ãã®æ–‡å­— */
+  int idx_in_moji = cbit % 8; /* ãã®æ–‡å­—ã®ä½•ãƒ“ãƒƒãƒˆç›®ã‹ */
+  if(cbit == -1) return 1; /* ãƒˆãƒƒãƒ—ãƒãƒ¼ãƒ‰ã®ã¨ãã¯1ã‚’è¿”ã™(topã‹ã‚‰ã¯å¿…ãšå³) */
+  if(len-1 < moji_idx) return 0;  /* æ–‡å­—åˆ—ã®é•·ã• < æŒ‡å®šã•ã‚ŒãŸä½ç½®ã®ãƒã‚§ãƒƒã‚¯ */
+  return(((moji << idx_in_moji) & 0x80) >> 7); /* 0 or 1 ã‚’è¿”ã™ã€‚ */
 }
 
 
 
 /****************************************************
-* hash_check_proc --- ¥¤¥ó¥Ç¥Ã¥¯¥¹¤Ç¥Ï¥Ã¥·¥å¤ò°ú¤¯
+* hash_check_proc --- ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã§ãƒãƒƒã‚·ãƒ¥ã‚’å¼•ã
 * 
-* ¥Ñ¥é¥á¡¼¥¿
-*   index --- ¥¤¥ó¥Ç¥Ã¥¯¥¹
+* ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+*   index --- ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹
 * 
-* ÊÖ¤·ÃÍ  ¥Ï¥Ã¥·¥å¤Ë¤Ê¤±¤ì¤Ğ¥Õ¥¡¥¤¥ë¤«¤é¼è¤ë¡¥
-*         ¤¢¤Ã¤¿¤éÊ¸»úÎóÀèÆ¬¥İ¥¤¥ó¥¿¡¤¤Ê¤±¤ì¤Ğ NULL ( ÉÔÍ×¤«? )
+* è¿”ã—å€¤  ãƒãƒƒã‚·ãƒ¥ã«ãªã‘ã‚Œã°ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰å–ã‚‹ï¼
+*         ã‚ã£ãŸã‚‰æ–‡å­—åˆ—å…ˆé ­ãƒã‚¤ãƒ³ã‚¿ï¼Œãªã‘ã‚Œã° NULL ( ä¸è¦ã‹? )
 ****************************************************/
 int hash_check_proc(FILE *f, long index, char *buf) {
   char *data,key[40];
-  long num_of_deleted = 0; /* ¾Ã¤µ¤ì¤¿¿ô */
+  long num_of_deleted = 0; /* æ¶ˆã•ã‚ŒãŸæ•° */
   int i;
 
-  /* ¥­¥ã¥Ã¥·¥åÌµ¤·¤Î¾ì¹ç */
+  /* ã‚­ãƒ£ãƒƒã‚·ãƒ¥ç„¡ã—ã®å ´åˆ */
 #ifndef USE_HASH
   strcpy(buf, get_line(f,index));
   return(0);
 #else
   if((data = th_hash_out( hash_array, HASH_SIZE, index, f)) == NULL) {
-    strcpy(buf, get_line(f,index)); /* ¤Ê¤±¤ì¤Ğ¥Õ¥¡¥¤¥ë¤«¤é¼è¤ë */
+    strcpy(buf, get_line(f,index)); /* ãªã‘ã‚Œã°ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰å–ã‚‹ */
 
     th_hash_in(hash_array,HASH_SIZE,index,buf,f);
 
     return(0);
   } else {
-    strcpy(buf,data); /* ¤¢¤ì¤ĞÍÑ¤¤¤ë */
+    strcpy(buf,data); /* ã‚ã‚Œã°ç”¨ã„ã‚‹ */
     return(1);
   }
 #endif
@@ -437,16 +437,16 @@ int hash_check_proc(FILE *f, long index, char *buf) {
 
 
 /****************************************************
-* get_line --- ¥Õ¥¡¥¤¥ë¤Î pos Ê¸»úÌÜ¤«¤é \n ¤Ş¤ÇÆÉ¤à
+* get_line --- ãƒ•ã‚¡ã‚¤ãƒ«ã® pos æ–‡å­—ç›®ã‹ã‚‰ \n ã¾ã§èª­ã‚€
 * 
-* ¥Ñ¥é¥á¡¼¥¿
-*   f --- ÆÉ¤à¥Õ¥¡¥¤¥ë
-*   pos --- ÆÉ¤ß¹ş¤ß»Ï¤á¤ë°ÌÃÖ
-*   buf --- ÆÉ¤ß¹ş¤à¥Ğ¥Ã¥Õ¥¡
+* ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+*   f --- èª­ã‚€ãƒ•ã‚¡ã‚¤ãƒ«
+*   pos --- èª­ã¿è¾¼ã¿å§‹ã‚ã‚‹ä½ç½®
+*   buf --- èª­ã¿è¾¼ã‚€ãƒãƒƒãƒ•ã‚¡
 * 
-* ÊÖ¤·ÃÍ
-*   Ê¸»ú¿ô(strlenÊı¼°) 
-*   -1 : ¼ºÇÔ
+* è¿”ã—å€¤
+*   æ–‡å­—æ•°(strlenæ–¹å¼) 
+*   -1 : å¤±æ•—
 ****************************************************/
 char *get_line(FILE *f, long pos){
   int i = 0, j = 0, ch, ffd = fileno(f);
@@ -515,20 +515,20 @@ char *get_line(FILE *f, long pos){
 	return NULL;
       return buf;
     }
-    else return NULL; /* seek ¼ºÇÔ */
+    else return NULL; /* seek å¤±æ•— */
 #endif
 }
 
 
 /****************************************************
-* show_pat --- ¥Ñ¥È¥ê¥·¥¢ÌÚ¥Ç¡¼¥¿¤ò½ĞÎÏ
+* show_pat --- ãƒ‘ãƒˆãƒªã‚·ã‚¢æœ¨ãƒ‡ãƒ¼ã‚¿ã‚’å‡ºåŠ›
 *
-* ¥Ñ¥é¥á¡¼¥¿
-*   top_ptr --- ¸¡º÷³«»Ï¥Î¡¼¥É¤Î°ÌÃÖ(¥İ¥¤¥ó¥¿)
-*   out_to --- ½ĞÎÏÀè(stdout¤ä¥Õ¥¡¥¤¥ë)
+* ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+*   top_ptr --- æ¤œç´¢é–‹å§‹ãƒãƒ¼ãƒ‰ã®ä½ç½®(ãƒã‚¤ãƒ³ã‚¿)
+*   out_to --- å‡ºåŠ›å…ˆ(stdoutã‚„ãƒ•ã‚¡ã‚¤ãƒ«)
 * 
-* ÊÖ¤·ÃÍ
-*   Ìµ¤·¡£¥Ñ¥È¥ê¥·¥¢ÌÚ¥Ç¡¼¥¿¤ò½ĞÎÏ¡£
+* è¿”ã—å€¤
+*   ç„¡ã—ã€‚ãƒ‘ãƒˆãƒªã‚·ã‚¢æœ¨ãƒ‡ãƒ¼ã‚¿ã‚’å‡ºåŠ›ã€‚
 ****************************************************/
 void show_pat(pat_node *top_ptr, FILE *out_to, char *prefix)
 {
@@ -547,8 +547,8 @@ void show_pat(pat_node *top_ptr, FILE *out_to, char *prefix)
   OL(prefix:)OS(prefix);
   OL(<checkbit>)OI(top_ptr->checkbit);
 
-  OL(## º¸\n)
-  /* Éßµï¥Ó¥Ã¥È¤Î¤È¤­ */
+  OL(## å·¦\n)
+  /* æ•·å±…ãƒ“ãƒƒãƒˆã®ã¨ã */
   if(top_ptr->checkbit % SIKII_BIT == 0 && top_ptr->checkbit != 0){
     strcpy(word, get_line(dic_file[0],top_ptr->left->il_ptr->index));
     strtok(word,"\t");
@@ -572,7 +572,7 @@ void show_pat(pat_node *top_ptr, FILE *out_to, char *prefix)
     OS(pftmp);
 
   } else {
-    /* º¸±¦¤Î Subtree ¤Î½èÍı¡£ÍÕ¤Ã¤Ñ¤Ç¤Ê¤±¤ì¤ĞºÆµ¢¡£*/
+    /* å·¦å³ã® Subtree ã®å‡¦ç†ã€‚è‘‰ã£ã±ã§ãªã‘ã‚Œã°å†å¸°ã€‚*/
     if(top_ptr->checkbit < top_ptr->left->checkbit){
       show_pat(top_ptr->left,out_to,prefix);}
     else {
@@ -599,7 +599,7 @@ void show_pat(pat_node *top_ptr, FILE *out_to, char *prefix)
 
   }
 
-  OL(## ±¦\n)
+  OL(## å³\n)
   if(top_ptr->checkbit < top_ptr->right->checkbit){
     show_pat(top_ptr->right,out_to,prefix);}
   else {

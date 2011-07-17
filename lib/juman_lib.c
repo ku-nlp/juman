@@ -789,6 +789,7 @@ int search_all(int position)
     int         jmp ;
     int		i;
     int		deleted_length, del_or_rep_position = 0;
+    int         code;
     char	*pbuf;
     U_CHAR      buf[LENMAX];
 
@@ -814,17 +815,21 @@ int search_all(int position)
 	}
 
 	if (Vocalize_Opt) { /* 濁音化した形態素の検索 */
-	    pat_buffer[0] = '\0';
-	    for (i = VOICED_CONSONANT_S; i < VOICED_CONSONANT_E; i++) {
-		if (position != 0 && !strncmp(String + position, dakuon[i], BYTES4CHAR) &&
-		    check_code(String, position) == check_code(String, position + BYTES4CHAR)) {
-		    sprintf(buf, "%s%s", seion[i], String + position + BYTES4CHAR);
-		    pat_search(db, buf, &DicFile.tree_top[dic_no], pat_buffer);
-		    pbuf = pat_buffer;
-		    while (*pbuf != '\0') {
-			if (take_data(position, &pbuf, OPT_DEVOICE, 0, 0) == FALSE) return FALSE;
+	    code = check_code(String, position);
+	    if (position != 0 && (code == HIRAGANA || code == KATAKANA) && code == check_code(String, position + BYTES4CHAR)) {
+		pat_buffer[0] = '\0';
+
+		for (i = VOICED_CONSONANT_S; i < VOICED_CONSONANT_E; i++) {
+		    if (!strncmp(String + position, dakuon[i], BYTES4CHAR)) {
+			strncpy(String + position, seion[i], BYTES4CHAR); /* 清音化 */
+			pat_search(db, String + position, &DicFile.tree_top[dic_no], pat_buffer);
+			strncpy(String + position, dakuon[i], BYTES4CHAR); /* 清音化した音を元に戻す */
+			pbuf = pat_buffer;
+			while (*pbuf != '\0') {
+			    if (take_data(position, &pbuf, OPT_DEVOICE, 0, 0) == FALSE) return FALSE;
+			}
+			break;
 		    }
-		    break;
 		}
 	    }
 	}

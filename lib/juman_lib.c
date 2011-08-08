@@ -114,26 +114,6 @@
 #define 	DEF_KUUHAKU_HINSI	"特殊"
 #define 	DEF_KUUHAKU_BUNRUI	"空白"
 
-#define         DEF_ONOMATOPOEIA_HINSI  "副詞"
-#define         DEF_ONOMATOPOEIA_IMIS   "自動認識"
-#define         DEF_RENDAKU_HINSI1      "動詞"
-#define         DEF_RENDAKU_RENYOU      "基本連用形"
-#define         DEF_RENDAKU_HINSI2      "名詞"
-#define         DEF_RENDAKU_BUNRUI2_1   "普通名詞"
-#define         DEF_RENDAKU_BUNRUI2_2   "サ変名詞"
-#define         DEF_RENDAKU_HINSI3      "形容詞"
-#define         DEF_RENDAKU_HINSI4      "接尾辞"
-#define         DEF_RENDAKU_BUNRUI4_1   "名詞性述語接尾辞"
-#define         DEF_RENDAKU_BUNRUI4_2   "名詞性名詞接尾辞"
-#define         DEF_RENDAKU_BUNRUI4_3   "名詞性名詞助数辞"
-#define         DEF_RENDAKU_BUNRUI4_4   "名詞性特殊接尾辞"
-#define         DEF_RENDAKU_FEATURE     "連濁可"
-#define         DEF_RENDAKU_MIDASI_KA   "か"
-#define         DEF_RENDAKU_REP         "代表表記"
-#define         DEF_RENDAKU_IMIS        "濁音化"
-#define         DEF_LOWERCASE_IMIS      "小文字化"
-#define         DEF_MACRON_IMIS         "長音化"
-
 #define 	DEF_UNDEF		"未定義語"
 #define 	DEF_UNDEF_KATA		"カタカナ"
 #define 	DEF_UNDEF_ALPH		"アルファベット"
@@ -178,11 +158,15 @@ int		Show_Opt_debug;
 int		Vocalize_Opt;
 int		Repetition_Opt;
 int             Onomatopoeia_Opt;
-int		Normalized_Opt;
-int		Macron_Opt;
+int		Lower_Opt;
+int		MacronRep_Opt;
+int		MacronDel_Opt;
 
 U_CHAR	        String[LENMAX];
 U_CHAR	        NormalizedString[LENMAX];
+U_CHAR	        MacronDeletedString[LENMAX];
+int             String2MDS[LENMAX];
+int             MDS2String[LENMAX];
 int		Unkword_Pat_Num;
 int             m_buffer_num;
 int             Jiritsu_buffer[CLASSIFY_NO + 1];
@@ -196,6 +180,8 @@ int		onomatopoeia_hinsi, onomatopoeia_bunrui, onomatopoeia_con_tbl;
 int             rendaku_hinsi1, rendaku_hinsi2, rendaku_hinsi3, rendaku_hinsi4;
 int             rendaku_renyou, rendaku_bunrui2_1, rendaku_bunrui2_2;
 int             rendaku_bunrui4_1, rendaku_bunrui4_2, rendaku_bunrui4_3, rendaku_bunrui4_4;
+int             macron_hinsi1, macron_hinsi2, macron_type2, macron_hinsi3, macron_hinsi4;
+int             macron_hinsi5, macron_bunrui5_1, macron_bunrui5_2, macron_bunrui5_3;
 int             jiritsu_num;
 int             p_buffer_num;
 CONNECT_COST	connect_cache[CONNECT_MATRIX_MAX];
@@ -232,8 +218,8 @@ void	realloc_process_buffer(void);
 void    read_class_cost(CELL *cell); /* k.n */
 static BOOL    katuyou_process(int position, int *k, MRPH *mrph, int *length, char opt);
 int     search_all(int position);
-int     take_data(int pos, char **pbuf, char opt, int deleted_offset, int deleted_length);
-char *	_take_data(char *s, MRPH *mrph, char opt, int deleted_offset, int deleted_length);
+int     take_data(int pos, char **pbuf, char opt);
+char *	_take_data(char *s, MRPH *mrph, char opt);
 int 	numeral_decode(char **str);
 int 	numeral_decode2(char **str);
 void 	hiragana_decode(char **str, char *yomi);
@@ -610,132 +596,6 @@ void read_class_cost(CELL *cell)
 
 /*
 ------------------------------------------------------------------------------
-        PROCEDURE: <make_macron_deleted_string>
-------------------------------------------------------------------------------
-*/
-int make_macron_deleted_string(char *buf, int pos, int *deleted_position)
-{
-    int deleted_length = 0, code;
-    U_CHAR *cp, c = '\0';
-
-    /* (今の位置から調べて)最初の長音連続を削除したbufを作成する
-       条件: 2文字目以降
-             先頭、および、長音の直前がひらがなまたは漢字 */
-    code = check_code(String + pos, 0);
-    if (code != HIRAGANA && code != KANJI) return 0;
-
-    /* strstrの時間を短くするため一時的に途中でStringを終端 */
-    if (strlen(String) - pos > MACRON_SEARCH_LENGTH + BYTES4CHAR) {
-	c = String[pos + MACRON_SEARCH_LENGTH + BYTES4CHAR];
-	String[pos + MACRON_SEARCH_LENGTH + BYTES4CHAR] = '\0';
-    }
-
-    if (cp = strstr(String + pos + BYTES4CHAR, "ー")) {
-	if (c != '\0') String[pos + MACRON_SEARCH_LENGTH + BYTES4CHAR] = c;
-	*deleted_position = cp - String;
-	code = check_code(cp - BYTES4CHAR, 0);
-
-	if (*deleted_position % BYTES4CHAR != 0 || /* 文字区切り以外の部分でマッチした場合は不可 */
-	    code != HIRAGANA && code != KANJI) { /* 長音直前がひらがな・漢字ではないなら削除しない */
-	    return 0;
-	}
-
-	for (; !strncmp(cp, "ー", BYTES4CHAR); cp += BYTES4CHAR) deleted_length += BYTES4CHAR;
-	strncpy(buf, String + pos, *deleted_position - pos);
-	buf[*deleted_position - pos] = '\0';
-	strcat(buf, cp);
-	return deleted_length; /* 削除した長さ(バイト)を返す */
-    }
-    else {
-	if (c != '\0') String[pos + MACRON_SEARCH_LENGTH + BYTES4CHAR] = c;
-	return 0;
-    }
-}
-
-/*
-------------------------------------------------------------------------------
-        PROCEDURE: <guess_replaced_string>
-------------------------------------------------------------------------------
-*/
-char *guess_replaced_string(char *buf)
-{
-    /* 長音置換用のルール */
-
-    int i;
-    for (i = 0; o_gyo[i]; i++) {
-	if (!strncmp(buf, o_gyo[i], BYTES4CHAR)) {
-	    return "う";
-	}
-    }
-    for (i = 0; e_gyo[i]; i++) {
-	if (!strncmp(buf, e_gyo[i], BYTES4CHAR)) {
-	    return "え"; /* 「い」もあり */
-	}
-    }
-    for (i = 0; u_gyo[i]; i++) {
-	if (!strncmp(buf, u_gyo[i], BYTES4CHAR)) {
-	    return "う";
-	}
-    }
-    for (i = 0; i_gyo[i]; i++) {
-	if (!strncmp(buf, i_gyo[i], BYTES4CHAR)) {
-	    return "い";
-	}
-    }
-    return NULL;
-}
-
-/*
-------------------------------------------------------------------------------
-        PROCEDURE: <make_macron_replaced_string>
-------------------------------------------------------------------------------
-*/
-int make_macron_replaced_string(char *buf, int pos)
-{
-    int replaced_position = -1, code;
-    U_CHAR *replaced_string, *cp, c = '\0';
-
-    /* (今の位置から調べて)最初の長音を置換したbufを作成する
-       条件: 2文字目以降
-             先頭がひらがなまたは漢字、長音の直前はひらがな */
-    code = check_code(String + pos, 0);
-    if (code != HIRAGANA && code != KANJI) return 0;
-
-    /* strstrの時間を短くするため一時的に途中でStringを終端 */
-    if (strlen(String) - pos > MACRON_SEARCH_LENGTH + BYTES4CHAR) {
-	c = String[pos + MACRON_SEARCH_LENGTH + BYTES4CHAR];
-	String[pos + MACRON_SEARCH_LENGTH + BYTES4CHAR] = '\0';
-    }
-
-    if (cp = strstr(String + pos + BYTES4CHAR, "ー")) {
-	if (c != '\0') String[pos + MACRON_SEARCH_LENGTH + BYTES4CHAR] = c;
-        replaced_position = cp - String;
-	code = check_code(cp - BYTES4CHAR, 0);
-
-	if (replaced_position % BYTES4CHAR != 0 || /* 文字区切り以外の部分でマッチした場合は不可 */
-	    code != HIRAGANA) { /* 長音直前がひらがな・漢字ではないなら削除しない */
-	    return -1;
-	}
-
-	if ((replaced_string = guess_replaced_string(cp - BYTES4CHAR))) {
-	    strncpy(buf, String + pos, replaced_position - pos);
-	    buf[replaced_position - pos] = '\0';
-	    strcat(buf, replaced_string);
-	    strcat(buf, cp + BYTES4CHAR);
-	    return replaced_position; /* 置換した場所を返す */
-	}
-	else {
-	    return -1;
-	}
-    }
-    else {
-	if (c != '\0') String[pos + MACRON_SEARCH_LENGTH + BYTES4CHAR] = c;
-	return -1;
-    }
-}
-
-/*
-------------------------------------------------------------------------------
 	PROCEDURE: <katuyou_process>       >>> changed by T.Nakamura <<<
 ------------------------------------------------------------------------------
 */
@@ -745,29 +605,12 @@ static BOOL katuyou_process(int position, int *k, MRPH *mrph, int *length, char 
     int deleted_length, del_rep_position = 0;
 
      while (Form[mrph->katuyou1][*k].name) {
-	 if ((Macron_Opt && /* 長音認識時 */
-	      !strstr(mrph->imis, DEF_MACRON_IMIS) && /* 語幹部分が長音化されていない場合 */
-	      ((deleted_length = make_macron_deleted_string(buf, position + mrph->length, &del_rep_position)) || /* 長音を削除した文字列を作る */
-	       (del_rep_position = make_macron_replaced_string(buf, position)) > 0) && /* 長音を置換した文字列を作る */
-	      del_rep_position <= (position + mrph->length + strlen(Form[mrph->katuyou1][*k].gobi)) && 
-	      compare_top_str1(Form[mrph->katuyou1][*k].gobi, buf))) {
-	     *length = mrph->length + strlen(Form[mrph->katuyou1][*k].gobi) + deleted_length;
-	     /* 長音削除・置換したものにペナルティ */
-	     mrph->weight += MACRON_COST;
-	     if (mrph->imis[0]) {
-		 mrph->imis[strlen(mrph->imis) - 1] = ' ';
-	     }
-	     else {
-		 strcpy(mrph->imis, "\"");
-	     }
-	     strcat(mrph->imis, DEF_MACRON_IMIS);
-	     strcat(mrph->imis, "\"");
-	     return TRUE;
-	 } else if (compare_top_str1(Form[mrph->katuyou1][*k].gobi, /* 通常時 */
-				     String + position + mrph->length) ||
-		    ((opt & OPT_NORMALIZE) && /* 非正規表現用 */
-		     compare_top_str1(Form[mrph->katuyou1][*k].gobi,
-				      NormalizedString + position + mrph->length))) {
+	 if (compare_top_str1(Form[mrph->katuyou1][*k].gobi, /* 通常時 */
+			      String + position + mrph->length) ||
+	     ((opt & OPT_NORMALIZE) && /* 非正規表現用 */
+	      compare_top_str1(Form[mrph->katuyou1][*k].gobi, NormalizedString + position + mrph->length)) ||
+	     ((opt & OPT_MACRON_DEL) && /* 長音挿入用 */
+	      compare_top_str1(Form[mrph->katuyou1][*k].gobi, MacronDeletedString + String2MDS[position] + mrph->length))) {
 	     *length = mrph->length + strlen(Form[mrph->katuyou1][*k].gobi);
 	     return TRUE;
 	 } else {
@@ -787,7 +630,7 @@ int search_all(int position)
     MRPH        mrph;
     int         dic_no;
     int         jmp ;
-    int		i;
+    int		i, j;
     int		deleted_length, del_or_rep_position = 0;
     int         code;
     char	*pbuf;
@@ -801,16 +644,29 @@ int search_all(int position)
 	pat_search(db, String + position, &DicFile.tree_top[dic_no], pat_buffer);
 	pbuf = pat_buffer;
 	while (*pbuf != '\0') {
-	    if (take_data(position, &pbuf, 0, 0, 0) == FALSE) return FALSE;
+	    if (take_data(position, &pbuf, 0) == FALSE) return FALSE;
 	}
 
-	if (Normalized_Opt && /* 非正規表現用の検索 */
-	    strncmp(String + position, NormalizedString + position, NORMALIZED_LENGTH * BYTES4CHAR)) {
+	if ((MacronRep_Opt || Lower_Opt) && /* 非正規表現用の検索(小文字化・長音化) */
+	    strncmp(String + position, NormalizedString + position, NORMALIZED_LENGTH * BYTES4CHAR) &&
+	    strncmp(String + position, DEF_MACRON_SYMBOL1, BYTES4CHAR) &&
+	    strncmp(String + position, DEF_MACRON_SYMBOL2, BYTES4CHAR)) {
 	    pat_buffer[0] = '\0';
 	    pat_search(db, NormalizedString + position, &DicFile.tree_top[dic_no], pat_buffer);
 	    pbuf = pat_buffer;
 	    while (*pbuf != '\0') {
-		if (take_data(position, &pbuf, OPT_NORMALIZE, 0, 0) == FALSE) return FALSE;
+		if (take_data(position, &pbuf, OPT_NORMALIZE) == FALSE) return FALSE;
+	    }
+	}
+
+	if (MacronDel_Opt && /* 長音挿入用の検索 */
+	    String2MDS[position] >= 0 && 
+	    strncmp(String + position, MacronDeletedString + String2MDS[position], NORMALIZED_LENGTH * BYTES4CHAR)) {
+	    pat_buffer[0] = '\0';
+	    pat_search(db, MacronDeletedString + String2MDS[position], &DicFile.tree_top[dic_no], pat_buffer);
+	    pbuf = pat_buffer;
+	    while (*pbuf != '\0') {
+		if (take_data(position, &pbuf, OPT_MACRON_DEL) == FALSE) return FALSE;
 	    }
 	}
 
@@ -826,30 +682,10 @@ int search_all(int position)
 			strncpy(String + position, dakuon[i], BYTES4CHAR); /* 清音化した音を元に戻す */
 			pbuf = pat_buffer;
 			while (*pbuf != '\0') {
-			    if (take_data(position, &pbuf, OPT_DEVOICE, 0, 0) == FALSE) return FALSE;
+			    if (take_data(position, &pbuf, OPT_DEVOICE) == FALSE) return FALSE;
 			}
 			break;
 		    }
-		}
-	    }
-	}
-
-	if (Macron_Opt) { /* 長音を含む表現について、長音を削除して検索 */
-	    pat_buffer[0] = '\0';
-	    if ((deleted_length = make_macron_deleted_string(buf, position, &del_or_rep_position))) { /* 長音があれば、それを削除した文字列を作る */
-		pat_search(db, buf, &DicFile.tree_top[dic_no], pat_buffer);
-		pbuf = pat_buffer;
-		while (*pbuf != '\0') {
-		    if (take_data(position, &pbuf, OPT_MACRON, del_or_rep_position - position, deleted_length) == FALSE) return FALSE;
-		}
-	    }
-
-	    pat_buffer[0] = '\0';
-	    if ((del_or_rep_position = make_macron_replaced_string(buf, position)) > 0) { /* 長音があれば、それを置換した文字列を作る */
-		pat_search(db, buf, &DicFile.tree_top[dic_no], pat_buffer);
-		pbuf = pat_buffer;
-		while (*pbuf != '\0') {
-		    if (take_data(position, &pbuf, OPT_MACRON, del_or_rep_position - position, 0) == FALSE) return FALSE;
 		}
 	    }
 	}
@@ -981,7 +817,7 @@ int recognize_onomatopoeia(int pos)
         PROCEDURE: <take_data>                  >>> Changed by yamaji <<<
 ------------------------------------------------------------------------------
 */
-int take_data(int pos, char **pbuf, char opt, int deleted_offset, int deleted_length)
+int take_data(int pos, char **pbuf, char opt)
 {
     unsigned char    *s;
     int     i, k, f, num;
@@ -1009,7 +845,7 @@ int take_data(int pos, char **pbuf, char opt, int deleted_offset, int deleted_le
 	
 	pos_bak = pos;
 
-	s = _take_data(s, &mrph, opt, 0, 0);
+	s = _take_data(s, &mrph, opt);
 	rengo_con_tbl = mrph.con_tbl;
 	rengo_weight  = mrph.weight;
 	num = mrph.bunrui;
@@ -1022,7 +858,7 @@ int take_data(int pos, char **pbuf, char opt, int deleted_offset, int deleted_le
 	    new_mrph->midasi[k-1] = '\0';
 	    new_mrph->midasi2[0] = '\0';
 
-	    s = _take_data(s, new_mrph, opt, 0, 0);
+	    s = _take_data(s, new_mrph, opt);
 	    if (opt) new_mrph->weight = STOP_MRPH_WEIGHT;
 
 	    length = strlen(new_mrph->midasi);
@@ -1160,7 +996,7 @@ int take_data(int pos, char **pbuf, char opt, int deleted_offset, int deleted_le
 	}
 
     } else {           /* 普通の形態素だった場合 */
-	s = _take_data(s, &mrph, opt, deleted_offset, deleted_length);
+	s = _take_data(s, &mrph, opt);
 
 	/* 重みがSTOP_MRPH_WEIGHTとなっているノードは生成しない */
 	if (mrph.weight == STOP_MRPH_WEIGHT) {
@@ -1173,16 +1009,17 @@ int take_data(int pos, char **pbuf, char opt, int deleted_offset, int deleted_le
 		k2 = 1;
 		while (katuyou_process(pos, &k2, &mrph, &length, opt)) {
 		    /* 濁音化ノードは2字以上の場合のみ、 */
-		    /* 正規化ノードは2字以上、かつ、length内に小文字を含む場合のみ作成 */
+		    /* 正規化ノードは2字以上、かつ、length内に非正規表現を含む場合のみ、 */
+		    /* 長音削除ノードは文字長が異なる場合のみ作成 */
 		    if ((opt & OPT_DEVOICE) && length == BYTES4CHAR ||
-			(opt & OPT_NORMALIZE) &&
-			(length == BYTES4CHAR || !strncmp(String + pos, NormalizedString + pos, length))) {
+			(opt & OPT_NORMALIZE) && (length == BYTES4CHAR || !strncmp(String + pos, NormalizedString + pos, length)) ||
+			(opt & OPT_MACRON_DEL) && length == MDS2String[String2MDS[pos] + length] - pos) {
 			k2++;
 			continue;
 		    }
 		    m_buffer[m_buffer_num] = mrph;
 		    m_buffer[m_buffer_num].katuyou2 = k2;
-		    m_buffer[m_buffer_num].length = length;
+		    m_buffer[m_buffer_num].length = (opt & OPT_MACRON_DEL) ? MDS2String[String2MDS[pos] + length] - pos : length;
 		    m_buffer[m_buffer_num].con_tbl += (k2 - 1);
 		    check_connect(pos, m_buffer_num, opt);
 		    if (++m_buffer_num == mrph_buffer_max)
@@ -1191,6 +1028,7 @@ int take_data(int pos, char **pbuf, char opt, int deleted_offset, int deleted_le
 		}
 	    } else {                         /* 語幹なし */
 		m_buffer[m_buffer_num] = mrph;
+ 		if (opt & OPT_MACRON_DEL) m_buffer[m_buffer_num].length = MDS2String[String2MDS[pos] + mrph.length] - pos;		
 		m_buffer[m_buffer_num].midasi[0] = '\0';
 		m_buffer[m_buffer_num].midasi2[0] = '\0';
 		m_buffer[m_buffer_num].yomi[0]  = '\0';
@@ -1199,12 +1037,15 @@ int take_data(int pos, char **pbuf, char opt, int deleted_offset, int deleted_le
 		    realloc_mrph_buffer();
 	    }
 	} else {	                                 /* 活用しない */
-	    if (!(opt & OPT_NORMALIZE) ||
-		/* 正規化ノードは2字以上、かつ、length内に小文字を含む場合のみ作成 */
-		strlen(mrph.midasi) > BYTES4CHAR && 
-		strncmp(String + pos, NormalizedString + pos, strlen(mrph.midasi))) {
-		
+	    if (!(opt & OPT_NORMALIZE || opt & OPT_MACRON_DEL) ||
+		/* 正規化ノードは2字以上、かつ、length内に非正規表記を含む場合のみ作成 */
+		(opt & OPT_NORMALIZE) && strlen(mrph.midasi) > BYTES4CHAR && 
+		strncmp(String + pos, NormalizedString + pos, strlen(mrph.midasi)) ||
+		/* 長音削除ノードは文字長が異なる場合のみ作成 */
+		(opt & OPT_MACRON_DEL) && mrph.length != MDS2String[String2MDS[pos] + mrph.length] - pos) {
+
 		m_buffer[m_buffer_num] = mrph;
+ 		if (opt & OPT_MACRON_DEL) m_buffer[m_buffer_num].length = MDS2String[String2MDS[pos] + mrph.length] - pos;		
 		check_connect(pos, m_buffer_num, opt);
 		new_mrph_num = m_buffer_num;
 		if (++m_buffer_num == mrph_buffer_max)
@@ -1231,9 +1072,9 @@ int take_data(int pos, char **pbuf, char opt, int deleted_offset, int deleted_le
 ------------------------------------------------------------------------------
 */
 
-char *_take_data(char *s, MRPH *mrph, char opt, int deleted_offset, int deleted_length)
+char *_take_data(char *s, MRPH *mrph, char opt)
 {
-    int		i, j, k = 0, deleted_flag = FALSE;
+    int		i, j, k = 0;
     char	c, *rep;
     
     mrph->hinsi    = numeral_decode(&s);
@@ -1244,15 +1085,6 @@ char *_take_data(char *s, MRPH *mrph, char opt, int deleted_offset, int deleted_
     mrph->con_tbl  = numeral_decode2(&s);
     hiragana_decode(&s, mrph->yomi);
     mrph->length   = strlen(mrph->midasi);
-    if (deleted_offset > 0) {
-	if (deleted_offset <= mrph->length) { /* この形態素において、長音などの削除が行われた場合 */
-	    mrph->length += deleted_length; /* 削除された長さを足す */
-	    deleted_flag = TRUE;
-	}
-	else { /* 長音などの削除を行ってサーチしたが、この形態素が長音とは関係ない場合 */
-	    mrph->weight = STOP_MRPH_WEIGHT; /* 生成しない */
-	}
-    }
     
     if (*s != ' ' && *s != '\n') { /* 意味情報あり */
 	j = numeral_decode(&s);
@@ -1318,32 +1150,43 @@ char *_take_data(char *s, MRPH *mrph, char opt, int deleted_offset, int deleted_
 	}
     }
 
-    /* 正規化したものにペナルティ(小文字化された表現用) */
+    /* 正規化したものにペナルティ(小文字化・長音置換された表現用) */
     if (opt & OPT_NORMALIZE) {
-	mrph->weight += NORMALIZED_COST;	
+	mrph->weight += NORMALIZED_COST;
 	if (k == 0) {
 	    strcpy(mrph->imis, "\"");
 	}
 	else {
 	    mrph->imis[strlen(mrph->imis) - 1] = ' ';
 	}
-	strcat(mrph->imis, DEF_LOWERCASE_IMIS);
+	strcat(mrph->imis, DEF_ABNORMAL_IMIS);
 	strcat(mrph->imis, "\"");
     }
 
-    /* 長音削除したものにペナルティ */
-    if (deleted_flag) {
-	mrph->weight += MACRON_COST;
-	if (k == 0) {
-	    strcpy(mrph->imis, "\"");
+    /* 長音挿入したものにペナルティ */
+    if (opt & OPT_MACRON_DEL) {
+	/* 動詞(子音動詞ラ行イ形を除く)、名詞、接頭辞、格助詞、1文字の接続助詞・副助詞は長音削除を認めない */
+	if (mrph->hinsi == macron_hinsi2 && mrph->katuyou1 != macron_type2 || 
+	    mrph->hinsi == macron_hinsi3 || mrph->hinsi == macron_hinsi4 ||
+	    mrph->hinsi == macron_hinsi5 && mrph->bunrui == macron_bunrui5_1 ||
+	    mrph->hinsi == macron_hinsi5 && mrph->bunrui == macron_bunrui5_2 && mrph->length == BYTES4CHAR ||
+	    mrph->hinsi == macron_hinsi5 && mrph->bunrui == macron_bunrui5_3 && mrph->length == BYTES4CHAR) {
+	    mrph->weight = STOP_MRPH_WEIGHT;
 	}
 	else {
-	    mrph->imis[strlen(mrph->imis) - 1] = ' ';
+	    mrph->weight += (mrph->hinsi == macron_hinsi1) ? MACRON_DEL_COST1 : MACRON_DEL_COST2;
+
+	    if (k == 0) {
+		strcpy(mrph->imis, "\"");
+	    }
+	    else {
+		mrph->imis[strlen(mrph->imis) - 1] = ' ';
+	    }
+	    strcat(mrph->imis, DEF_MACRON_IMIS);
+	    strcat(mrph->imis, "\"");
 	}
-	strcat(mrph->imis, DEF_MACRON_IMIS);
-	strcat(mrph->imis, "\"");
     }
-    
+
     return(s);
 }
 
@@ -1657,7 +1500,7 @@ void juman_init_etc(void)
     onomatopoeia_bunrui = 0;
     onomatopoeia_con_tbl = check_table_for_undef(onomatopoeia_hinsi, onomatopoeia_bunrui);
 
-    /* 連濁処理 */
+    /* 連濁処理・長音処理 */
     rendaku_hinsi1 = get_hinsi_id(DEF_RENDAKU_HINSI1);
     rendaku_renyou = get_form_id(DEF_RENDAKU_RENYOU, 1); /* 母音動詞(type=1)の基本連用形のform_idを基本連用形の汎用idとみなす */
     rendaku_hinsi2 = get_hinsi_id(DEF_RENDAKU_HINSI2);
@@ -1669,6 +1512,15 @@ void juman_init_etc(void)
     rendaku_bunrui4_2 = get_bunrui_id(DEF_RENDAKU_BUNRUI4_2, rendaku_hinsi4);
     rendaku_bunrui4_3 = get_bunrui_id(DEF_RENDAKU_BUNRUI4_3, rendaku_hinsi4);
     rendaku_bunrui4_4 = get_bunrui_id(DEF_RENDAKU_BUNRUI4_4, rendaku_hinsi4);
+    macron_hinsi1 = get_hinsi_id(DEF_MACRON_HINSI1);
+    macron_hinsi2 = get_hinsi_id(DEF_MACRON_HINSI2);
+    macron_type2 = get_type_id(DEF_MACRON_TYPE2);
+    macron_hinsi3 = get_hinsi_id(DEF_MACRON_HINSI3);
+    macron_hinsi4 = get_hinsi_id(DEF_MACRON_HINSI4);
+    macron_hinsi5 = get_hinsi_id(DEF_MACRON_HINSI5);
+    macron_bunrui5_1 = get_bunrui_id(DEF_MACRON_BUNRUI5_1, macron_hinsi5);
+    macron_bunrui5_2 = get_bunrui_id(DEF_MACRON_BUNRUI5_2, macron_hinsi5);
+    macron_bunrui5_3 = get_bunrui_id(DEF_MACRON_BUNRUI5_3, macron_hinsi5);
 }
 
 /*
@@ -2500,11 +2352,11 @@ int check_connect(int pos, int m_num, char opt)
 */
 int juman_sent(void)
 {
-    int        i, j, flag;
+    int        i, j, pre_code, post_code;
     int        pos_end, length;
     int        pre_m_buffer_num;
     int        pre_p_buffer_num;
-    int        pos, next_pos = 0;
+    int        pos, next_pos = 0, deleted_num;
     int	       p_start = 0;
 
     if (mrph_buffer_max == 0) {
@@ -2539,22 +2391,72 @@ int juman_sent(void)
     strcpy(m_buffer[0].midasi , "(文頭)");
     m_buffer_num = 1;
     p_buffer_num = 1;
-    
-    /* 非正規表記への対応 */
-    strcpy(NormalizedString, String);
+
+    /* 非正規表現・長音挿入表現検索用の文字列を生成 */
+    if (MacronRep_Opt || Lower_Opt) strcpy(NormalizedString, String); /* 非正規表記への対応 */
+    if (MacronDel_Opt) {
+	deleted_num = 0;
+	for (pos = 0; pos < length; pos++) String2MDS[pos] = -1;
+    }
     for (pos = 0; pos < length; pos+=next_pos) {
 	if (String[pos]&0x80) { /* 全角の場合 */
-	    for (i = NORMALIZED_LOWERCASE_S; i < NORMALIZED_LOWERCASE_E; i++) {
-		if (!strncmp(String + pos, lowercase[i], BYTES4CHAR)) {
-		    for (j = 0; j < BYTES4CHAR; j++) {
-			NormalizedString[pos+j] = uppercase[i][j];
+	    /* 長音置換 */
+	    if (MacronRep_Opt &&
+		(!strncmp(String + pos, DEF_MACRON_SYMBOL1, BYTES4CHAR) ||
+		 !strncmp(String + pos, DEF_MACRON_SYMBOL2, BYTES4CHAR) && 
+		 (!String[pos + BYTES4CHAR] || check_code(String, pos + BYTES4CHAR) == KIGOU || check_code(String, pos + BYTES4CHAR) == HIRAGANA)) &&
+		(pos - BYTES4CHAR >= 0 && /* 2文字目以降、かつ、次の文字が"ー","〜"でない */
+		 strncmp(String + pos + BYTES4CHAR, DEF_MACRON_SYMBOL1, BYTES4CHAR) &&
+		 strncmp(String + pos + BYTES4CHAR, DEF_MACRON_SYMBOL2, BYTES4CHAR))) {
+		for (i = 0; *pre_prolonged[i]; i++) {
+		    if (!strncmp(String + pos - BYTES4CHAR, pre_prolonged[i], BYTES4CHAR)) {
+			strncpy(NormalizedString + pos, prolonged2chr[i], BYTES4CHAR);
 		    }
 		}
 	    }
+	    /* 小文字化 */
+	    else if (Lower_Opt) {
+		for (i = NORMALIZED_LOWERCASE_S; i < NORMALIZED_LOWERCASE_E; i++) {
+		    if (!strncmp(String + pos, lowercase[i], BYTES4CHAR)) {
+			for (j = 0; j < BYTES4CHAR; j++) {
+			    NormalizedString[pos+j] = uppercase[i][j];
+			}
+		    }
+		}
+	    }		
 	    next_pos = utf8_bytes(String + pos);
 	} else {
 	    next_pos = 1;
 	}
+
+	/* 長音挿入 */
+	if (MacronDel_Opt && next_pos == BYTES4CHAR) {
+	    pre_code = (BYTES4CHAR <= pos) ? check_code(String, pos - BYTES4CHAR) : -1;
+	    post_code = check_code(String, pos + BYTES4CHAR); /* 文末の場合は0 */
+	    if (pre_code > 0 &&
+		/* 直前が削除された長音記号、平仮名、または、漢字かつ直後が平仮名 */
+		((String2MDS[pos - BYTES4CHAR] == -1 ||
+		  pre_code == HIRAGANA || pre_code == KANJI && post_code == HIRAGANA) &&
+		 /* "ー"または"〜" */
+		 (!strncmp(String + pos, DEF_MACRON_SYMBOL1, BYTES4CHAR) ||
+		  !strncmp(String + pos, DEF_MACRON_SYMBOL2, BYTES4CHAR))) ||
+		/* 直前が長音記号で、現在文字が"っ"、かつ、直後が文末、または、記号の場合も削除 */
+		(String2MDS[pos - BYTES4CHAR] == -1 && !strncmp(String + pos, DEF_MACRON_SYMBOL3, BYTES4CHAR) &&
+		 (post_code == 0 || post_code == KIGOU))) {
+		deleted_num++;
+		String2MDS[pos] = -1;
+	    }
+	    else {
+		for (i = 0; i < next_pos; i++) MacronDeletedString[pos - deleted_num * BYTES4CHAR + i] = String[pos + i];
+		MacronDeletedString[pos - deleted_num * BYTES4CHAR + next_pos] = '\0'; /* 長音記号を除いた文字列を作成 */
+		String2MDS[pos] = pos - deleted_num * BYTES4CHAR; /* Stringから作成した文字列へのマップ */
+		MDS2String[pos - deleted_num * BYTES4CHAR] = pos; /* 作成した文字列からStringへのマップ */
+	    }
+	}
+    }
+    if (MacronDel_Opt) {
+	String2MDS[pos] = pos - deleted_num * BYTES4CHAR; /* Stringから作成した文字列へのマップ */
+	MDS2String[pos - deleted_num * BYTES4CHAR] = pos; /* 作成した文字列からStringへのマップ */
     }
 
     for (pos = 0; pos < length; pos+=next_pos) {

@@ -30,10 +30,11 @@ extern char		Show_Opt_tag[MIDASI_MAX];
 extern int		Show_Opt_jumanrc;
 extern int		Show_Opt_debug;
 extern int		Vocalize_Opt;
-extern int		Normalized_Opt;
+extern int		Lower_Opt;
 extern int		Repetition_Opt;
 extern int              Onomatopoeia_Opt;
-extern int		Macron_Opt;
+extern int		MacronRep_Opt;
+extern int		MacronDel_Opt;
 extern int		Unkword_Pat_Num;
 
 extern FILE		*Jumanrc_Fileptr;
@@ -244,10 +245,11 @@ void option_proc(int argc, char **argv)
     Show_Opt_tag[0] = '\0';
     Show_Opt_debug = 0;
     Vocalize_Opt = 1;
-    Normalized_Opt = 1;
+    Lower_Opt = 1;
     Repetition_Opt = 1;
     Onomatopoeia_Opt = 1;
-    Macron_Opt = 0;
+    MacronRep_Opt = 1;
+    MacronDel_Opt = 1;
 
     for ( i=1; i<argc; i++ ) {
 	if ( argv[i][0] != '-' ) {
@@ -288,10 +290,10 @@ else {
 	    else if ( argv[i][1] == 'd' ) Show_Opt_debug = 1;
 	    else if ( argv[i][1] == 'D' ) Show_Opt_debug = 2;
 	    else if ( argv[i][1] == 'V' ) Vocalize_Opt = 0;
-	    else if ( argv[i][1] == 'L' ) Normalized_Opt = 0;
+	    else if ( argv[i][1] == 'L' ) Lower_Opt = 0;
 	    else if ( argv[i][1] == 'R' ) Repetition_Opt = 0;
 	    else if ( argv[i][1] == 'O' ) Onomatopoeia_Opt = 0;
-	    else if ( argv[i][1] == 'M' ) Macron_Opt = 1;
+	    else if ( argv[i][1] == 'M' ) MacronRep_Opt = MacronDel_Opt = 0;
 
 	    /* サーバーモード用のオプションの取扱い */
             else if ( argv[i][1] == 'S' ) JUMAN_server_mode = TRUE;

@@ -2,7 +2,7 @@
 ==============================================================================
         const.h
                 2007/09/03  Ryohei Sasano
-		2010/08/09  Last Modified
+		2011/08/08  Last Modified
 ==============================================================================
 */
 
@@ -15,9 +15,41 @@
 #define STOP_MRPH_WEIGHT       255 /* このWeigthのときは形態素候補から除く */
 #define OPT_NORMALIZE          1
 #define OPT_DEVOICE            2
-#define OPT_MACRON             4
-#define NORMALIZED_LENGTH      6   /* 非正規表記の処理で考慮する最大形態素長 */
-#define MACRON_SEARCH_LENGTH  10   /* 長音化の処理で長音を探す最大バイト数 */
+#define OPT_MACRON_DEL         4
+#define NORMALIZED_LENGTH      7   /* 非正規表記の処理で考慮する最大形態素長 */
+
+/* 連濁処理等で使用する品詞や表記情報 */
+#define         DEF_ONOMATOPOEIA_HINSI  "副詞"
+#define         DEF_ONOMATOPOEIA_IMIS   "自動認識"
+#define         DEF_RENDAKU_HINSI1      "動詞"
+#define         DEF_RENDAKU_RENYOU      "基本連用形"
+#define         DEF_RENDAKU_HINSI2      "名詞"
+#define         DEF_RENDAKU_BUNRUI2_1   "普通名詞"
+#define         DEF_RENDAKU_BUNRUI2_2   "サ変名詞"
+#define         DEF_RENDAKU_HINSI3      "形容詞"
+#define         DEF_RENDAKU_HINSI4      "接尾辞"
+#define         DEF_RENDAKU_BUNRUI4_1   "名詞性述語接尾辞"
+#define         DEF_RENDAKU_BUNRUI4_2   "名詞性名詞接尾辞"
+#define         DEF_RENDAKU_BUNRUI4_3   "名詞性名詞助数辞"
+#define         DEF_RENDAKU_BUNRUI4_4   "名詞性特殊接尾辞"
+#define         DEF_RENDAKU_FEATURE     "連濁可"
+#define         DEF_RENDAKU_MIDASI_KA   "か"
+#define         DEF_RENDAKU_REP         "代表表記"
+#define         DEF_RENDAKU_IMIS        "濁音化"
+#define         DEF_MACRON_IMIS         "長音挿入"
+#define         DEF_ABNORMAL_IMIS       "非標準表記"
+#define         DEF_MACRON_SYMBOL1      "ー"
+#define         DEF_MACRON_SYMBOL2      "〜"
+#define         DEF_MACRON_SYMBOL3      "っ"
+#define         DEF_MACRON_HINSI1       "感動詞"
+#define         DEF_MACRON_HINSI2       "動詞"
+#define         DEF_MACRON_TYPE2        "子音動詞ラ行イ形"
+#define         DEF_MACRON_HINSI3       "名詞"
+#define         DEF_MACRON_HINSI4       "接頭辞"
+#define         DEF_MACRON_HINSI5       "助詞"
+#define         DEF_MACRON_BUNRUI5_1    "格助詞"
+#define         DEF_MACRON_BUNRUI5_2    "副助詞"
+#define         DEF_MACRON_BUNRUI5_3    "接続助詞"
 
 /* 濁音・半濁音、濁音と対応する清音の一覧 
    連濁認識(濁音・対応する清音)、オノマトペ認識(濁音・半濁音(cf. DAKUON_BONUS))で利用 
@@ -39,6 +71,21 @@ U_CHAR *lowercase[] = {"ぁ", "ぃ", "ぅ", "ぇ", "ぉ", "ゎ", "ヵ",
 		       "ァ", "ィ", "ゥ", "ェ", "ォ", "ヮ", "っ", "ッ", "ん", "ン",
 		       "ゃ", "ャ", "ゅ", "ュ", "ょ", "ョ", "\0"};
 U_CHAR *uppercase[] = {"あ", "い", "う", "え", "お", "わ", "か", "\0"};
+
+/* 長音置換のルールで利用 */
+/* 長音記号直前の文字が pre_prolonged[] だった場合、長音記号を prolonged2chr[] に置換 */
+U_CHAR *pre_prolonged[] = {"か", "ば", "ま", "ゃ", /* あ */
+			   "い", "き", "し", "ち", "に", "ひ", "じ", "け", "せ", /* い */
+			   "て", "へ", "め", "れ", "げ", "ぜ", "で", "べ", "ぺ",
+			   "く", "す", "つ", "ふ", "ゆ", "ぐ", "ず", "ぷ", "ゅ", /* う */
+			   "お", "こ", "そ", "と", "の", "ほ", "も", "よ", "ろ",
+			   "が", "ぞ", "ど", "ぼ", "ぽ", "ょ", "ね", "\0"}; /* え(ね) */
+U_CHAR *prolonged2chr[] = {"あ", "あ", "あ", "あ", /* あ */
+			   "い", "い", "い", "い", "い", "い", "い", "い", "い", /* い */
+			   "い", "い", "い", "い", "い", "い", "い", "い", "い",
+			   "う", "う", "う", "う", "う", "う", "う", "う", "う", /* う */
+			   "う", "う", "う", "う", "う", "う", "う", "う", "う",
+			   "う", "う", "う", "う", "う", "う", "え", "\0"}; /* え(ね) */
 
 /* 長音置換のルールで利用 */
 U_CHAR *i_gyo[] = {"い", "き", "し", "ち", "に", "ひ", "み", "り", 
@@ -88,11 +135,12 @@ U_CHAR *o_gyo[] = {"お", "こ", "そ", "と", "の", "ほ", "も", "よ", "ろ"
 #define ADJECTIVE_VOICED_COST  9  /* 形容詞の連濁化のコスト */
 #define OTHER_VOICED_COST      5  /* 上記以外の連濁化のコスト */
 
-/* 小文字を大文字化する際の追加コスト */
-#define NORMALIZED_COST        1
+/* 小文字を大文字化、平仮名を長音記号に置換する際の追加コスト */
+#define NORMALIZED_COST       6
 
-/* 長音を削除・置換する際の追加コスト */
-#define MACRON_COST	2
+/* 長音を削除する際の追加コスト */
+#define MACRON_DEL_COST1       9  /* 感動詞 */
+#define MACRON_DEL_COST2      12  /* その他 */
 
 /* 反復型オノマトペのコスト */
 

@@ -255,6 +255,16 @@ enum		_ExitCode 	{ NormalExit,
 #define WIN_AZURE_DICFILE_DEFAULT ".\\dic\\"
 #define WIN_AZURE_AUTODICFILE_DEFAULT ".\\autodic\\"
 #define WIN_AZURE_WIKIPEDIADICFILE_DEFAULT ".\\wikipediadic\\"
+
+#ifdef _WIN32
+#ifndef strcasecmp
+#define strcasecmp stricmp
+#endif
+#ifndef strncasecmp
+#define strncasecmp strnicmp
+#endif
+#endif
+
 /*
 ------------------------------------------------------------------------------
 	global type definition of structures

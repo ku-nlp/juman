@@ -151,9 +151,6 @@ int readtonl(FILE *fp)
 void juman_standalone(void)
 {
     int length;
-#ifdef _WIN32
-    char *eucstr;
-#endif
     
     if (!juman_init_rc(Jumanrc_Fileptr)) {	/* rcfile関係の初期化 */
 	fprintf(stderr, "error in .jumanrc\n");
@@ -173,11 +170,6 @@ void juman_standalone(void)
 	    readtonl(stdin);
 	    continue;
 	}
-#ifdef _WIN32
-	eucstr = toStringEUC(String);
-	strcpy(String,eucstr);
-	free(eucstr);
-#endif       
 	
 	length = strlen(String);
 	if (length == LENMAX-1 && String[length - 1] != '\n') {

@@ -119,6 +119,8 @@
 #define 	DEF_UNDEF_ALPH		"アルファベット"
 #define 	DEF_UNDEF_ETC		"その他"
 
+#define my_fprintf fprintf
+
 /*
 ------------------------------------------------------------------------------
 	GLOBAL:
@@ -1434,8 +1436,22 @@ int check_code(U_CHAR *cp, int pos)
     else if ( code < KATAKANA ) 		return KATAKANA;
     else if ( code < GR ) 			return GR;
     else return KANJI;
+#else
+#ifdef IO_ENCODING_SJIS
+    code = cp[pos]*256 + cp[pos+1];
+    
+    if ( code == 0x8144 ) 			return PRIOD;
+    else if ( code == 0x815b ) 			return CHOON;
+    else if ( code < 0x8200 ) 			return KIGOU;
+    else if ( code < 0x8260 ) 			return SUJI;
+    else if ( code < 0x829f )			return ALPH;
+    else if ( code < 0x8300 ) 			return HIRAGANA;
+    else if ( code < 0x839f ) 			return KATAKANA;
+    else if ( code < 0x8800 ) 			return GR;
+    else return KANJI;
 #else /* UTF-8 */
     return check_utf8_char_type(cp + pos);
+#endif
 #endif
 }
 
@@ -1671,33 +1687,6 @@ int 	is_through(MRPH *mrph_p)
 	return TRUE;
     else 
 	return FALSE;
-}
-
-/*
-------------------------------------------------------------------------------
-  PROCEDURE: <my_fprintf> (MS Windows のため に出力を SJIS にする)
-                             >>> Added by Taku Kudoh <<<
-------------------------------------------------------------------------------
-*/
-
-void my_fprintf(FILE* output, const char *fmt, ...)
-{
-    va_list  ap;
-    char     buf[1024];
-    char     *sjisstr;
-
-    va_start(ap,fmt);
-    vsprintf(buf,fmt,ap);
-    va_end(ap);
-
-#ifdef IO_ENCODING_EUC
-    /* SJIS に変更して出力 */
-    sjisstr = toStringSJIS(buf);
-    fwrite(sjisstr,sizeof(char),strlen(sjisstr),output);
-    free(sjisstr);
-#else 
-    fwrite(buf,sizeof(char),strlen(buf),output);
-#endif
 }
 
 char **OutputAV;

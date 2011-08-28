@@ -431,7 +431,7 @@ int myscanf(FILE *fp, U_CHAR *cp)
 		*cp++ = '\0';
 		return 1;
 	    }
-#ifndef _WIN32
+#ifndef IO_ENCODING_SJIS
 	    else if ( code == '\\' ) {
 		*cp++ = code;
 		if ( (code = my_getc(fp)) == EOF ) 
@@ -446,7 +446,7 @@ int myscanf(FILE *fp, U_CHAR *cp)
     }
     else {
 	*cp++ = code;
-#ifndef _WIN32
+#ifndef IO_ENCODING_SJIS
 	if (code == '\\') 
 	    *(cp-1) = my_getc(fp); /* kuro on 12/01/94 */
 #endif
@@ -459,7 +459,7 @@ int myscanf(FILE *fp, U_CHAR *cp)
 	    }
 	    else {
 		*cp++ = code;
-#ifndef _WIN32
+#ifndef IO_ENCODING_SJIS
 		if (code == '\\') 
 		    *(cp-1) = my_getc(fp); /* kuro on 12/01/94 */
 #endif

@@ -46,8 +46,8 @@ typedef struct pat_node {
 extern pat_node tree_top[MAX_DIC_NUMBER]; /* 木のねっこ♪ 辞書の数だけ使う */
 extern FILE *dic_file[MAX_DIC_NUMBER]; /* 木のもとデータ(辞書ファイル) */
 
-/* 文字と文字の区切りは何ビット目? (8 or 16(EUC-JP) or 24(UTF-8) */
-#ifdef IO_ENCODING_EUC
+/* 文字と文字の区切りは何ビット目? (8 or 16(EUC-JP, Shift_JIS) or 24(UTF-8) */
+#if defined(IO_ENCODING_EUC) || defined(IO_ENCODING_SJIS)
 #define SIKII_BIT 16
 #else
 #define SIKII_BIT 24

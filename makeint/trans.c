@@ -441,11 +441,15 @@ static void trim_midasi_gobi(MRPH *mrph_p)
 
 int hankaku_check(U_CHAR *s)
 {
+#ifdef IO_ENCODING_SJIS
+    return(0);
+#else
     while (*s) {
 	if (*s < 0x80) return(1);
 	s++;
     }
     return(0);
+#endif
 }
 
 /*

@@ -1269,8 +1269,9 @@ int undef_word(int pos)
 	    /* MIDASI_MAXを越える未定義語は作成しない */
 	    if (end - pos >= MIDASI_MAX - ((code == HANKAKU) ? 1 : cur_bytes)) break;
 
-	    end += (code == HANKAKU) ? 1 : cur_bytes;
+	    end += cur_bytes;
 	    next_code = check_code(String, end);
+	    cur_bytes = utf8_bytes(String + end);
 	    if (next_code == code ||
 		(code == KATAKANA && next_code == CHOON) ||
 		(code == ALPH     && next_code == PRIOD)) continue;
@@ -2458,13 +2459,12 @@ int juman_sent(void)
 	
 	    if (String[pos]&0x80) { /* 全角の場合，辞書をひく */
 		if (search_all(pos) == FALSE) return FALSE;
-		next_pos = utf8_bytes(String + pos);
-	    } else {
-		next_pos = 1;
 	    }
 
 	    if (undef_word(pos) == FALSE) return FALSE;
 	}
+
+	next_pos = utf8_bytes(String + pos);
     }
     
     /* 文末処理 */

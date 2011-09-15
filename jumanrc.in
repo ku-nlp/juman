@@ -4,8 +4,8 @@
 
 (辞書ファイル
 	@pkgdatadir@/dic
-;	@pkgdatadir@/autodic
-;	@pkgdatadir@/wikipediadic
+	@pkgdatadir@/autodic
+	@pkgdatadir@/wikipediadic
 )
 
 (品詞コスト

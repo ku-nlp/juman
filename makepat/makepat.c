@@ -15,7 +15,7 @@ FILE *dic_file[MAX_DIC_NUMBER]; /* 木のもとデータ(辞書ファイル) */
 char line[50000]; /* 入力行 */
 FILE *out_file, *in_file; /* セーブファイル・ロードファイル */
 char  inkey[10000]; /* 検索・挿入キー */
-char            *ProgName;
+extern char	*ProgName;
 
 /*** JUMAN辞書引き関連 ***/
 int number_of_tree = 0; /* 使用する辞書(パト木)の数 */

@@ -25,7 +25,7 @@ typedef struct _line_info {
 static void *buffer_ptr[1024];
 static int  buffer_ptr_num = 0;
 static int  buffer_idx = JUMAN_MALLOC_SIZE;
-char            *ProgName;
+extern char	*ProgName;
 
 static void *jm_malloc_char(int size)
 {

@@ -21,6 +21,7 @@
 TYPE		Type[TYPE_NO];
 FORM		Form[TYPE_NO][FORM_NO];
 
+extern char	*ProgName;
 extern CLASS	Class[CLASSIFY_NO][CLASSIFY_NO];
 extern int	LineNo;
 extern int	LineNoForError;
@@ -140,17 +141,28 @@ void katuyou(FILE *fp_out)
     char	cur_path[FILENAME_MAX];
     char	juman_path[FILENAME_MAX];
     char	katuyoufile_path[FILENAME_MAX];
+    char	*prog_basename = NULL;
 
     getpath(cur_path, juman_path);
+
+    /* program basename (juman, makeint, ...) */
+    if (ProgName) {
+        if ((prog_basename = strrchr(ProgName, '/'))) {
+            prog_basename++;
+        }
+        else {
+            prog_basename = ProgName;
+        }
+    }
 
     while (1) {
 	if ((fp = pathfopen(KATUYOUFILE, "r", "", katuyoufile_path))
 	    != NULL) break;
 	if ((fp = pathfopen(KATUYOUFILE, "r", cur_path, katuyoufile_path))
 	    != NULL) break;
-	if ((fp = pathfopen(KATUYOUFILE, "r", juman_path, katuyoufile_path))
+	if (prog_basename && strcmp(prog_basename, "juman") && (fp = pathfopen(KATUYOUFILE, "r", "../dic/", katuyoufile_path)) /* for compilation (program is not juman) */
 	    != NULL) break;
-	if ((fp = pathfopen(KATUYOUFILE, "r", "../dic/", katuyoufile_path)) /* for compilation */
+	if ((fp = pathfopen(KATUYOUFILE, "r", juman_path, katuyoufile_path))
 	    != NULL) break;
 	error(OpenError, "can't open", katuyoufile_path, ".", EOA);
     }

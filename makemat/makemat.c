@@ -20,8 +20,7 @@
 ------------------------------------------------------------------------------
 */
 
-char            *ProgName;
-
+extern char	*ProgName;
 extern FILE	*Jumanrc_Fileptr;
 extern FILE	*Cha_stderr;
 

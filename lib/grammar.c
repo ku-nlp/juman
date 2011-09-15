@@ -25,6 +25,8 @@ CLASS		Class[CLASSIFY_NO + 1][CLASSIFY_NO + 1];
 
 char		CurPath[FILENAME_MAX];
 char		JumanPath[FILENAME_MAX];
+
+extern char	*ProgName;
 extern int      LineNo;
 extern int      LineNoForError;
 
@@ -169,6 +171,17 @@ void grammar(FILE *fp_out)
 
      FILE	*fp;
      char	grammarfile_path[FILENAME_MAX];
+     char	*prog_basename = NULL;
+
+     /* program basename (juman, makeint, ...) */
+     if (ProgName) {
+         if ((prog_basename = strrchr(ProgName, '/'))) {
+             prog_basename++;
+         }
+         else {
+             prog_basename = ProgName;
+         }
+     }
 
      getpath(CurPath, JumanPath);
      while (1) {
@@ -176,9 +189,9 @@ void grammar(FILE *fp_out)
 	      != NULL )	break;
 	  if ( (fp = pathfopen(GRAMMARFILE, "r", CurPath, grammarfile_path))
 	      != NULL ) break;
-	  if ( (fp = pathfopen(GRAMMARFILE, "r", JumanPath, grammarfile_path))
+	  if ( prog_basename && strcmp(prog_basename, "juman") && (fp = pathfopen(GRAMMARFILE, "r", "../dic/", grammarfile_path)) /* for compilation (program is not juman) */
 	      != NULL ) break;
-	  if ( (fp = pathfopen(GRAMMARFILE, "r", "../dic/", grammarfile_path)) /* for compilation */
+	  if ( (fp = pathfopen(GRAMMARFILE, "r", JumanPath, grammarfile_path))
 	      != NULL ) break;
 	  error(OpenError, "can't open", GRAMMARFILE, ".", EOA);
      }

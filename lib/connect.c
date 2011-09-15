@@ -56,16 +56,28 @@ void connect_table(FILE *fp_out)
 
      FILE	*fp;
      char	tablefile_path[FILENAME_MAX];
+     char	*prog_basename = NULL;
 
      getpath(CurPath, JumanPath);
+
+    /* program basename (juman, makeint, ...) */
+    if (ProgName) {
+        if ((prog_basename = strrchr(ProgName, '/'))) {
+            prog_basename++;
+        }
+        else {
+            prog_basename = ProgName;
+        }
+    }
+
      while (1) {
 	  if ( (fp = pathfopen(TABLEFILE, "r", ""     , tablefile_path))
 	      != NULL )	break;
 	  if ( (fp = pathfopen(TABLEFILE, "r", CurPath, tablefile_path))
 	      != NULL ) break;
-	  if ( (fp = pathfopen(TABLEFILE, "r", JumanPath, tablefile_path))
+	  if ( prog_basename && strcmp(prog_basename, "juman") && (fp = pathfopen(TABLEFILE, "r", "../dic/", tablefile_path)) /* for compilation (program is not juman) */
 	      != NULL ) break;
-	  if ( (fp = pathfopen(TABLEFILE, "r", "../dic/", tablefile_path)) /* for compilation */
+	  if ( (fp = pathfopen(TABLEFILE, "r", JumanPath, tablefile_path))
 	      != NULL ) break;
 	  error(OpenError, "can't open", TABLEFILE, ".", EOA);
      }

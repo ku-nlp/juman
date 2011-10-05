@@ -357,7 +357,7 @@ void juman_help()
     fprintf(stderr, "             -L : not search normalized lowercase\n");
     fprintf(stderr, "             -R : not recognize repetitive onomatopoeia automatically\n");
     fprintf(stderr, "             -O : not recognize non-repetitive onomatopoeia automatically\n");
-    fprintf(stderr, "             -M : search macron-deleted morphemes\n");
+    fprintf(stderr, "             -M : not search macron-deleted morphemes\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "             -i : ignore an input line startig with 'string'\n");
     fprintf(stderr, "             -r : use 'rc_file' as '.jumanrc'\n");

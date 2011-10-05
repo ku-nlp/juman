@@ -3,11 +3,11 @@
 \usepackage{ascmac}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\title{\bf 日本語形態素解析システム \\ JUMAN version 6.0}
+\title{\bf 日本語形態素解析システム \\ JUMAN version 7.0}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \author{黒橋 禎夫 \ \ 河原 大輔}
-\date{平成21年9月 \\
-\rule{0mm}{110mm}Copyright \copyright\ 2009\begin{tabular}[t]{l}
+\date{平成23年10月 \\
+\rule{0mm}{110mm}Copyright \copyright\ 2011\begin{tabular}[t]{l}
                                 京都大学大学院情報学研究科 \\
                                 \end{tabular}
 }
@@ -22,10 +22,10 @@
 
 \begin{small}
 \noindent
-Japanese Morphological Analysis System JUMAN 6.0 Users Manual
+Japanese Morphological Analysis System JUMAN 7.0 Users Manual
 
 \noindent
-Copyright (c) 2009 Kyoto University \\
+Copyright (c) 2011 Kyoto University \\
 All rights reserved.
 
 \noindent
@@ -80,6 +80,7 @@ Version 5.0 & 23 March 2005 \\
 Version 5.1 & 7 September 2005 \\
 Version 6.0b & 30 September 2007 \\
 Version 6.0 & 26 September 2009 \\
+Version 7.0 & 20 October 2011 \\
 \end{tabular}
 \end{small}
 
@@ -149,7 +150,7 @@ SICStus Prologとの接合部の調整をしていただきました．また，JUMAN3.1以降で
 げます．
 
 \begin{flushright}
-平成 21年 9月
+平成 23年 10月
 \end{flushright}
 
 \vfill
@@ -163,7 +164,7 @@ SICStus Prologとの接合部の調整をしていただきました．また，JUMAN3.1以降で
 黒橋 禎夫 \\
 Tel: (075)753-5344 \\
 Fax: (075)753-5962 \\
-Email: {\sf nl-resource@nlp.kuee.kyoto-u.ac.jp}
+Email: {\sf nl-resource@nlp.ist.i.kyoto-u.ac.jp}
 
 \clearpage
 
@@ -706,7 +707,7 @@ JUMAN.connect, jumandic.tab, jumandic.mat})が存在するディレクト
 \section{形態素解析}\label{kaiseki}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-JUMANは，EUCコードの日本語文字列を標準入力から一行ごとに読み込んで入力
+JUMANは，UTF-8コードの日本語文字列を標準入力から一行ごとに読み込んで入力
 とし，連接規則辞書によって許容された形態素からなる束(lattice)状の構造
 を出力とする．
 
@@ -818,7 +819,7 @@ $C_{i,j}=\infty$ とする)．したがって，$Mf_j$に対するすべての連接コストは，
 \subsection{Unix系OSにおけるインストール方法}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\texttt{juman-6.0.tar.gz}を展開し，\texttt{juman-6.0}ディレクトリに移動
+\texttt{juman-7.0.tar.gz}を展開し，\texttt{juman-7.0}ディレクトリに移動
 して，次の手順を実行する．
 
 \begin{enumerate}
@@ -853,7 +854,7 @@ $C_{i,j}=\infty$ とする)．したがって，$Mf_j$に対するすべての連接コストは，
 \subsection{Windowsにおけるインストール方法}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\texttt{juman-6.0.exe}を実行し，表示される指示に従ってインストールを行う．
+\texttt{juman-7.0.exe}を実行し，表示される指示に従ってインストールを行う．
 以下のファイルがインストールされる．\texttt{\$PREFIX}は，デフォルトでは
 \texttt{C:\yen Program Files\yen juman}であるが，インストール途中で設定
 できる．
@@ -870,8 +871,7 @@ $C_{i,j}=\infty$ とする)．したがって，$Mf_j$に対するすべての連接コストは，
 現在のWindows版は試験版であり未対応の機能がある．UNIX版との違いは
 次のとおりである．
 \begin{itemize}
- \item 入出力は SJIS で行う(辞書などはUNIX版と同様にEUCであるが，入出力
-       の時点で漢字コードの変換をしている)．
+ \item 入出力は SJIS で行う．
  \item jumanrcでの種々の設定はできない．辞書も一ヶ所(1フォルダ)しかもて
        ず，ここに文法辞書と形態素辞書の双方をおく．辞書の場所の設定は
        juman.iniで行う．
@@ -1408,7 +1408,7 @@ Perlモジュール``Juman''を用いることにより，PerlからJUMANを利用することが
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 JUMANサーバに接続すると，最初の１行にJUMANやサーバのバージョンが出力される．
-現在のJUMANでは，入出力ともに，文字コードは日本語EUC，
+現在のJUMANでは，入出力ともに，文字コードはUTF-8，
 改行コードは {\tt LF}(ASCII 10) となっている．
 
 JUMANサーバと通信するためのコマンドを以下に示す．
@@ -1422,7 +1422,7 @@ JUMANサーバと通信するためのコマンドを以下に示す．
 {\tt RUN}を，必要があれば後ろにオプションをつけて入力すると`{\tt 200
 OK}' と出力される．オプションはJUMAN起動時のものと同じである．
 
-つづいて，日本語の文章を日本語EUCで入力すると，改行を入力するごとにそ
+つづいて，日本語の文章をUTF-8で入力すると，改行を入力するごとにそ
 の行の解析結果が出力される．
 
 入力は，Ctr-k (ASCII 0b) のみの行を入力することで終了する．その結果，
@@ -3062,6 +3062,36 @@ JUMAN6.0では，未知語の自動獲得（品詞，活用形の推定を含む）を行い，その結
  加える → 反義:動詞:引く;動詞:減らす \\
  貯金 → カテゴリ:人工物-金銭;抽象物 \\
 \end{quote}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{JUMAN 6.0 からJUMAN 7.0への拡張点}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{subsec:7.0}
+
+概要
+\begin{itemize}
+\item 非反復形オノマトペ，長音化による非標準表記の自動認識
+\item Wikipediaから抽出した辞書の追加
+\item UTF-8化
+\item 辞書構築時に落ちるバグの修正
+\item その他の整備（辞書・接続表の若干の修正等）
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{非反復形オノマトペ，長音化による非標準表記の自動認識}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Wikipediaから抽出した辞書の追加}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{UTF-8化}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 

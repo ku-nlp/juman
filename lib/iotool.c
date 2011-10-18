@@ -30,6 +30,24 @@ FILE 		*Cha_stderr = NULL;
 /*
 ------------------------------------------------------------------------------
 	FUNCTION:
+	<check_filesize>: check filesize
+------------------------------------------------------------------------------
+*/
+
+int check_filesize(FILE *fp)
+{
+    int size;
+
+    fseek(fp, 0, SEEK_END);
+    size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    return size;
+}
+
+/*
+------------------------------------------------------------------------------
+	FUNCTION:
 	<my_fopen>: do "fopen"/<filename> and error processing
 ------------------------------------------------------------------------------
 */

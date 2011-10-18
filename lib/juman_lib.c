@@ -389,6 +389,10 @@ BOOL juman_init_rc(FILE *fp)
 		    sprintf(full_file_name, "%s%s", dic_file_name, PATFILE);
 		    strcat(dic_file_name, DICFILE);
 		    DicFile.dic[num] = my_fopen(dic_file_name , "r");
+                    if (check_filesize(DicFile.dic[num]) == 0) { /* ファイルサイズが0でないことをチェック */
+                        warning(OpenError, "filesize is 0", dic_file_name, ".", EOA);
+                        continue;
+                    }
 		    pat_init_tree_top(&DicFile.tree_top[num]);
 		    com_l(full_file_name, &DicFile.tree_top[num]);
 		}

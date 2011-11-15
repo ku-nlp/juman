@@ -70,13 +70,13 @@ extern int              Show_Opt2;
 extern char		Show_Opt_tag[MIDASI_MAX];
 extern int		Show_Opt_jumanrc;
 extern int		Show_Opt_debug;
-extern int		Vocalize_Opt;
-extern int		LowerRep_Opt;
-extern int		LowerDel_Opt;
+extern int		Rendaku_Opt;
+extern int		LowercaseRep_Opt;
+extern int		LowercaseDel_Opt;
 extern int		Repetition_Opt;
 extern int              Onomatopoeia_Opt;
-extern int              MacronRep_Opt;
-extern int              MacronDel_Opt;
+extern int              LongSoundRep_Opt;
+extern int              LongSoundDel_Opt;
 
 extern U_CHAR	        String[LENMAX];
 
@@ -231,13 +231,13 @@ int option_proc_for_server(int argc, char **argv)
     Show_Opt_jumanrc = 0;
     Show_Opt_tag[0] = '\0';
     Show_Opt_debug = 0;
-    Vocalize_Opt = 1;
-    LowerRep_Opt = 1;
-    LowerDel_Opt = 1;
+    Rendaku_Opt = 1;
+    LowercaseRep_Opt = 1;
+    LowercaseDel_Opt = 1;
     Repetition_Opt = 1;
     Onomatopoeia_Opt = 1;
-    MacronRep_Opt = 1;
-    MacronDel_Opt = 1;
+    LongSoundRep_Opt = 1;
+    LongSoundDel_Opt = 1;
     
     for (i = 1; i < argc; i++ ) {
 	if (argv[i][0] != '-') {
@@ -259,11 +259,27 @@ int option_proc_for_server(int argc, char **argv)
 	    else if ( argv[i][1] == 'E' ) Show_Opt2 = Op_EE;
 	    else if ( argv[i][1] == 'i' ) strcpy(Show_Opt_tag, argv[i+1]), i++;
             else if ( argv[i][1] == 'r' ) i++;
-	    else if ( argv[i][1] == 'V' ) Vocalize_Opt = 0;
-	    else if ( argv[i][1] == 'L' ) LowerRep_Opt = LowerDel_Opt = 0;
-	    else if ( argv[i][1] == 'R' ) Repetition_Opt = 0;
-	    else if ( argv[i][1] == 'O' ) Onomatopoeia_Opt = 0;
-	    else if ( argv[i][1] == 'M' ) MacronRep_Opt = MacronDel_Opt = 0;
+	    else if ( argv[i][1] == 'u' ) { /* 未知語処理用のオプションの取扱い */
+	        if (i == argc - 1 || argv[i+1][0] == '-' ) { /* no argument */
+		    Rendaku_Opt = LowercaseRep_Opt = LowercaseDel_Opt = LongSoundRep_Opt = 
+			LongSoundDel_Opt = Repetition_Opt = Onomatopoeia_Opt = 0;
+		}
+		else { /* 先頭3文字をチェック */
+		    i++;
+		    if ( argv[i][0] == 'r' && argv[i][1] == 'e' && argv[i][2] == 'n') {
+			Rendaku_Opt = 0; /* rendaku */
+		    }
+		    else if ( argv[i][0] == 'l' && argv[i][1] == 'o' && argv[i][2] == 'w') {
+			LowercaseRep_Opt = LowercaseDel_Opt = 0; /* lowercase */
+		    }
+		    else if ( argv[i][0] == 'l' && argv[i][1] == 'o' && argv[i][2] == 'n') {
+			LongSoundRep_Opt = LongSoundDel_Opt = 0; /* long-sound */
+		    }
+		    else if ( argv[i][0] == 'o' && argv[i][1] == 'n' && argv[i][2] == 'o') {
+			Repetition_Opt = Onomatopoeia_Opt = 0; /* onomatopoeia */
+		    }
+		}
+	    }
 	    else {
 	      fprintf(client_ofp, "Invalid Option !!\nHELP command for more detail.\n");
 	      return FALSE;
@@ -440,6 +456,7 @@ static int do_cmd(line)
 	    "  -e2         -e plus semantics data\n",
 	    "  -E          -e plus location and semantics data\n",
 	    "\n",
+	    "  -u          disable unknown word processing\n",
 	    "  -i          ignore an input line startig with 'string'\n",
 	    "\n",
 	    "RC\n",

@@ -29,13 +29,13 @@ extern int              Show_Opt2;
 extern char		Show_Opt_tag[MIDASI_MAX];
 extern int		Show_Opt_jumanrc;
 extern int		Show_Opt_debug;
-extern int		Vocalize_Opt;
-extern int		LowerRep_Opt;
-extern int		LowerDel_Opt;
+extern int		Rendaku_Opt;
+extern int		LowercaseRep_Opt;
+extern int		LowercaseDel_Opt;
 extern int		Repetition_Opt;
 extern int              Onomatopoeia_Opt;
-extern int		MacronRep_Opt;
-extern int		MacronDel_Opt;
+extern int		LongSoundRep_Opt;
+extern int		LongSoundDel_Opt;
 extern int		Unkword_Pat_Num;
 
 extern FILE		*Jumanrc_Fileptr;
@@ -237,13 +237,13 @@ void option_proc(int argc, char **argv)
     Show_Opt_jumanrc = 0;
     Show_Opt_tag[0] = '\0';
     Show_Opt_debug = 0;
-    Vocalize_Opt = 1;
-    LowerRep_Opt = 1;
-    LowerDel_Opt = 1;
+    Rendaku_Opt = 1;
+    LowercaseRep_Opt = 1;
+    LowercaseDel_Opt = 1;
     Repetition_Opt = 1;
     Onomatopoeia_Opt = 1;
-    MacronRep_Opt = 1;
-    MacronDel_Opt = 1;
+    LongSoundRep_Opt = 1;
+    LongSoundDel_Opt = 1;
 
     for ( i=1; i<argc; i++ ) {
 	if ( argv[i][0] != '-' ) {
@@ -283,12 +283,30 @@ else {
 	    else if ( argv[i][1] == 'v' ) juman_version();
 	    else if ( argv[i][1] == 'd' ) Show_Opt_debug = 1;
 	    else if ( argv[i][1] == 'D' ) Show_Opt_debug = 2;
-	    else if ( argv[i][1] == 'V' ) Vocalize_Opt = 0;
-	    else if ( argv[i][1] == 'L' ) LowerRep_Opt = LowerDel_Opt = 0;
-	    else if ( argv[i][1] == 'R' ) Repetition_Opt = 0;
-	    else if ( argv[i][1] == 'O' ) Onomatopoeia_Opt = 0;
-	    else if ( argv[i][1] == 'M' ) MacronRep_Opt = MacronDel_Opt = 0;
-
+	    else if ( argv[i][1] == 'u' ) { /* 未知語処理用のオプションの取扱い */
+	        if (i == argc - 1 || argv[i+1][0] == '-' ) { /* no argument */
+		    Rendaku_Opt = LowercaseRep_Opt = LowercaseDel_Opt = LongSoundRep_Opt = 
+			LongSoundDel_Opt = Repetition_Opt = Onomatopoeia_Opt = 0;
+		}
+		else { /* 先頭3文字をチェック */
+		    i++;
+		    if ( argv[i][0] == 'r' && argv[i][1] == 'e' && argv[i][2] == 'n') {
+			Rendaku_Opt = 0; /* rendaku */
+		    }
+		    else if ( argv[i][0] == 'l' && argv[i][1] == 'o' && argv[i][2] == 'w') {
+			LowercaseRep_Opt = LowercaseDel_Opt = 0; /* lowercase */
+		    }
+		    else if ( argv[i][0] == 'l' && argv[i][1] == 'o' && argv[i][2] == 'n') {
+			LongSoundRep_Opt = LongSoundDel_Opt = 0; /* long-sound */
+		    }
+		    else if ( argv[i][0] == 'o' && argv[i][1] == 'n' && argv[i][2] == 'o') {
+			Repetition_Opt = Onomatopoeia_Opt = 0; /* onomatopoeia */
+		    }
+		    else {
+			juman_help();				  
+		    }
+		}
+	    }
 	    /* サーバーモード用のオプションの取扱い */
             else if ( argv[i][1] == 'S' ) JUMAN_server_mode = TRUE;
 #if ! defined _WIN32
@@ -342,6 +360,7 @@ static void set_juman_server(server)
 void juman_help()
 {
     fprintf(stderr, "usage: juman -[b|B|m|p|P] -[f|c|e|E] [-S] [-N port] [-C host[:port]] [-i string] [-r rc_file]\n");
+    fprintf(stderr, "             [-u [rendaku|lowercase|long-sound|onomatopoeia]]\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "             -b : show best path\n");
     fprintf(stderr, "             -B : show best path including homographs (default)\n");
@@ -355,12 +374,7 @@ void juman_help()
     fprintf(stderr, "             -e2 : -e plus semantics data (default)\n");
     fprintf(stderr, "             -E : -e plus location and semantics data\n");
     fprintf(stderr, "\n");
-    fprintf(stderr, "             -V : not search voiceless morphemes\n");
-    fprintf(stderr, "             -L : not search normalized lowercase\n");
-    fprintf(stderr, "             -R : not recognize repetitive onomatopoeia automatically\n");
-    fprintf(stderr, "             -O : not recognize non-repetitive onomatopoeia automatically\n");
-    fprintf(stderr, "             -M : not search macron-deleted morphemes\n");
-    fprintf(stderr, "\n");
+    fprintf(stderr, "             -u : disable unknown word processing\n");
     fprintf(stderr, "             -i : ignore an input line startig with 'string'\n");
     fprintf(stderr, "             -r : use 'rc_file' as '.jumanrc'\n");
     fprintf(stderr, "             -v : show version\n");

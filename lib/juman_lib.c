@@ -157,13 +157,13 @@ int             Show_Opt2;
 char		Show_Opt_tag[MIDASI_MAX];
 int		Show_Opt_jumanrc;
 int		Show_Opt_debug;
-int		Vocalize_Opt;
+int		Rendaku_Opt;
 int		Repetition_Opt;
 int             Onomatopoeia_Opt;
-int		LowerRep_Opt;
-int		LowerDel_Opt;
-int		MacronRep_Opt;
-int		MacronDel_Opt;
+int		LowercaseRep_Opt;
+int		LowercaseDel_Opt;
+int		LongSoundRep_Opt;
+int		LongSoundDel_Opt;
 
 U_CHAR	        String[LENMAX];
 U_CHAR	        NormalizedString[LENMAX];
@@ -655,7 +655,7 @@ int search_all(int position)
 	    if (take_data(position, &pbuf, 0) == FALSE) return FALSE;
 	}
 
-	if ((MacronRep_Opt || LowerRep_Opt) && /* 非正規表現用の検索(小文字化・長音化) */
+	if ((LongSoundRep_Opt || LowercaseRep_Opt) && /* 非正規表現用の検索(小書き文字・長音記号化) */
 	    strncmp(String + position, NormalizedString + position, NORMALIZED_LENGTH * BYTES4CHAR) &&
 	    strncmp(String + position, DEF_MACRON_SYMBOL1, BYTES4CHAR) &&
 	    strncmp(String + position, DEF_MACRON_SYMBOL2, BYTES4CHAR)) {
@@ -667,7 +667,7 @@ int search_all(int position)
 	    }
 	}
 
-	if ((MacronDel_Opt || LowerDel_Opt) && /* 長音挿入用の検索 */
+	if ((LongSoundDel_Opt || LowercaseDel_Opt) && /* 小書き文字・長音記号挿入用の検索 */
 	    String2MDS[position] >= 0 && 
 	    strncmp(String + position, MacronDeletedString + String2MDS[position], NORMALIZED_LENGTH * BYTES4CHAR)) {
 	    pat_buffer[0] = '\0';
@@ -678,7 +678,7 @@ int search_all(int position)
 	    }
 	}
 
-	if (Vocalize_Opt) { /* 濁音化した形態素の検索 */
+	if (Rendaku_Opt) { /* 濁音化した形態素の検索 */
 	    code = check_code(String, position);
 	    if (position >= BYTES4CHAR && 
 		(code == HIRAGANA || 
@@ -1168,7 +1168,7 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 	}
     }
 
-    /* 正規化したものにペナルティ(小文字化・長音置換された表現用) */
+    /* 正規化したものにペナルティ(小書き文字・長音記号置換された表現用) */
     if (opt & OPT_NORMALIZE) {
 	mrph->weight += NORMALIZED_COST;
 	if (k == 0) {
@@ -1533,7 +1533,7 @@ void juman_init_etc(void)
     onomatopoeia_bunrui = 0;
     onomatopoeia_con_tbl = check_table_for_undef(onomatopoeia_hinsi, onomatopoeia_bunrui);
 
-    /* 連濁処理・長音処理 */
+    /* 連濁処理・小書き文字・長音記号処理の準備 */
     rendaku_hinsi1 = get_hinsi_id(DEF_RENDAKU_HINSI1);
     rendaku_renyou = get_form_id(DEF_RENDAKU_RENYOU, 1); /* 母音動詞(type=1)の基本連用形のform_idを基本連用形の汎用idとみなす */
     rendaku_hinsi2 = get_hinsi_id(DEF_RENDAKU_HINSI2);
@@ -1734,7 +1734,7 @@ MRPH *prepare_path_mrph(int path_num , int para_flag)
 	strcat(yomi, Form[mrph_p->katuyou1][mrph_p->katuyou2].gobi_yomi);
     }
 
-    /* 連濁、小文字化、長音用 */
+    /* 連濁、小書き文字、長音記号処理用 */
     if (strncmp(midasi1, String + p_buffer[path_num].start, mrph_p->length)) {
 	strncpy(midasi1, String + p_buffer[path_num].start, mrph_p->length);
 	midasi1[mrph_p->length] = '\0';
@@ -2401,15 +2401,15 @@ int juman_sent(void)
     p_buffer_num = 1;
 
     /* 非正規表現・長音挿入表現検索用の文字列を生成 */
-    if (MacronRep_Opt || LowerRep_Opt) strcpy(NormalizedString, String); /* 非正規表記への対応 */
-    if (MacronDel_Opt || LowerDel_Opt) {
+    if (LongSoundRep_Opt || LowercaseRep_Opt) strcpy(NormalizedString, String); /* 非正規表記への対応 */
+    if (LongSoundDel_Opt || LowercaseDel_Opt) {
 	deleted_num = 0;
 	for (pos = 0; pos < length; pos++) String2MDS[pos] = -2;
     }
     for (pos = 0; pos < length; pos+=next_pos) {
 	if (String[pos]&0x80) { /* 全角の場合 */
-	    /* 長音置換 */
-	    if (MacronRep_Opt &&
+	    /* 長音記号による置換 */
+	    if (LongSoundRep_Opt &&
 		(!strncmp(String + pos, DEF_MACRON_SYMBOL1, BYTES4CHAR) ||
 		 !strncmp(String + pos, DEF_MACRON_SYMBOL2, BYTES4CHAR) && 
 		 (!String[pos + BYTES4CHAR] || check_code(String, pos + BYTES4CHAR) == KIGOU || check_code(String, pos + BYTES4CHAR) == HIRAGANA)) &&
@@ -2422,8 +2422,8 @@ int juman_sent(void)
 		    }
 		}
 	    }
-	    /* 小文字化 */
-	    else if (LowerRep_Opt) {
+	    /* 小書き文字による置換 */
+	    else if (LowercaseRep_Opt) {
 		for (i = NORMALIZED_LOWERCASE_S; i < NORMALIZED_LOWERCASE_E; i++) {
 		    if (!strncmp(String + pos, lowercase[i], BYTES4CHAR)) {
 			for (j = 0; j < BYTES4CHAR; j++) {
@@ -2438,10 +2438,10 @@ int juman_sent(void)
 	}
 
 	/* 長音挿入 */
-	if ((MacronDel_Opt || LowerDel_Opt) && next_pos == BYTES4CHAR) {
+	if ((LongSoundDel_Opt || LowercaseDel_Opt) && next_pos == BYTES4CHAR) {
 	    pre_code = (BYTES4CHAR <= pos) ? check_code(String, pos - BYTES4CHAR) : -1;
 	    post_code = check_code(String, pos + BYTES4CHAR); /* 文末の場合は0 */
-	    if (MacronDel_Opt && pre_code > 0 &&
+	    if (LongSoundDel_Opt && pre_code > 0 &&
 		/* 直前が削除された長音記号、平仮名、または、漢字かつ直後が平仮名 */
 		((String2MDS[pos - BYTES4CHAR] == -1 ||
 		  pre_code == HIRAGANA || pre_code == KANJI && post_code == HIRAGANA) &&
@@ -2454,7 +2454,7 @@ int juman_sent(void)
 		deleted_num++;
 		String2MDS[pos] = -1;
 	    }
-	    else if (LowerDel_Opt && pre_code > 0) {
+	    else if (LowercaseDel_Opt && pre_code > 0) {
 		/* 小書き文字による長音化 */
 		for (i = DELETE_LOWERCASE_S; i < DELETE_LOWERCASE_E; i++) {
 		    if (!strncmp(String + pos, lowercase[i], BYTES4CHAR)) {
@@ -2474,13 +2474,13 @@ int juman_sent(void)
 
 	    if (String2MDS[pos] != -1) {
 		for (i = 0; i < next_pos; i++) MacronDeletedString[pos - deleted_num * BYTES4CHAR + i] = String[pos + i];
-		MacronDeletedString[pos - deleted_num * BYTES4CHAR + next_pos] = '\0'; /* 長音記号を除いた文字列を作成 */
+		MacronDeletedString[pos - deleted_num * BYTES4CHAR + next_pos] = '\0'; /* 小書き文字・長音記号を除いた文字列を作成 */
 		String2MDS[pos] = pos - deleted_num * BYTES4CHAR; /* Stringから作成した文字列へのマップ */
 		MDS2String[pos - deleted_num * BYTES4CHAR] = pos; /* 作成した文字列からStringへのマップ */
 	    }
 	}
     }
-    if (MacronDel_Opt || LowerDel_Opt) {
+    if (LongSoundDel_Opt || LowercaseDel_Opt) {
 	String2MDS[pos] = pos - deleted_num * BYTES4CHAR; /* Stringから作成した文字列へのマップ */
 	MDS2String[pos - deleted_num * BYTES4CHAR] = pos; /* 作成した文字列からStringへのマップ */
     }

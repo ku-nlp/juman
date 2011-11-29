@@ -167,9 +167,9 @@ int		LongSoundDel_Opt;
 
 U_CHAR	        String[LENMAX];
 U_CHAR	        NormalizedString[LENMAX];
-U_CHAR	        MacronDeletedString[LENMAX];
-int             String2MDS[LENMAX];
-int             MDS2String[LENMAX];
+U_CHAR	        ProlongDeletedString[LENMAX];
+int             String2PDS[LENMAX];
+int             PDS2String[LENMAX];
 int		Unkword_Pat_Num;
 int             m_buffer_num;
 int             Jiritsu_buffer[CLASSIFY_NO + 1];
@@ -183,8 +183,9 @@ int		onomatopoeia_hinsi, onomatopoeia_bunrui, onomatopoeia_con_tbl;
 int             rendaku_hinsi1, rendaku_hinsi2, rendaku_hinsi3, rendaku_hinsi4;
 int             rendaku_renyou, rendaku_bunrui2_1, rendaku_bunrui2_2, rendaku_bunrui2_3;
 int             rendaku_bunrui4_1, rendaku_bunrui4_2, rendaku_bunrui4_3, rendaku_bunrui4_4;
-int             macron_hinsi1, macron_hinsi2, macron_type2, macron_hinsi3, macron_hinsi4;
-int             macron_hinsi5, macron_bunrui5_1, macron_bunrui5_2, macron_bunrui5_3;
+int             prolong_interjection;
+int             prolong_ng_hinsi1, prolong_ng_hinsi2, prolong_ng_hinsi3, prolong_ng_hinsi4;
+int             prolong_ng_bunrui4_1, prolong_ng_bunrui4_2, prolong_ng_bunrui4_3;
 int             jiritsu_num;
 int             p_buffer_num;
 CONNECT_COST	connect_cache[CONNECT_MATRIX_MAX];
@@ -617,8 +618,8 @@ static BOOL katuyou_process(int position, int *k, MRPH *mrph, int *length, char 
 			      String + position + mrph->length) ||
 	     ((opt & OPT_NORMALIZE) && /* 非正規表現用 */
 	      compare_top_str1(Form[mrph->katuyou1][*k].gobi, NormalizedString + position + mrph->length)) ||
-	     ((opt & OPT_MACRON_DEL) && /* 長音挿入用 */
-	      compare_top_str1(Form[mrph->katuyou1][*k].gobi, MacronDeletedString + String2MDS[position] + mrph->length))) {
+	     ((opt & OPT_PROLONG_DEL) && /* 長音挿入用 */
+	      compare_top_str1(Form[mrph->katuyou1][*k].gobi, ProlongDeletedString + String2PDS[position] + mrph->length))) {
 	     *length = mrph->length + strlen(Form[mrph->katuyou1][*k].gobi);
 	     return TRUE;
 	 } else {
@@ -657,8 +658,8 @@ int search_all(int position)
 
 	if ((LongSoundRep_Opt || LowercaseRep_Opt) && /* 非正規表現用の検索(小書き文字・長音記号化) */
 	    strncmp(String + position, NormalizedString + position, NORMALIZED_LENGTH * BYTES4CHAR) &&
-	    strncmp(String + position, DEF_MACRON_SYMBOL1, BYTES4CHAR) &&
-	    strncmp(String + position, DEF_MACRON_SYMBOL2, BYTES4CHAR)) {
+	    strncmp(String + position, DEF_PROLONG_SYMBOL1, BYTES4CHAR) &&
+	    strncmp(String + position, DEF_PROLONG_SYMBOL2, BYTES4CHAR)) {
 	    pat_buffer[0] = '\0';
 	    pat_search(db, NormalizedString + position, &DicFile.tree_top[dic_no], pat_buffer);
 	    pbuf = pat_buffer;
@@ -668,13 +669,13 @@ int search_all(int position)
 	}
 
 	if ((LongSoundDel_Opt || LowercaseDel_Opt) && /* 小書き文字・長音記号挿入用の検索 */
-	    String2MDS[position] >= 0 && 
-	    strncmp(String + position, MacronDeletedString + String2MDS[position], NORMALIZED_LENGTH * BYTES4CHAR)) {
+	    String2PDS[position] >= 0 && 
+	    strncmp(String + position, ProlongDeletedString + String2PDS[position], NORMALIZED_LENGTH * BYTES4CHAR)) {
 	    pat_buffer[0] = '\0';
-	    pat_search(db, MacronDeletedString + String2MDS[position], &DicFile.tree_top[dic_no], pat_buffer);
+	    pat_search(db, ProlongDeletedString + String2PDS[position], &DicFile.tree_top[dic_no], pat_buffer);
 	    pbuf = pat_buffer;
 	    while (*pbuf != '\0') {
-		if (take_data(position, &pbuf, OPT_MACRON_DEL) == FALSE) return FALSE;
+		if (take_data(position, &pbuf, OPT_PROLONG_DEL) == FALSE) return FALSE;
 	    }
 	}
 
@@ -1031,13 +1032,13 @@ int take_data(int pos, char **pbuf, char opt)
 		    /* 長音削除ノードは文字長が異なる場合のみ作成 */
 		    if ((opt & OPT_DEVOICE) && length == BYTES4CHAR ||
 			(opt & OPT_NORMALIZE) && (length == BYTES4CHAR || !strncmp(String + pos, NormalizedString + pos, length)) ||
-			(opt & OPT_MACRON_DEL) && length == MDS2String[String2MDS[pos] + length] - pos) {
+			(opt & OPT_PROLONG_DEL) && length == PDS2String[String2PDS[pos] + length] - pos) {
 			k2++;
 			continue;
 		    }
 		    m_buffer[m_buffer_num] = mrph;
 		    m_buffer[m_buffer_num].katuyou2 = k2;
-		    m_buffer[m_buffer_num].length = (opt & OPT_MACRON_DEL) ? MDS2String[String2MDS[pos] + length] - pos : length;
+		    m_buffer[m_buffer_num].length = (opt & OPT_PROLONG_DEL) ? PDS2String[String2PDS[pos] + length] - pos : length;
 		    m_buffer[m_buffer_num].con_tbl += (k2 - 1);
 		    check_connect(pos, m_buffer_num, opt);
 		    if (++m_buffer_num == mrph_buffer_max)
@@ -1046,7 +1047,7 @@ int take_data(int pos, char **pbuf, char opt)
 		}
 	    } else {                         /* 語幹なし */
 		m_buffer[m_buffer_num] = mrph;
- 		if (opt & OPT_MACRON_DEL) m_buffer[m_buffer_num].length = MDS2String[String2MDS[pos] + mrph.length] - pos;		
+ 		if (opt & OPT_PROLONG_DEL) m_buffer[m_buffer_num].length = PDS2String[String2PDS[pos] + mrph.length] - pos;		
 		m_buffer[m_buffer_num].midasi[0] = '\0';
 		m_buffer[m_buffer_num].midasi2[0] = '\0';
 		m_buffer[m_buffer_num].yomi[0]  = '\0';
@@ -1055,15 +1056,15 @@ int take_data(int pos, char **pbuf, char opt)
 		    realloc_mrph_buffer();
 	    }
 	} else {	                                 /* 活用しない */
-	    if (!(opt & OPT_NORMALIZE || opt & OPT_MACRON_DEL) ||
+	    if (!(opt & OPT_NORMALIZE || opt & OPT_PROLONG_DEL) ||
 		/* 正規化ノードは2字以上、かつ、length内に非正規表記を含む場合のみ作成 */
 		(opt & OPT_NORMALIZE) && strlen(mrph.midasi) > BYTES4CHAR && 
 		strncmp(String + pos, NormalizedString + pos, strlen(mrph.midasi)) ||
 		/* 長音削除ノードは文字長が異なる場合のみ作成 */
-		(opt & OPT_MACRON_DEL) && mrph.length != MDS2String[String2MDS[pos] + mrph.length] - pos) {
+		(opt & OPT_PROLONG_DEL) && mrph.length != PDS2String[String2PDS[pos] + mrph.length] - pos) {
 
 		m_buffer[m_buffer_num] = mrph;
- 		if (opt & OPT_MACRON_DEL) m_buffer[m_buffer_num].length = MDS2String[String2MDS[pos] + mrph.length] - pos;		
+ 		if (opt & OPT_PROLONG_DEL) m_buffer[m_buffer_num].length = PDS2String[String2PDS[pos] + mrph.length] - pos;		
 		check_connect(pos, m_buffer_num, opt);
 		new_mrph_num = m_buffer_num;
 		if (++m_buffer_num == mrph_buffer_max)
@@ -1131,7 +1132,7 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 		mrph->weight += ADJECTIVE_VOICED_COST;
 	    }
 	    /* その他の品詞でも濁音可という意味素があれば解析できるようにする */
-	    else if (strstr(mrph->imis, DEF_RENDAKU_FEATURE)) {
+	    else if (strstr(mrph->imis, DEF_RENDAKU_OK_FEATURE)) {
 		mrph->weight += OTHER_VOICED_COST;
 	    }
 	    else {
@@ -1144,7 +1145,7 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 	    for (i = VOICED_CONSONANT_S; i < VOICED_CONSONANT_E; i++) {
 		if (strstr(mrph->midasi + BYTES4CHAR, dakuon[i])) break;
 	    }
-	    if (i < VOICED_CONSONANT_E && !strstr(mrph->imis, DEF_RENDAKU_FEATURE)) 
+	    if (i < VOICED_CONSONANT_E && !strstr(mrph->imis, DEF_RENDAKU_OK_FEATURE)) 
 		mrph->weight = STOP_MRPH_WEIGHT;
 	}
 
@@ -1182,17 +1183,20 @@ char *_take_data(char *s, MRPH *mrph, char opt)
     }
 
     /* 長音挿入したものにペナルティ */
-    if (opt & OPT_MACRON_DEL) {
-	/* 動詞(子音動詞ラ行イ形を除く)、名詞、接頭辞、格助詞、1文字の接続助詞・副助詞は長音削除を認めない */
-	if (mrph->hinsi == macron_hinsi2 && mrph->katuyou1 != macron_type2 || 
-	    mrph->hinsi == macron_hinsi3 || mrph->hinsi == macron_hinsi4 ||
-	    mrph->hinsi == macron_hinsi5 && mrph->bunrui == macron_bunrui5_1 ||
-	    mrph->hinsi == macron_hinsi5 && mrph->bunrui == macron_bunrui5_2 && mrph->length == BYTES4CHAR ||
-	    mrph->hinsi == macron_hinsi5 && mrph->bunrui == macron_bunrui5_3 && mrph->length == BYTES4CHAR) {
+    if (opt & OPT_PROLONG_DEL) {
+	/* 動詞、名詞、接頭辞、格助詞、1文字の接続助詞・副助詞は長音削除を認めない */
+	if ((mrph->hinsi == prolong_ng_hinsi1 || /* 動詞 */
+	     mrph->hinsi == prolong_ng_hinsi2 || /* 名詞 */
+	     mrph->hinsi == prolong_ng_hinsi3 || /* 接頭辞 */
+	     mrph->hinsi == prolong_ng_hinsi4 && mrph->bunrui == prolong_ng_bunrui4_1 || /* 格助詞 */
+	     mrph->hinsi == prolong_ng_hinsi4 && mrph->bunrui == prolong_ng_bunrui4_2 && mrph->length == BYTES4CHAR || /* 接続助詞 */
+	     mrph->hinsi == prolong_ng_hinsi4 && mrph->bunrui == prolong_ng_bunrui4_3 && mrph->length == BYTES4CHAR) && /* 副助詞 */
+	    /* 上記の品詞でも長音挿入可という意味素があれば削除を認める */
+	    !strstr(mrph->imis, DEF_PROLONG_OK_FEATURE)) {
 	    mrph->weight = STOP_MRPH_WEIGHT;
 	}
 	else {
-	    mrph->weight += (mrph->hinsi == macron_hinsi1) ? MACRON_DEL_COST1 : MACRON_DEL_COST2;
+	    mrph->weight += (mrph->hinsi == prolong_interjection) ? PROLONG_DEL_COST1 : PROLONG_DEL_COST2;
 
 	    if (k == 0) {
 		strcpy(mrph->imis, "\"");
@@ -1200,7 +1204,7 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 	    else {
 		mrph->imis[strlen(mrph->imis) - 1] = ' ';
 	    }
-	    strcat(mrph->imis, DEF_MACRON_IMIS);
+	    strcat(mrph->imis, DEF_PROLONG_IMIS);
 	    strcat(mrph->imis, "\"");
 	}
     }
@@ -1546,15 +1550,14 @@ void juman_init_etc(void)
     rendaku_bunrui4_2 = get_bunrui_id(DEF_RENDAKU_BUNRUI4_2, rendaku_hinsi4);
     rendaku_bunrui4_3 = get_bunrui_id(DEF_RENDAKU_BUNRUI4_3, rendaku_hinsi4);
     rendaku_bunrui4_4 = get_bunrui_id(DEF_RENDAKU_BUNRUI4_4, rendaku_hinsi4);
-    macron_hinsi1 = get_hinsi_id(DEF_MACRON_HINSI1);
-    macron_hinsi2 = get_hinsi_id(DEF_MACRON_HINSI2);
-    macron_type2 = get_type_id(DEF_MACRON_TYPE2);
-    macron_hinsi3 = get_hinsi_id(DEF_MACRON_HINSI3);
-    macron_hinsi4 = get_hinsi_id(DEF_MACRON_HINSI4);
-    macron_hinsi5 = get_hinsi_id(DEF_MACRON_HINSI5);
-    macron_bunrui5_1 = get_bunrui_id(DEF_MACRON_BUNRUI5_1, macron_hinsi5);
-    macron_bunrui5_2 = get_bunrui_id(DEF_MACRON_BUNRUI5_2, macron_hinsi5);
-    macron_bunrui5_3 = get_bunrui_id(DEF_MACRON_BUNRUI5_3, macron_hinsi5);
+    prolong_interjection = get_hinsi_id(DEF_PROLONG_INTERJECTION);
+    prolong_ng_hinsi1 = get_hinsi_id(DEF_PROLONG_NG_HINSI1);
+    prolong_ng_hinsi2 = get_hinsi_id(DEF_PROLONG_NG_HINSI2);
+    prolong_ng_hinsi3 = get_hinsi_id(DEF_PROLONG_NG_HINSI3);
+    prolong_ng_hinsi4 = get_hinsi_id(DEF_PROLONG_NG_HINSI4);
+    prolong_ng_bunrui4_1 = get_bunrui_id(DEF_PROLONG_NG_BUNRUI4_1, prolong_ng_hinsi4);
+    prolong_ng_bunrui4_2 = get_bunrui_id(DEF_PROLONG_NG_BUNRUI4_2, prolong_ng_hinsi4);
+    prolong_ng_bunrui4_3 = get_bunrui_id(DEF_PROLONG_NG_BUNRUI4_3, prolong_ng_hinsi4);
 }
 
 /*
@@ -2404,18 +2407,18 @@ int juman_sent(void)
     if (LongSoundRep_Opt || LowercaseRep_Opt) strcpy(NormalizedString, String); /* 非正規表記への対応 */
     if (LongSoundDel_Opt || LowercaseDel_Opt) {
 	deleted_num = 0;
-	for (pos = 0; pos < length; pos++) String2MDS[pos] = -2;
+	for (pos = 0; pos < length; pos++) String2PDS[pos] = -2;
     }
     for (pos = 0; pos < length; pos+=next_pos) {
 	if (String[pos]&0x80) { /* 全角の場合 */
 	    /* 長音記号による置換 */
 	    if (LongSoundRep_Opt &&
-		(!strncmp(String + pos, DEF_MACRON_SYMBOL1, BYTES4CHAR) ||
-		 !strncmp(String + pos, DEF_MACRON_SYMBOL2, BYTES4CHAR) && 
+		(!strncmp(String + pos, DEF_PROLONG_SYMBOL1, BYTES4CHAR) ||
+		 !strncmp(String + pos, DEF_PROLONG_SYMBOL2, BYTES4CHAR) && 
 		 (!String[pos + BYTES4CHAR] || check_code(String, pos + BYTES4CHAR) == KIGOU || check_code(String, pos + BYTES4CHAR) == HIRAGANA)) &&
 		(pos - BYTES4CHAR >= 0 && /* 2文字目以降、かつ、次の文字が"ー","〜"でない */
-		 strncmp(String + pos + BYTES4CHAR, DEF_MACRON_SYMBOL1, BYTES4CHAR) &&
-		 strncmp(String + pos + BYTES4CHAR, DEF_MACRON_SYMBOL2, BYTES4CHAR))) {
+		 strncmp(String + pos + BYTES4CHAR, DEF_PROLONG_SYMBOL1, BYTES4CHAR) &&
+		 strncmp(String + pos + BYTES4CHAR, DEF_PROLONG_SYMBOL2, BYTES4CHAR))) {
 		for (i = 0; *pre_prolonged[i]; i++) {
 		    if (!strncmp(String + pos - BYTES4CHAR, pre_prolonged[i], BYTES4CHAR)) {
 			strncpy(NormalizedString + pos, prolonged2chr[i], BYTES4CHAR);
@@ -2443,16 +2446,16 @@ int juman_sent(void)
 	    post_code = check_code(String, pos + BYTES4CHAR); /* 文末の場合は0 */
 	    if (LongSoundDel_Opt && pre_code > 0 &&
 		/* 直前が削除された長音記号、平仮名、または、漢字かつ直後が平仮名 */
-		((String2MDS[pos - BYTES4CHAR] == -1 ||
+		((String2PDS[pos - BYTES4CHAR] == -1 ||
 		  pre_code == HIRAGANA || pre_code == KANJI && post_code == HIRAGANA) &&
 		 /* "ー"または"〜" */
-		 (!strncmp(String + pos, DEF_MACRON_SYMBOL1, BYTES4CHAR) ||
-		  !strncmp(String + pos, DEF_MACRON_SYMBOL2, BYTES4CHAR))) ||
+		 (!strncmp(String + pos, DEF_PROLONG_SYMBOL1, BYTES4CHAR) ||
+		  !strncmp(String + pos, DEF_PROLONG_SYMBOL2, BYTES4CHAR))) ||
 		/* 直前が長音記号で、現在文字が"っ"、かつ、直後が文末、または、記号の場合も削除 */
-		(String2MDS[pos - BYTES4CHAR] == -1 && !strncmp(String + pos, DEF_MACRON_SYMBOL3, BYTES4CHAR) &&
+		(String2PDS[pos - BYTES4CHAR] == -1 && !strncmp(String + pos, DEF_PROLONG_SYMBOL3, BYTES4CHAR) &&
 		 (post_code == 0 || post_code == KIGOU))) {
 		deleted_num++;
-		String2MDS[pos] = -1;
+		String2PDS[pos] = -1;
 	    }
 	    else if (LowercaseDel_Opt && pre_code > 0) {
 		/* 小書き文字による長音化 */
@@ -2463,26 +2466,26 @@ int juman_sent(void)
 			}
 			/* 直前の文字が対応する平仮名、または、削除された同一の小書き文字の場合は削除 */
 			if (j < pre_lower_end[i] ||
-			    String2MDS[pos - BYTES4CHAR] == -1 && !strncmp(String + pos - BYTES4CHAR, String + pos, BYTES4CHAR)) {
+			    String2PDS[pos - BYTES4CHAR] == -1 && !strncmp(String + pos - BYTES4CHAR, String + pos, BYTES4CHAR)) {
 			    deleted_num++;
-			    String2MDS[pos] = -1;
+			    String2PDS[pos] = -1;
 			    break;
 			}
 		    }
 		}
 	    }
 
-	    if (String2MDS[pos] != -1) {
-		for (i = 0; i < next_pos; i++) MacronDeletedString[pos - deleted_num * BYTES4CHAR + i] = String[pos + i];
-		MacronDeletedString[pos - deleted_num * BYTES4CHAR + next_pos] = '\0'; /* 小書き文字・長音記号を除いた文字列を作成 */
-		String2MDS[pos] = pos - deleted_num * BYTES4CHAR; /* Stringから作成した文字列へのマップ */
-		MDS2String[pos - deleted_num * BYTES4CHAR] = pos; /* 作成した文字列からStringへのマップ */
+	    if (String2PDS[pos] != -1) {
+		for (i = 0; i < next_pos; i++) ProlongDeletedString[pos - deleted_num * BYTES4CHAR + i] = String[pos + i];
+		ProlongDeletedString[pos - deleted_num * BYTES4CHAR + next_pos] = '\0'; /* 小書き文字・長音記号を除いた文字列を作成 */
+		String2PDS[pos] = pos - deleted_num * BYTES4CHAR; /* Stringから作成した文字列へのマップ */
+		PDS2String[pos - deleted_num * BYTES4CHAR] = pos; /* 作成した文字列からStringへのマップ */
 	    }
 	}
     }
     if (LongSoundDel_Opt || LowercaseDel_Opt) {
-	String2MDS[pos] = pos - deleted_num * BYTES4CHAR; /* Stringから作成した文字列へのマップ */
-	MDS2String[pos - deleted_num * BYTES4CHAR] = pos; /* 作成した文字列からStringへのマップ */
+	String2PDS[pos] = pos - deleted_num * BYTES4CHAR; /* Stringから作成した文字列へのマップ */
+	PDS2String[pos - deleted_num * BYTES4CHAR] = pos; /* 作成した文字列からStringへのマップ */
     }
 
     for (pos = 0; pos < length; pos+=next_pos) {

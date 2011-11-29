@@ -2,12 +2,12 @@
 ==============================================================================
         const.h
                 2007/09/03  Ryohei Sasano
-		2011/08/08  Last Modified
+		2011/11/29  Last Modified
 ==============================================================================
 */
 
 /*
-   連濁認識("ガニ")、非正規表記("ぉはよぅ")の処理、オノマトペ("もっさり"、"ピタっと")の
+   連濁認識("ガニ")、非正規表記("ぉはよぅ")の処理、オノマトペ("もっさり"、"ピタっと")等の
    自動認識処理で使用している定数、コスト、パターンなどを記述      
 */
 
@@ -15,42 +15,42 @@
 #define STOP_MRPH_WEIGHT       255 /* このWeigthのときは形態素候補から除く */
 #define OPT_NORMALIZE          1
 #define OPT_DEVOICE            2
-#define OPT_MACRON_DEL         4
+#define OPT_PROLONG_DEL        4
 #define NORMALIZED_LENGTH      7   /* 非正規表記の処理で考慮する最大形態素長 */
 
 /* 連濁処理等で使用する品詞や表記情報 */
-#define         DEF_ONOMATOPOEIA_HINSI  "副詞"
-#define         DEF_ONOMATOPOEIA_IMIS   "自動認識"
-#define         DEF_RENDAKU_HINSI1      "動詞"
-#define         DEF_RENDAKU_RENYOU      "基本連用形"
-#define         DEF_RENDAKU_HINSI2      "名詞"
-#define         DEF_RENDAKU_BUNRUI2_1   "普通名詞"
-#define         DEF_RENDAKU_BUNRUI2_2   "サ変名詞"
-#define         DEF_RENDAKU_BUNRUI2_3   "形式名詞"
-#define         DEF_RENDAKU_HINSI3      "形容詞"
-#define         DEF_RENDAKU_HINSI4      "接尾辞"
-#define         DEF_RENDAKU_BUNRUI4_1   "名詞性述語接尾辞"
-#define         DEF_RENDAKU_BUNRUI4_2   "名詞性名詞接尾辞"
-#define         DEF_RENDAKU_BUNRUI4_3   "名詞性名詞助数辞"
-#define         DEF_RENDAKU_BUNRUI4_4   "名詞性特殊接尾辞"
-#define         DEF_RENDAKU_FEATURE     "連濁可"
-#define         DEF_RENDAKU_MIDASI_KA   "か"
-#define         DEF_RENDAKU_REP         "代表表記"
-#define         DEF_RENDAKU_IMIS        "濁音化"
-#define         DEF_MACRON_IMIS         "長音挿入"
-#define         DEF_ABNORMAL_IMIS       "非標準表記"
-#define         DEF_MACRON_SYMBOL1      "ー"
-#define         DEF_MACRON_SYMBOL2      "〜"
-#define         DEF_MACRON_SYMBOL3      "っ"
-#define         DEF_MACRON_HINSI1       "感動詞"
-#define         DEF_MACRON_HINSI2       "動詞"
-#define         DEF_MACRON_TYPE2        "子音動詞ラ行イ形"
-#define         DEF_MACRON_HINSI3       "名詞"
-#define         DEF_MACRON_HINSI4       "接頭辞"
-#define         DEF_MACRON_HINSI5       "助詞"
-#define         DEF_MACRON_BUNRUI5_1    "格助詞"
-#define         DEF_MACRON_BUNRUI5_2    "副助詞"
-#define         DEF_MACRON_BUNRUI5_3    "接続助詞"
+#define         DEF_ONOMATOPOEIA_HINSI   "副詞"
+#define         DEF_ONOMATOPOEIA_IMIS    "自動認識"
+#define         DEF_RENDAKU_HINSI1       "動詞"
+#define         DEF_RENDAKU_RENYOU       "基本連用形"
+#define         DEF_RENDAKU_HINSI2       "名詞"
+#define         DEF_RENDAKU_BUNRUI2_1    "普通名詞"
+#define         DEF_RENDAKU_BUNRUI2_2    "サ変名詞"
+#define         DEF_RENDAKU_BUNRUI2_3    "形式名詞"
+#define         DEF_RENDAKU_HINSI3       "形容詞"
+#define         DEF_RENDAKU_HINSI4       "接尾辞"
+#define         DEF_RENDAKU_BUNRUI4_1    "名詞性述語接尾辞"
+#define         DEF_RENDAKU_BUNRUI4_2    "名詞性名詞接尾辞"
+#define         DEF_RENDAKU_BUNRUI4_3    "名詞性名詞助数辞"
+#define         DEF_RENDAKU_BUNRUI4_4    "名詞性特殊接尾辞"
+#define         DEF_RENDAKU_OK_FEATURE   "濁音可"
+#define         DEF_RENDAKU_MIDASI_KA    "か"
+#define         DEF_RENDAKU_REP          "代表表記"
+#define         DEF_RENDAKU_IMIS         "濁音化"
+#define         DEF_PROLONG_IMIS         "長音挿入"
+#define         DEF_ABNORMAL_IMIS        "非標準表記"
+#define         DEF_PROLONG_SYMBOL1      "ー"
+#define         DEF_PROLONG_SYMBOL2      "〜"
+#define         DEF_PROLONG_SYMBOL3      "っ"
+#define         DEF_PROLONG_OK_FEATURE   "長音挿入可"
+#define         DEF_PROLONG_INTERJECTION "感動詞"
+#define         DEF_PROLONG_NG_HINSI1    "動詞"
+#define         DEF_PROLONG_NG_HINSI2    "名詞"
+#define         DEF_PROLONG_NG_HINSI3    "接頭辞"
+#define         DEF_PROLONG_NG_HINSI4    "助詞"
+#define         DEF_PROLONG_NG_BUNRUI4_1 "格助詞"
+#define         DEF_PROLONG_NG_BUNRUI4_2 "副助詞"
+#define         DEF_PROLONG_NG_BUNRUI4_3 "接続助詞"
 
 /* 濁音・半濁音、濁音と対応する清音の一覧 
    連濁認識(濁音・対応する清音)、オノマトペ認識(濁音・半濁音(cf. DAKUON_BONUS))で利用 
@@ -93,13 +93,13 @@ U_CHAR *prolonged2chr[] = {"あ", "あ", "あ", "あ", /* あ */
 #define DELETE_LOWERCASE_S 0   /* 削除するlowercase[]の範囲 */
 #define DELETE_LOWERCASE_E 5   /*   (0,5→"ぁ"から"ぉ"までが対象) */
 int pre_lower_start[DELETE_LOWERCASE_E] = {0,  14, 23, 30, 37};
-int pre_lower_end[DELETE_LOWERCASE_E]   = {14, 23, 30, 37, 44};
+int pre_lower_end[DELETE_LOWERCASE_E]   = {14, 23, 30, 37, 45};
 U_CHAR *pre_lower[] = {"か", "さ", "た", "な", "は", "ま", "や", "ら", "わ", 
-		       "が", "ざ", "だ", "ば", "ぱ",                         /* ぁ:14 */
- 		       "い", "し", "に", "り", "ぎ", "じ", "ね", "れ", "ぜ", /* ぃ: 9 */
-		       "う", "く", "す", "ふ", "む", "る", "よ",             /* ぅ: 7 */
-		       "け", "せ", "て", "め", "れ", "ぜ", "で",             /* ぇ: 7 */
-		       "そ", "の", "も", "よ", "ろ", "ぞ", "ど", "\0"};      /* ぉ: 7 */
+		       "が", "ざ", "だ", "ば", "ぱ",                          /* ぁ:14 */
+ 		       "い", "し", "に", "り", "ぎ", "じ", "ね", "れ", "ぜ",  /* ぃ: 9 */
+		       "う", "く", "す", "ふ", "む", "る", "よ",              /* ぅ: 7 */
+		       "け", "せ", "て", "め", "れ", "ぜ", "で",              /* ぇ: 7 */
+		       "こ", "そ", "の", "も", "よ", "ろ", "ぞ", "ど", "\0"}; /* ぉ: 8 */
 
 /* 処理ごとに使用する範囲(指定がない場合、全てを使用) */
 #define VOICED_CONSONANT_S     0   /* 連濁認識で使用するdakuon[]の範囲 */
@@ -143,8 +143,8 @@ U_CHAR *pre_lower[] = {"か", "さ", "た", "な", "は", "ま", "や", "ら", "
 #define NORMALIZED_COST        6
 
 /* 長音を削除する際の追加コスト */
-#define MACRON_DEL_COST1       6  /* 感動詞 */
-#define MACRON_DEL_COST2       9  /* その他 (9より小さいと"あーあ"を指示詞と解析する) */
+#define PROLONG_DEL_COST1      6  /* 感動詞 */
+#define PROLONG_DEL_COST2      9  /* その他 (9より小さいと"あーあ"を指示詞と解析する) */
 
 /* 反復型オノマトペのコスト */
 

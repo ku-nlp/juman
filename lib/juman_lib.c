@@ -1057,8 +1057,9 @@ int take_data(int pos, char **pbuf, char opt)
 	    }
 	} else {	                                 /* 活用しない */
 	    if (!(opt & OPT_NORMALIZE || opt & OPT_PROLONG_DEL) ||
-		/* 正規化ノードは2字以上、かつ、length内に非正規表記を含む場合のみ作成 */
-		(opt & OPT_NORMALIZE) && strlen(mrph.midasi) > BYTES4CHAR && 
+		/* 正規化ノードは2字以上("ヵ"は例外)、かつ、length内に非正規表記を含む場合のみ作成 */
+		(opt & OPT_NORMALIZE) && 
+		(strlen(mrph.midasi) > BYTES4CHAR || !strncmp(mrph.midasi, uppercase[NORMALIZED_LOWERCASE_KA], BYTES4CHAR)) &&
 		strncmp(String + pos, NormalizedString + pos, strlen(mrph.midasi)) ||
 		/* 長音削除ノードは文字長が異なる場合のみ作成 */
 		(opt & OPT_PROLONG_DEL) && mrph.length != PDS2String[String2PDS[pos] + mrph.length] - pos) {

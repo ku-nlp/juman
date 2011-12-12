@@ -1278,7 +1278,11 @@ int undef_word(int pos)
        平仮名，漢字，半角空白 → 一文字
        半角(空白以外)，片仮名(「ー」も)，アルファベット(「．」も) → 連続 */
 
+#ifdef IO_ENCODING_SJIS
+    cur_bytes = String[pos]&0x80 ? 2 : 1;
+#else
     cur_bytes = utf8_bytes(String + pos);
+#endif
     code = check_code(String, pos);
     if (code == HIRAGANA || code == KANJI) {
 	end = (pos + cur_bytes);
@@ -1292,7 +1296,11 @@ int undef_word(int pos)
 
 	    end += cur_bytes;
 	    next_code = check_code(String, end);
+#ifdef IO_ENCODING_SJIS
+            cur_bytes = String[end]&0x80 ? 2 : 1;
+#else
 	    cur_bytes = utf8_bytes(String + end);
+#endif
 	    if (next_code == code ||
 		(code == KATAKANA && next_code == CHOON) ||
 		(code == ALPH     && next_code == PRIOD)) continue;
@@ -2435,8 +2443,12 @@ int juman_sent(void)
 			}
 		    }
 		}
-	    }		
+	    }
+#ifdef IO_ENCODING_SJIS
+            next_pos = 2;
+#else
 	    next_pos = utf8_bytes(String + pos);
+#endif
 	} else {
 	    next_pos = 1;
 	}
@@ -2504,7 +2516,11 @@ int juman_sent(void)
 	    if (undef_word(pos) == FALSE) return FALSE;
 	}
 
+#ifdef IO_ENCODING_SJIS
+        next_pos = String[pos]&0x80 ? 2 : 1;
+#else
 	next_pos = utf8_bytes(String + pos);
+#endif
     }
     
     /* 文末処理 */

@@ -263,6 +263,15 @@ enum		_ExitCode 	{ NormalExit,
 #ifndef strncasecmp
 #define strncasecmp strnicmp
 #endif
+
+#ifndef VERSION
+#define VERSION "7.0"
+#endif
+
+#ifndef PACKAGE_NAME
+#define PACKAGE_NAME "juman"
+#endif
+
 #endif
 
 /*

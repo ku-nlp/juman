@@ -1119,7 +1119,8 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 	/* 濁音化の処理はしない形態素の重みをSTOP_MRPH_WEIGHTにする */
 	if (mrph->katuyou2 || /* 語幹のない語 */
  	    mrph->length == BYTES4CHAR && !Class[mrph->hinsi][mrph->bunrui].kt || /* 1文字の形態素 */
-	    (rep = strstr(mrph->imis, DEF_RENDAKU_REP)) && *(rep+BYTES4CHAR*4) == ':' && check_code(rep, BYTES4CHAR*4+1) == KATAKANA) { /* 非和語 */
+	    !(rep = strstr(mrph->imis, DEF_RENDAKU_REP)) || 
+	    *(rep+BYTES4CHAR*4) == ':' && check_code(rep, BYTES4CHAR*4+1) == KATAKANA) { /* 非和語 */
 	    mrph->weight = STOP_MRPH_WEIGHT;
 	}
 	else {

@@ -1404,6 +1404,10 @@ int check_unicode_char_type(int code)
     else if ((code > 0x4dff && code < 0xa000) || code == 0x3005) {
 	return KANJI;
     }
+    /* α, β, ... */
+    else if (code > 0x036f && code < 0x0400) {
+	return GR;
+    }
     else {
 	return KIGOU;
     }

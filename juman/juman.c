@@ -365,8 +365,8 @@ void juman_help()
     fprintf(stderr, "             -b : show best path\n");
     fprintf(stderr, "             -B : show best path including homographs (default)\n");
     fprintf(stderr, "             -m : show all morphemes\n");
-    fprintf(stderr, "             -p : show all pathes\n");
-    fprintf(stderr, "             -P : show all pathes by -B style\n");
+    fprintf(stderr, "             -p : show all paths\n");
+    fprintf(stderr, "             -P : show all paths by -B style\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "             -f : show formatted morpheme data\n");
     fprintf(stderr, "             -c : show coded morpheme data\n");
@@ -375,7 +375,7 @@ void juman_help()
     fprintf(stderr, "             -E : -e plus location and semantics data\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "             -u : disable unknown word processing\n");
-    fprintf(stderr, "             -i : ignore an input line startig with 'string'\n");
+    fprintf(stderr, "             -i : ignore an input line starting with 'string'\n");
     fprintf(stderr, "             -r : use 'rc_file' as '.jumanrc'\n");
     fprintf(stderr, "             -v : show version\n");
     fprintf(stderr, "\n");

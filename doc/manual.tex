@@ -6,8 +6,8 @@
 \title{\bf 日本語形態素解析システム \\ JUMAN version 7.0}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \author{黒橋・河原研究室}
-\date{平成23年12月 \\
-\rule{0mm}{110mm}Copyright \copyright\ 2011\begin{tabular}[t]{l}
+\date{平成24年1月 \\
+\rule{0mm}{110mm}Copyright \copyright\ 2012\begin{tabular}[t]{l}
                                 京都大学大学院情報学研究科 \\
                                 \end{tabular}
 }
@@ -25,7 +25,7 @@
 Japanese Morphological Analysis System JUMAN 7.0 Users Manual
 
 \noindent
-Copyright (c) 2011 Kyoto University \\
+Copyright (c) 2012 Kyoto University \\
 All rights reserved.
 
 \noindent
@@ -80,7 +80,7 @@ Version 5.0 & 23 March 2005 \\
 Version 5.1 & 7 September 2005 \\
 Version 6.0b & 30 September 2007 \\
 Version 6.0 & 26 September 2009 \\
-Version 7.0 & 31 December 2011 \\
+Version 7.0 & 12 January 2012 \\
 \end{tabular}
 \end{small}
 
@@ -153,7 +153,7 @@ JUMAN7.0への拡張においては，柴田知秀助教にWikipediaからの語
 げます．
 
 \begin{flushright}
-平成 23年 12月
+平成 24年 1月
 \end{flushright}
 
 \vfill
@@ -878,7 +878,7 @@ $C_{i,j}=\infty$ とする)．したがって，$Mf_j$に対するすべての�
  \item jumanrcでの種々の設定はできない．辞書も一ヶ所(1フォルダ)しかもて
        ず，ここに文法辞書と形態素辞書の双方をおく．辞書の場所の設定は
        juman.iniで行う．
- \item サーバ・クライアント機能は備えていない．
+% \item サーバ・クライアント機能は備えていない．
 \end{itemize}
 
 
@@ -3279,7 +3279,7 @@ Wikipedia辞書の利用にともない，Wikipedia辞書に収録された語�
 知語のペアを編集距離を用いて列挙する．しかし，表記上の類似度だけで
 は，「アワー」と「アワ」のように実際には無関係なペアも候補となる．そこ
 で，次に分布類似度を用いて実際に同じ形態素らしいかを判定した．分布類似度
-としては，名詞ペアについては共起する用言，動詞，形容詞のペアについては共
+としては，名詞ペアについては共起する用言，動詞や形容詞のペアについては共
 起する格要素の名詞を用いた．こうした非標準表記はJUMANによって動的にも認識
 されるが，自動辞書の語彙が優先される．振る舞いの近さという手がかりを利用
 している分，自動辞書の語彙の方が信頼できると期待されるからである．
@@ -3303,6 +3303,8 @@ Wikipedia辞書の利用にともない，Wikipedia辞書に収録された語�
 利用していた場合は，辞書ファイルの文字コードをUTF-8に変換し，辞書を再コン
 パイルする必要がある．
 
+ただし，Windows版は従来と同じく，入出力および辞書の文字コードはSJISであ
+る．
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \end{document}

@@ -20,7 +20,7 @@ clean:
 	rm -f jumandic.* *.int JUMAN.connect
 
 JUMAN.connect: JUMAN.connect.c
-	@CPP@ -P $< | sed "s/\(\#pragma\)/\;\1/" > $@
+	@CPP@ -P $< | LANG=C sed "s/\(\#pragma\)/\;\1/" > $@
 
 jumandic.tab: $(GRM_FILES) JUMAN.connect $(MAKEMAT)
 	$(MAKEMAT)

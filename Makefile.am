@@ -8,5 +8,5 @@ EXTRA_DIST = perl
 
 jumanrc: jumanrc.in config.status
 	rm -f $@ $@.tmp
-	sed 's,@pkgdatadir\@,$(pkgdatadir),g' $< > $@.tmp
+	LANG=C sed 's,@pkgdatadir\@,$(pkgdatadir),g' $< > $@.tmp
 	mv $@.tmp $@

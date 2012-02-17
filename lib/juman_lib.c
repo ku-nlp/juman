@@ -2158,7 +2158,11 @@ int _print_homograph_path(FILE* output, int pbuf_start, int new_p)
 		    /* 同音異義語群を求める(但し重複しないようにする) */
 		    for (k = new_p; k < l; k++)
 			if (path_buffer[k] == pt) break;
-		    if (k == l) path_buffer[l++] = pt;
+		    if (k == l) {
+                        path_buffer[l++] = pt;
+                        if (l >= process_buffer_max)
+                            realloc_process_buffer();
+                    }
 		}
 	    }
 	}

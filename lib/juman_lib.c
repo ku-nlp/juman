@@ -1276,7 +1276,7 @@ int undef_word(int pos)
     int i, end, code, next_code, cur_bytes;
     
     /* 字種による切りだし
-       平仮名，漢字，半角空白 → 一文字
+       平仮名，漢字，半角空白，記号 → 一文字
        半角(空白以外)，片仮名(「ー」も)，アルファベット(「．」も) → 連続 */
 
 #ifdef IO_ENCODING_SJIS
@@ -1285,7 +1285,7 @@ int undef_word(int pos)
     cur_bytes = utf8_bytes(String + pos);
 #endif
     code = check_code(String, pos);
-    if (code == HIRAGANA || code == KANJI) {
+    if (code == HIRAGANA || code == KANJI || code == KIGOU) {
 	end = (pos + cur_bytes);
     } else if (code == KUUHAKU) {
 	end = (pos + 1);

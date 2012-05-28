@@ -20,6 +20,7 @@ lib/Juman/Sexp.pm
 lib/Juman/Simple.pm
 lib/Juman/KULM/MList.pm
 lib/Juman/KULM/Morpheme.pm
+lib/JumanDevel.pm
 t/10-new.t
 t/20-morpheme.t
 t/22-kulm-morpheme.t

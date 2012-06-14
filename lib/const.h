@@ -16,7 +16,7 @@
 #define OPT_NORMALIZE          1
 #define OPT_DEVOICE            2
 #define OPT_PROLONG_DEL        4
-#define NORMALIZED_LENGTH      7   /* 非正規表記の処理で考慮する最大形態素長 */
+#define NORMALIZED_LENGTH      8   /* 非正規表記の処理で考慮する最大形態素長 */
 
 /* 連濁処理等で使用する品詞や表記情報 */
 #define         DEF_ONOMATOPOEIA_HINSI   "副詞"
@@ -44,6 +44,7 @@
 #define         DEF_PROLONG_SYMBOL3      "っ"
 #define         DEF_PROLONG_OK_FEATURE   "長音挿入可"
 #define         DEF_PROLONG_INTERJECTION "感動詞"
+#define         DEF_PROLONG_COPULA       "判定詞"
 #define         DEF_PROLONG_NG_HINSI1    "動詞"
 #define         DEF_PROLONG_NG_HINSI2    "名詞"
 #define         DEF_PROLONG_NG_HINSI3    "接頭辞"
@@ -145,7 +146,8 @@ U_CHAR *pre_lower[] = {"か", "さ", "た", "な", "は", "ま", "や", "ら", "
 
 /* 長音を削除する際の追加コスト */
 #define PROLONG_DEL_COST1      6  /* 感動詞 */
-#define PROLONG_DEL_COST2      9  /* その他 (9より小さいと"あーあ"を指示詞と解析する) */
+#define PROLONG_DEL_COST2     50  /* 判定詞 */
+#define PROLONG_DEL_COST3      9  /* その他 (9より小さいと"あーあ"を指示詞と解析する) */
 
 /* 反復型オノマトペのコスト */
 

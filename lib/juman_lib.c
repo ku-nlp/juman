@@ -183,7 +183,7 @@ int		onomatopoeia_hinsi, onomatopoeia_bunrui, onomatopoeia_con_tbl;
 int             rendaku_hinsi1, rendaku_hinsi2, rendaku_hinsi3, rendaku_hinsi4;
 int             rendaku_renyou, rendaku_bunrui2_1, rendaku_bunrui2_2, rendaku_bunrui2_3;
 int             rendaku_bunrui4_1, rendaku_bunrui4_2, rendaku_bunrui4_3, rendaku_bunrui4_4;
-int             prolong_interjection;
+int             prolong_interjection, prolong_copula;
 int             prolong_ng_hinsi1, prolong_ng_hinsi2, prolong_ng_hinsi3, prolong_ng_hinsi4;
 int             prolong_ng_bunrui4_1, prolong_ng_bunrui4_2, prolong_ng_bunrui4_3;
 int             jiritsu_num;
@@ -1198,7 +1198,8 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 	    mrph->weight = STOP_MRPH_WEIGHT;
 	}
 	else {
-	    mrph->weight += (mrph->hinsi == prolong_interjection) ? PROLONG_DEL_COST1 : PROLONG_DEL_COST2;
+	    mrph->weight += (mrph->hinsi == prolong_interjection) ? PROLONG_DEL_COST1 : 
+	      (mrph->hinsi == prolong_copula) ? PROLONG_DEL_COST2 : PROLONG_DEL_COST3;
 
 	    if (k == 0) {
 		strcpy(mrph->imis, "\"");
@@ -1565,6 +1566,7 @@ void juman_init_etc(void)
     rendaku_bunrui4_3 = get_bunrui_id(DEF_RENDAKU_BUNRUI4_3, rendaku_hinsi4);
     rendaku_bunrui4_4 = get_bunrui_id(DEF_RENDAKU_BUNRUI4_4, rendaku_hinsi4);
     prolong_interjection = get_hinsi_id(DEF_PROLONG_INTERJECTION);
+    prolong_copula = get_hinsi_id(DEF_PROLONG_COPULA);
     prolong_ng_hinsi1 = get_hinsi_id(DEF_PROLONG_NG_HINSI1);
     prolong_ng_hinsi2 = get_hinsi_id(DEF_PROLONG_NG_HINSI2);
     prolong_ng_hinsi3 = get_hinsi_id(DEF_PROLONG_NG_HINSI3);

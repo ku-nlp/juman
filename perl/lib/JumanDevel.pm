@@ -15,9 +15,23 @@ sub read_juman_entry
     # JUMANのS式の1エントリを読む
 
     my($input) = @_;
-    my($top_midashi, $midashi, $yomi, $pos, $pos2, $conj, $sem);
+    my($top_midashi, $midashi, $yomi, $pos, $pos2, $conj, $sem, $comment);
+    my($open_p, $close_p);
     my(@m);
 
+    chomp($input);
+    
+    $open_p = @{$input =~ [/\(/g]};
+    $close_p = @{$input =~ [/\)/g]};
+    return ("ERROR") if ($open_p != $close_p);
+
+    if ($input =~ s/\s*\;\s*([^\)]+)$//) {
+	$comment = $1;
+    } else {
+	$comment = "";
+    }
+
+    # "(あいず 1.6)" -> "あいず:1.6"
     $input =~ s/\(([^ \(\)]+) ([\d\.]+)\)/\1:\2 /g;
     $input =~ s/  / /g;
     $input =~ s/ \)/\)/;
@@ -49,7 +63,7 @@ sub read_juman_entry
 	$sem = "";
     }
 
-    return ($top_midashi, $midashi, $yomi, $pos, $pos2, $conj, $sem);
+    return ($top_midashi, $midashi, $yomi, $pos, $pos2, $conj, $sem, $comment);
 }
 
 ######################################################################

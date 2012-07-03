@@ -1294,7 +1294,7 @@ int undef_word(int pos)
 	end = pos;
 	while(1) {
 	    /* MIDASI_MAXを越える未定義語は作成しない */
-	    if (end - pos >= MIDASI_MAX - ((code == HANKAKU) ? 1 : cur_bytes)) break;
+	    if (end - pos >= MIDASI_MAX - cur_bytes) break;
 
 	    end += cur_bytes;
 	    next_code = check_code(String, end);
@@ -1458,9 +1458,10 @@ int check_code(U_CHAR *cp, int pos)
     
     if ( cp[pos] == '\0')			return 0;
     else if ( cp[pos] == KUUHAKU )		return KUUHAKU;
-    else if ( cp[pos] < HANKAKU )		return HANKAKU;
     
 #ifdef IO_ENCODING_EUC
+    else if ( cp[pos] < HANKAKU )		return HANKAKU;
+
     code = cp[pos]*256 + cp[pos+1];
     
     if ( code == PRIOD ) 			return PRIOD;
@@ -1474,6 +1475,8 @@ int check_code(U_CHAR *cp, int pos)
     else return KANJI;
 #else
 #ifdef IO_ENCODING_SJIS
+    else if ( cp[pos] < HANKAKU )		return HANKAKU;
+
     code = cp[pos]*256 + cp[pos+1];
     
     if ( code == 0x8144 ) 			return PRIOD;
@@ -1754,7 +1757,8 @@ MRPH *prepare_path_mrph(int path_num , int para_flag)
     }
 
     /* 連濁、小書き文字、長音記号処理用 */
-    if (strncmp(midasi1, String + p_buffer[path_num].start, mrph_p->length)) {
+    if (strcmp(midasi1, "\\ ") && /* 空白は入力と異なるが、そのまま出力 */
+        strncmp(midasi1, String + p_buffer[path_num].start, mrph_p->length)) {
 	strncpy(midasi1, String + p_buffer[path_num].start, mrph_p->length);
 	midasi1[mrph_p->length] = '\0';
     }
@@ -2545,7 +2549,7 @@ int juman_sent(void)
 
     pos_match_process(pos, p_start);
     if (check_connect(length, m_buffer_num-1, 0) == FALSE)
-    return FALSE;
+        return FALSE;
 
     return TRUE;
 }

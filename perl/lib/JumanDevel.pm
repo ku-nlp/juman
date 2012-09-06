@@ -7,7 +7,7 @@ use utf8;
 
 @ISA = qw(Exporter);
 
-@EXPORT = qw(read_juman_entry write_juman_entry);
+@EXPORT = qw(read_juman_entry write_juman_entry write_LD_entry);
 
 ######################################################################
 sub read_juman_entry
@@ -32,10 +32,10 @@ sub read_juman_entry
     }
 
     # "(あいず 1.6)" -> "あいず:1.6"
-    $input =~ s/\(([^ \(\)]+) ([\d\.]+)\)/\1:\2 /g;
+    $input =~ s/\(([^ \(\)]+) ([0-9\.]+)\)/\1:\2 /g;
     $input =~ s/  / /g;
     $input =~ s/ \)/\)/;
-    
+
     if ($input =~ /^\(([^ \(\)]+) \(([^ \(\)]+)/) {
 	$pos = $1; $pos2 = $2;
     } elsif ($input =~ /^\(([^ \(\)]+)/) {
@@ -46,7 +46,7 @@ sub read_juman_entry
     $midashi = $1;
     @m = split(/ /, $midashi);
     $top_midashi = shift(@m);
-    $top_midashi =~ s/\:[\d\.]+$//;
+    $top_midashi =~ s/\:[0-9\.]+$//;
 
     $input =~ /読み ([^\)]+)/;
     $yomi = $1;
@@ -86,6 +86,37 @@ sub write_juman_entry
     $string = "($pos2 $string)" if ($pos2);
     $string = "($pos $string)";
     return $string;
+}
+
+######################################################################
+sub write_LD_entry
+{
+    my($type, $rep, $std, $yomi, $midashi, $pos, $pos2, $conj, $sem, $comment) = @_;
+    my(@etc);
+
+    $comment =~ s/\</&lt;/g;
+    $comment =~ s/\>/&gt;/g;
+    
+    # LD用出力
+    printf "<LDEntry type=\"$type\">\n";
+    printf "  <RepForm>$rep</RepForm>\n";
+    printf "  <StdForm>$std</StdForm>\n" if ($std);
+    printf "  <Yomi>$yomi</Yomi>\n";
+    printf "  <Form>$midashi</Form>\n";
+    printf "  <POS>$pos"; printf ":$pos2" if ($pos2); printf "</POS>\n";
+    printf "  <Conj>$conj</Conj>\n" if ($conj); 
+    @etc = ();
+    foreach $i (split(/ /, $sem)) {
+	if ($i =~ /:/ ) {
+	    $i =~ /([^:]+):(.+)/; $type = $1; $info = $2;
+	    printf "  <Sem type=\"$type\">$info</Sem>\n";
+	} else {
+	    push(@etc, $i);
+	}
+    }
+    printf "  <Sem type=\"etc\">%s</Sem>\n", join(" ", @etc) if (@etc);
+    printf "  <Comment>$comment</Comment>\n" if ($comment); 
+    printf "</LDEntry>\n";
 }
 
 ######################################################################

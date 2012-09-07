@@ -172,11 +172,11 @@ U_CHAR *pre_lower[] = {"か", "さ", "た", "な", "は", "ま", "や", "ら", "
 #define PATTERN_MAX      64
 
 #ifdef IO_ENCODING_EUC
-#define Hcode            "\xA4[\xA1-\xF3]"
+#define Hcode            "\xA4[\xA2-\xEF]"
 #define Kcode            "\xA5[\xA1-\xF4]"
 #define Ycode            "[\xA4\xA5][\xE3\xE5\xE7]"
 #else /* UTF-8 */
-#define Hcode            "\xE3(\x81[\x80-\xBF]|\x82[\x80-\x9F])"
+#define Hcode            "\xE3(\x81[\x82-\xBF]|\x82[\x80-\x8F])"
 #define Kcode            "\xE3(\x82[\xA0-\xBF]|\x83[\x80-\xBA])"
 #define Ycode            "\xE3(\x82[\x83\x85\x87]|\x83[\xA3\xA5\xA7])"
 #endif
@@ -197,7 +197,7 @@ MRPH_PATTERN *m_pattern;
 
 /* 非反復型オノマトペのパターンとコスト */
 /* 書式: 【パターン コスト】
-     平仮名[ぁーん]にマッチさせる場合は"Ｈ", 
+   平仮名[あーわ]にマッチさせる場合は"Ｈ", ("ぁ", "ゐ", "ゑ", "を", "ん"は含まないので注意)
      片仮名[ァーヴ]にマッチさせる場合は"Ｋ", 
      [ゃゅょャュョ]にマッチさせる場合は"Ｙ"と記述
    高速化のため、
@@ -208,6 +208,7 @@ char *mrph_pattern[]  = {
     "ＨっＨＹり  30", /* ぐっちょり */
     "ＫッＫリ    30", /* モッサリ */
     "ＫッＫＹリ  30", /* ズッチョリ */
+    "ＨＨっと    24", /* かりっと */
     "ＫＫっと    20", /* ピタっと */
     "ＫＫッと    20", /* ピタッと */
     "\0"};

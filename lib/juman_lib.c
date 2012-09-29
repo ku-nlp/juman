@@ -1,6 +1,7 @@
 /*
 ==============================================================================
 	juman_lib.c
+        				Last Update: 2012/9/28 Sadao Kurohashi
 ==============================================================================
 */
  
@@ -9,6 +10,9 @@
   明する．
 
   【連語処理】
+
+  連語はdefaultの重みを0.5とし，連語内の形態素および連接のコストを重み
+  倍する．
 
   m_buffer 及び p_buffer の構造は，以前の juman と何ら変わりない．例と
   して，現在のラティスが次のような状態であるとする．
@@ -119,6 +123,8 @@
 #define 	DEF_UNDEF_ALPH		"アルファベット"
 #define 	DEF_UNDEF_ETC		"その他"
 
+#define 	RENGO_BUFSIZE		20
+
 #define my_fprintf fprintf
 
 /*
@@ -225,8 +231,7 @@ int     search_all(int position);
 int     take_data(int pos, char **pbuf, char opt);
 char *	_take_data(char *s, MRPH *mrph, char opt);
 int 	numeral_decode(char **str);
-int 	numeral_decode2(char **str);
-void 	hiragana_decode(char **str, char *yomi);
+void 	string_decode(char **str, char *out);
 void    check_rc(void);
 void    changeDictionary(int number);
 
@@ -839,249 +844,156 @@ int recognize_onomatopoeia(int pos)
 int take_data(int pos, char **pbuf, char opt)
 {
     unsigned char    *s;
-    int     i, k, f, num;
+    int     i, k, f, component_num;
     int	    rengo_con_tbl, rengo_weight;
-    MRPH    mrph;
-    MRPH    *new_mrph;
-    int	    length, con_tbl_bak, k2, pnum_bak;
+    MRPH    mrph, c_mrph_buf[RENGO_BUFSIZE];
+    MRPH    *c_mrph_p;
+    int	    con_tbl_bak, pnum_bak, c_weight;
     int	    new_mrph_num;
 
     s = *pbuf;
+    s = _take_data(s, &mrph, opt);
 
-    k = 0 ;
+    /* 連語の場合 */
+    if (mrph.hinsi == RENGO_ID) {
 
-    while ((mrph.midasi[k++] = *(s++)) != '\t') {}
-    mrph.midasi[k-1] = '\0';
-    mrph.midasi2[0] = '\0';
-
-    if (*s == 0xff) { /* 連語情報だった場合 */
-
-#define 	RENGO_BUFSIZE		20
-
-	MRPH mrph_buf[RENGO_BUFSIZE];
-	int add_list[FORM_NO];
-	int co, pos_bak, glen, cno;
-	
-	pos_bak = pos;
-
-	s = _take_data(s, &mrph, opt);
+        if (Show_Opt_debug) printf("\\begin{連語} %s(%s)\n", mrph.midasi, mrph.midasi2);
+	component_num = mrph.bunrui;	/* bunruiの場所に要素数 */
 	rengo_con_tbl = mrph.con_tbl;
 	rengo_weight  = mrph.weight;
-	num = mrph.bunrui;
 
-	for (i = 0; i < num; i++) { /* まず，連語全体をバッファに読み込む */
-	    new_mrph = &mrph_buf[i];
-
-	    k = 0;
-	    while ((new_mrph->midasi[k++] = *(s++)) != ' ') {}
-	    new_mrph->midasi[k-1] = '\0';
-	    new_mrph->midasi2[0] = '\0';
-
-	    s = _take_data(s, new_mrph, opt);
-	    if (opt) new_mrph->weight = STOP_MRPH_WEIGHT;
-
-	    length = strlen(new_mrph->midasi);
-	    if (Class[new_mrph->hinsi][new_mrph->bunrui].kt) /* 活用する */
-		if (i < num-1) { /* 末尾以外の活用語 */
-		    length += strlen(
-			Form[new_mrph->katuyou1][new_mrph->katuyou2].gobi);
-		    new_mrph->con_tbl += (new_mrph->katuyou2-1);
-		}
-	    new_mrph->length = length;
-
-	    if (i < num-1) pos += length; /* 末尾形態素の位置を保存 */
-/*printf(".....%d/%d   %s %d\n", i, num, new_mrph->midasi, new_mrph->con_tbl);*/
+        /* まず連語全体をバッファに読み込む */
+	for (i = 0; i < component_num; i++) { 
+	    s = _take_data(s, &c_mrph_buf[i], opt);
+	    if (opt) c_mrph_buf[i].weight = STOP_MRPH_WEIGHT;
 	}
 
-	new_mrph = &mrph_buf[num-1];
-	if (Class[new_mrph->hinsi][new_mrph->bunrui].kt == 0) {
-	    add_list[0] = 0;
-	    add_list[1] = -1;
-	} else {
-	    if (new_mrph->katuyou2) {
-		add_list[0] = new_mrph->katuyou2;
-		add_list[1] = -1;
-	    } else {
-		/* 末尾の形態素が活用する場合 */
-		k2 = strlen(new_mrph->midasi) ? 1 : 2;
-		co = 0;
-		while (katuyou_process(pos, &k2, new_mrph, &length, opt)) {
-		    add_list[co++] = k2;
-		    k2++;
-		}
-		add_list[co] = -1;
-	    }
-	}
+        /* 前と連接すれば，順に各要素をm_buffer,p_bufferに入れる
+           ※ 連接しない場合にbreakするので，上のループとはマージできない
+              （マージするとbreak時にpbufからの読み出しが途中のままに）
+        */
+        for (i = 0; i < component_num; i++) {
+            m_buffer[m_buffer_num] = c_mrph_buf[i];
+            c_mrph_p = &m_buffer[m_buffer_num];
 
-	/* 活用形ごとに連語を追加していく */
-	for (co = 0; add_list[co] >= 0; co++) {
-	    pos = pos_bak;
-	    for (i = 0; i < num; i++) {
-		m_buffer[m_buffer_num] = mrph_buf[i];
-		new_mrph = &m_buffer[m_buffer_num];
+            /* 連語の先頭の要素 */
+            if (i == 0) {
 
-		if (i == 0) { /* 連語の先頭の形態素 */
-		    con_tbl_bak = new_mrph->con_tbl;
-/*printf("FROM %d %d\n", new_mrph->con_tbl, rengo_con_tbl);*/
-		    if (rengo_con_tbl != -1) {
-			if (add_list[co]) cno = add_list[co]-1; else cno = 0;
-			if (check_matrix_left(rengo_con_tbl+cno) == TRUE)
-			    /* 連語特有の左連接規則 */
-			    new_mrph->con_tbl = rengo_con_tbl+cno;
-		    }
-/*printf("  TO %d\n", new_mrph->con_tbl);*/
-		    pnum_bak = p_buffer_num;
+                /* 連語特有の左連接規則を調べる */
+                con_tbl_bak = c_mrph_p->con_tbl;
+                if (rengo_con_tbl != -1 && check_matrix_left(rengo_con_tbl) == TRUE)
+                    c_mrph_p->con_tbl = rengo_con_tbl;
 
-		    if (Show_Opt_debug) {
-			printf("\\begin{形態素→連語} %s", mrph.midasi);
-			if (add_list[co])
-			    printf("%s",
-				   Form[mrph_buf[num-1].katuyou1][add_list[co]].gobi);
-			printf("\n");
-		    }
-		    
-		    check_connect(pos, m_buffer_num, opt);
-		    if (p_buffer_num == pnum_bak) break;
+                /* check_connectで，前との連接を調べ，連接する場合はコストが計算され，
+                   p_buffer_numが 1 増える */
+                pnum_bak = p_buffer_num;
+                check_connect(pos, m_buffer_num, opt);
+                if (p_buffer_num == pnum_bak) break;	/* 連接しない場合 */
 
-		    p_buffer[pnum_bak].end = pos + new_mrph->length;
-		    p_buffer[pnum_bak].connect = FALSE;
-		    p_buffer[pnum_bak].score = p_buffer[pnum_bak].score +
-			(Class[new_mrph->hinsi][new_mrph->bunrui].cost
-			 * new_mrph->weight * cost_omomi.keitaiso 
-			 * (rengo_weight-10)/10);
-		    new_mrph->con_tbl = con_tbl_bak;
+                c_mrph_p->con_tbl = con_tbl_bak;
+                /* 次の要素との接続で使うので，もとの接続情報にもどす */
 
-		    if (Show_Opt_debug) {
-			printf("----- 連語内 %s %d\n", new_mrph->midasi, 
-			       p_buffer[pnum_bak].score);
-		    }
-		} else {
-		    p_buffer[p_buffer_num].score =
-			p_buffer[p_buffer_num-1].score +
-			(Class[new_mrph->hinsi][new_mrph->bunrui].cost
-			 * new_mrph->weight * cost_omomi.keitaiso +
-			 (check_matrix(m_buffer[p_buffer[p_buffer_num-1].mrph_p].con_tbl, new_mrph->con_tbl) ? 
-			  check_matrix(m_buffer[p_buffer[p_buffer_num-1].mrph_p].con_tbl, new_mrph->con_tbl) : DEFAULT_C_WEIGHT)
-			 /* 連語内の接続は接続表で定義されていない場合がある
-			    その場合は，接続のコストはデフォルトの値とする． */
-			 * cost_omomi.rensetsu)
-			 * rengo_weight/10;
-		    p_buffer[p_buffer_num].mrph_p = m_buffer_num;
-		    p_buffer[p_buffer_num].start = pos;
-		    p_buffer[p_buffer_num].end = pos + new_mrph->length;
-		    p_buffer[p_buffer_num].path[0] = p_buffer_num-1;
-		    p_buffer[p_buffer_num].path[1] = -1;
+                p_buffer[pnum_bak].end = pos + c_mrph_p->length;
+                p_buffer[pnum_bak].connect = FALSE;
+                p_buffer[pnum_bak].score = p_buffer[pnum_bak].score +
+                    (Class[c_mrph_p->hinsi][c_mrph_p->bunrui].cost
+                     * c_mrph_p->weight * cost_omomi.keitaiso 
+                     * (rengo_weight-10)/10);
+                /* 先頭要素の形態素scoreが普通に足されているので，連語内のscoreに修正 */
 
-		    if (i < num-1) { /* 連語の中程の形態素 */
-			p_buffer[p_buffer_num].connect = FALSE;
-		    } else { /* 連語の末尾の形態素 */
-			p_buffer[p_buffer_num].connect = TRUE;
+                if (Show_Opt_debug)
+                    printf("----- 連語内 %s %d\n", c_mrph_p->midasi, p_buffer[pnum_bak].score);
+            } 
 
-			if (rengo_con_tbl != -1) {
-			    if (add_list[co]) cno = add_list[co]-1;
-			    else cno = 0;
-			    if (check_matrix_right(rengo_con_tbl+cno) == TRUE)
-				/* 連語特有の右連接規則 */
-				new_mrph->con_tbl = rengo_con_tbl;
-			}
-			if (add_list[co]) {
-			    new_mrph->katuyou2 = add_list[co];
-			    new_mrph->con_tbl += (add_list[co]-1);
-			    glen = strlen(Form[new_mrph->katuyou1]
-					  [new_mrph->katuyou2].gobi);
-			    new_mrph->length += glen;
-			    p_buffer[p_buffer_num].end += glen;
-			}
-		    }
-		    if (Show_Opt_debug) {
-			printf("----- 連語内 %s %d\n", new_mrph->midasi, 
-			       p_buffer[p_buffer_num].score);
-		    }
+            /* 連語の先頭以外の要素 */
+            else {
+                /* 連語内では単純に前後の要素をつなぐ */
+                p_buffer[p_buffer_num].mrph_p = m_buffer_num;
+                p_buffer[p_buffer_num].start = pos;
+                p_buffer[p_buffer_num].end = pos + c_mrph_p->length;
+                p_buffer[p_buffer_num].path[0] = p_buffer_num - 1;
+                p_buffer[p_buffer_num].path[1] = -1;
 
-		    if (++p_buffer_num == process_buffer_max)
-			realloc_process_buffer();
-		}
-		pos += new_mrph->length;
+                /* 連語内の接続コストは，接続表で定義されていない場合，および，
+                   デフォルト値より大きいコストの場合，デフォルト値とする． */
+                c_weight = check_matrix(m_buffer[p_buffer[p_buffer_num-1].mrph_p].con_tbl, 
+                                        c_mrph_p->con_tbl);
+                if (c_weight == 0 || c_weight > DEFAULT_C_WEIGHT) 
+                    c_weight = DEFAULT_C_WEIGHT;
+                p_buffer[p_buffer_num].score =
+                    p_buffer[p_buffer_num-1].score +
+                    (Class[c_mrph_p->hinsi][c_mrph_p->bunrui].cost * c_mrph_p->weight * cost_omomi.keitaiso +
+                     c_weight * cost_omomi.rensetsu)
+                    * rengo_weight/10;
+                
+                /* 連語の中程の要素 */
+                if (i < component_num - 1) {
+                    p_buffer[p_buffer_num].connect = FALSE;
+                } 
+                /* 連語の末尾の要素 */
+                else { 
+                    p_buffer[p_buffer_num].connect = TRUE;
 
-		/* fixed by kuro on 01/01/19
-		   以下がreallocが上のif-elseの中だたったので，new_mrphへの
-		   アクセスで segmentation fault となっていた */
-		if (++m_buffer_num == mrph_buffer_max)
-		  realloc_mrph_buffer();
-	    }
-	    if (Show_Opt_debug) {
-		printf("\\end{形態素→連語}\n");
-	    }
-	}
+                    /* 連語特有の右連接規則を調べる */
+                    if (rengo_con_tbl != -1 && check_matrix_right(rengo_con_tbl) == TRUE) 
+                        c_mrph_p->con_tbl = rengo_con_tbl;
+                }
 
-    } else {           /* 普通の形態素だった場合 */
-	s = _take_data(s, &mrph, opt);
+                if (Show_Opt_debug)
+                    printf("----- 連語内 %s %d\n", c_mrph_p->midasi, p_buffer[p_buffer_num].score);
+                
+                if (++p_buffer_num == process_buffer_max)
+                    realloc_process_buffer();
+            }
+            pos += c_mrph_p->length;
+
+            /* fixed by kuro on 01/01/19
+               以下がreallocが上のif-elseの中だたったので，c_mrph_pへの
+               アクセスで segmentation fault となっていた */
+            if (++m_buffer_num == mrph_buffer_max)
+                realloc_mrph_buffer();
+        }
+
+        if (Show_Opt_debug) printf("\\end{連語}\n");
+    } 
+
+    /* 形態素の場合 */
+    else {
 
 	/* 重みがSTOP_MRPH_WEIGHTとなっているノードは生成しない */
 	if (mrph.weight == STOP_MRPH_WEIGHT) {
+            s++; /* 項目間の\n */
 	    *pbuf = s;
 	    return TRUE;
 	}
 
-	if ( Class[mrph.hinsi][mrph.bunrui].kt ) { /* 活用する */
-	    if ( mrph.katuyou2 == 0 ) {   /* 語幹あり */
-		k2 = 1;
-		while (katuyou_process(pos, &k2, &mrph, &length, opt)) {
-		    /* 濁音化ノードは2字以上の場合のみ、 */
-		    /* 正規化ノードは2字以上、かつ、length内に非正規表現を含む場合のみ、 */
-		    /* 長音削除ノードは文字長が異なる場合のみ作成 */
-		    if ((opt & OPT_DEVOICE) && length == BYTES4CHAR ||
-			(opt & OPT_NORMALIZE) && (length == BYTES4CHAR || !strncmp(String + pos, NormalizedString + pos, length)) ||
-			(opt & OPT_PROLONG_DEL) && length == PDS2String[String2PDS[pos] + length] - pos) {
-			k2++;
-			continue;
-		    }
-		    m_buffer[m_buffer_num] = mrph;
-		    m_buffer[m_buffer_num].katuyou2 = k2;
-		    m_buffer[m_buffer_num].length = (opt & OPT_PROLONG_DEL) ? PDS2String[String2PDS[pos] + length] - pos : length;
-		    m_buffer[m_buffer_num].con_tbl += (k2 - 1);
-		    check_connect(pos, m_buffer_num, opt);
-		    if (++m_buffer_num == mrph_buffer_max)
-			realloc_mrph_buffer();
-		    k2++;
-		}
-	    } else {                         /* 語幹なし */
-		m_buffer[m_buffer_num] = mrph;
- 		if (opt & OPT_PROLONG_DEL) m_buffer[m_buffer_num].length = PDS2String[String2PDS[pos] + mrph.length] - pos;		
-		m_buffer[m_buffer_num].midasi[0] = '\0';
-		m_buffer[m_buffer_num].midasi2[0] = '\0';
-		m_buffer[m_buffer_num].yomi[0]  = '\0';
-		check_connect(pos, m_buffer_num, opt);
-		if (++m_buffer_num == mrph_buffer_max)
-		    realloc_mrph_buffer();
-	    }
-	} else {	                                 /* 活用しない */
-	    if (!(opt & OPT_NORMALIZE || opt & OPT_PROLONG_DEL) ||
-		/* 正規化ノードは2字以上("ヵ"は例外)、かつ、length内に非正規表記を含む場合のみ作成 */
-		(opt & OPT_NORMALIZE) && 
-		(strlen(mrph.midasi) > BYTES4CHAR || !strncmp(mrph.midasi, uppercase[NORMALIZED_LOWERCASE_KA], BYTES4CHAR)) &&
-		strncmp(String + pos, NormalizedString + pos, strlen(mrph.midasi)) ||
-		/* 長音削除ノードは文字長が異なる場合のみ作成 */
-		(opt & OPT_PROLONG_DEL) && mrph.length != PDS2String[String2PDS[pos] + mrph.length] - pos) {
+        if (!(opt & OPT_NORMALIZE || opt & OPT_PROLONG_DEL) ||
+            /* 正規化ノードは2字以上("ヵ"は例外)、かつ、length内に非正規表記を含む場合のみ作成 */
+            (opt & OPT_NORMALIZE) && 
+            (strlen(mrph.midasi) > BYTES4CHAR || !strncmp(mrph.midasi, uppercase[NORMALIZED_LOWERCASE_KA], BYTES4CHAR)) &&
+            strncmp(String + pos, NormalizedString + pos, strlen(mrph.midasi)) ||
+            /* 長音削除ノードは文字長が異なる場合のみ作成 */
+            (opt & OPT_PROLONG_DEL) && mrph.length != PDS2String[String2PDS[pos] + mrph.length] - pos) {
 
-		m_buffer[m_buffer_num] = mrph;
- 		if (opt & OPT_PROLONG_DEL) m_buffer[m_buffer_num].length = PDS2String[String2PDS[pos] + mrph.length] - pos;		
-		check_connect(pos, m_buffer_num, opt);
-		new_mrph_num = m_buffer_num;
-		if (++m_buffer_num == mrph_buffer_max)
-		    realloc_mrph_buffer();	    
+            m_buffer[m_buffer_num] = mrph;
+            if (opt & OPT_PROLONG_DEL) 
+                m_buffer[m_buffer_num].length = PDS2String[String2PDS[pos] + mrph.length] - pos;		
+            check_connect(pos, m_buffer_num, opt);
+            new_mrph_num = m_buffer_num;
+            if (++m_buffer_num == mrph_buffer_max)
+                realloc_mrph_buffer();	    
 
 #ifdef NUMERIC_P
-		if (suusi_word(pos, new_mrph_num) == FALSE)
-		    return FALSE;
+            if (suusi_word(pos, new_mrph_num) == FALSE)
+                return FALSE;
 #endif
 #ifdef THROUGH_P
-		if (through_word(pos, new_mrph_num) == FALSE)
-		    return FALSE;
+            if (through_word(pos, new_mrph_num) == FALSE)
+                return FALSE;
 #endif
-	    }
 	}
     }
+    s++; /* 項目間の\n */
     *pbuf = s;
     return TRUE;
 }
@@ -1094,26 +1006,31 @@ int take_data(int pos, char **pbuf, char opt)
 
 char *_take_data(char *s, MRPH *mrph, char opt)
 {
-    int		i, j, k = 0;
+    int		i, imi_length;
     char	c, *rep;
-    
+
+    string_decode(&s, mrph->midasi);
     mrph->hinsi    = numeral_decode(&s);
     mrph->bunrui   = numeral_decode(&s);
     mrph->katuyou1 = numeral_decode(&s);
     mrph->katuyou2 = numeral_decode(&s);
     mrph->weight   = numeral_decode(&s);
-    mrph->con_tbl  = numeral_decode2(&s);
-    hiragana_decode(&s, mrph->yomi);
-    mrph->length   = strlen(mrph->midasi);
-    
-    if (*s != ' ' && *s != '\n') { /* 意味情報あり */
-	j = numeral_decode(&s);
-	for (i = 0; i < j; i++) mrph->imis[k++] = *(s++);
-	mrph->imis[k] = '\0';
+    mrph->con_tbl  = numeral_decode(&s);
+    string_decode(&s, mrph->yomi);
+    string_decode(&s, mrph->midasi2);
+
+    if (!mrph->midasi2[0]) strcpy(mrph->midasi2, mrph->midasi);
+    mrph->length = strlen(mrph->midasi);
+
+    imi_length = numeral_decode(&s);
+    if (imi_length) {
+        for (i = 0; i < imi_length; i++) mrph->imis[i] = *(s++);
+        mrph->imis[i] = '\0';
+    } else {
+        strcpy(mrph->imis, NILSYMBOL);
     }
-    s++;
-    if (k == 0) strcpy(mrph->imis, NILSYMBOL);  
     
+
     if (opt & OPT_DEVOICE) {
 
 	/* 濁音化の処理はしない形態素の重みをSTOP_MRPH_WEIGHTにする */
@@ -1160,7 +1077,7 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 		}
 	    }
 	    
-	    if (k == 0) {
+	    if (imi_length == 0) {
 		strcpy(mrph->imis, "\"");
 	    }
 	    else {
@@ -1174,7 +1091,7 @@ char *_take_data(char *s, MRPH *mrph, char opt)
     /* 正規化したものにペナルティ(小書き文字・長音記号置換された表現用) */
     if (opt & OPT_NORMALIZE) {
 	mrph->weight += NORMALIZED_COST;
-	if (k == 0) {
+	if (imi_length == 0) {
 	    strcpy(mrph->imis, "\"");
 	}
 	else {
@@ -1201,7 +1118,7 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 	    mrph->weight += (mrph->hinsi == prolong_interjection) ? PROLONG_DEL_COST1 : 
 	      (mrph->hinsi == prolong_copula) ? PROLONG_DEL_COST2 : PROLONG_DEL_COST3;
 
-	    if (k == 0) {
+	    if (imi_length == 0) {
 		strcpy(mrph->imis, "\"");
 	    }
 	    else {
@@ -1217,23 +1134,6 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 
 int numeral_decode(char **str)
 {
-  unsigned char *s;
-
-    s = *str;
-    if (*s < 0xf0) {
-	*str = s+1;
-	return(*s-0x20);
-    } else if (*s == 0xff) {
-	*str = s+1;
-	return(atoi(RENGO_ID));
-    } else {
-	*str = s+2;
-	return((*s-0xf0)*(0xf0-0x20)+*(s+1)-0x20);
-    }
-}
-
-int numeral_decode2(char **str)
-{
     unsigned char *s;
 
     s = *str;
@@ -1241,12 +1141,12 @@ int numeral_decode2(char **str)
     return((*s-0x20)*(0x100-0x20)+*(s+1)-0x20-1);
 }
 
-void hiragana_decode(char **str, char *yomi)
+void string_decode(char **str, char *out)
 {
-    while (**str != 0x20)
-        *(yomi++) = *(*str)++;
+    while (**str != 0x20 && **str != '\t')
+        *(out++) = *(*str)++;
     (*str)++;
-    *yomi = '\0';
+    *out = '\0';
 }
 
 /*
@@ -1600,16 +1500,17 @@ int 	suusi_word(int pos , int m_num)
 	    pre_mrph->bunrui == suusi_bunrui &&
 	    check_matrix(pre_mrph->con_tbl, new_mrph->con_tbl) != 0) {
 
-	    if (strlen(pre_mrph->midasi)+strlen(new_mrph->midasi) >= MIDASI_MAX
-		|| strlen(pre_mrph->yomi)+strlen(new_mrph->yomi) >= YOMI_MAX) {
+	    if (strlen(pre_mrph->midasi)+strlen(new_mrph->midasi) >= MIDASI_MAX || 
+		strlen(pre_mrph->yomi)+strlen(new_mrph->yomi) >= YOMI_MAX) {
 		/* MIDASI_MAX、YOMI_MAXを越える数詞は分割するように変更 08/01/15 */
 		/* fprintf(stderr, "Too long suusi<%s>\n", String);
 		   return FALSE; */
 		return TRUE;
 	    }
 	    m_buffer[m_buffer_num] = *pre_mrph;
-	    strcat(m_buffer[m_buffer_num].midasi , new_mrph->midasi);
-	    strcat(m_buffer[m_buffer_num].yomi   , new_mrph->yomi);
+	    strcat(m_buffer[m_buffer_num].midasi, new_mrph->midasi);
+	    strcat(m_buffer[m_buffer_num].yomi, new_mrph->yomi);
+	    strcat(m_buffer[m_buffer_num].midasi2, new_mrph->midasi2);
 	    m_buffer[m_buffer_num].length += strlen(new_mrph->midasi);
 	    /* コストは後ろ側の方を継承 */
 	    m_buffer[m_buffer_num].weight = new_mrph->weight;
@@ -1749,12 +1650,6 @@ MRPH *prepare_path_mrph(int path_num , int para_flag)
     strcpy(midasi1, mrph_p->midasi);
     strcpy(midasi2, *mrph_p->midasi2 ? mrph_p->midasi2 : mrph_p->midasi);
     strcpy(yomi, mrph_p->yomi);
-    if ( (mrph_p->katuyou1 > 0) && (mrph_p->katuyou2 > 0) ) {
-	strcat(midasi1, Form[mrph_p->katuyou1][mrph_p->katuyou2].gobi);
-	for(j = 1; strcmp(Form[mrph_p->katuyou1][j].name, BASIC_FORM); j++);
-	strcat(midasi2, Form[mrph_p->katuyou1][j].gobi);
-	strcat(yomi, Form[mrph_p->katuyou1][mrph_p->katuyou2].gobi_yomi);
-    }
 
     /* 連濁、小書き文字、長音記号処理用 */
     if (strcmp(midasi1, "\\ ") && /* 空白は入力と異なるが、そのまま出力 */
@@ -2304,10 +2199,11 @@ int check_connect(int pos, int m_num, char opt)
 
 	    pre_mrph = &m_buffer[p_buffer[j].mrph_p];
 	    fprintf(stderr, "%s" , pre_mrph->midasi);
-	    if (Class[pre_mrph->hinsi][pre_mrph->bunrui].kt)
-		fprintf(stderr, "%s", Form[pre_mrph->katuyou1][pre_mrph->katuyou2].gobi);
 	    if (Class[pre_mrph->hinsi][0].id) {
-		fprintf(stderr, "(%s" , Class[pre_mrph->hinsi][0].id);
+		fprintf(stderr, "(");
+		if (strcmp(pre_mrph->midasi, pre_mrph->midasi2))
+                    fprintf(stderr, "%s:" , pre_mrph->midasi2);                    
+		fprintf(stderr, "%s" , Class[pre_mrph->hinsi][0].id);
 		if (pre_mrph->bunrui)
 		    fprintf(stderr, "-%s", Class[pre_mrph->hinsi][pre_mrph->bunrui].id);
 		if (pre_mrph->katuyou1)
@@ -2325,10 +2221,11 @@ int check_connect(int pos, int m_num, char opt)
 	    }
 
 	    fprintf(stderr, "%s" , new_mrph->midasi);
-	    if (Class[new_mrph->hinsi][new_mrph->bunrui].kt)
-		fprintf(stderr, "%s", Form[new_mrph->katuyou1][new_mrph->katuyou2].gobi);
 	    if (Class[new_mrph->hinsi][0].id) {
-		fprintf(stderr, "(%s" , Class[new_mrph->hinsi][0].id);
+                fprintf(stderr, "(");
+		if (strcmp(new_mrph->midasi, new_mrph->midasi2))
+                    fprintf(stderr, "%s:" , new_mrph->midasi2);                    
+		fprintf(stderr, "%s" , Class[new_mrph->hinsi][0].id);
 		if (new_mrph->bunrui)
 		    fprintf(stderr, "-%s",Class[new_mrph->hinsi][new_mrph->bunrui].id);
 		if (new_mrph->katuyou1)

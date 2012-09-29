@@ -208,8 +208,8 @@ enum		_ExitCode 	{ NormalExit,
 #define         COST_WIDTH_DEFAULT      20
 #define         UNDEF_WORD_DEFAULT  10000
 
-#define         RENGO_ID   "999"    /* yamaji */
-#define         RENGO_DEFAULT_WEIGHT 0.5
+#define         RENGO_ID		127	/* "999" yamaji */
+#define         RENGO_DEFAULT_WEIGHT	0.5
 
 /* for juman_lib.c */
 #define		LENMAX			50000

@@ -23,8 +23,6 @@ int 	main(int argc, char *argv[]);
 static void 	init_mrph(MRPH *mrph_p);
 static void     output_mrph(FILE *fp, MRPH *mrph_p);
 static void	numeral_encode(FILE *fp, int num);
-static void	numeral_encode2(FILE *fp, int num);
-static void 	hiragana_encode(FILE *fp, unsigned char *str);
 static void	imi_print(FILE *fp, CELL *cell);
 static void	_imi_print(char *buf, CELL *cell);
 static void	_imi_print_cdr(char *buf, CELL *cell);

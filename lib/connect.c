@@ -95,95 +95,68 @@ void connect_table(FILE *fp_out)
      fclose(fp);
 }
 
-
-
-
-
-
 void read_table(FILE *fp)
 {
      int i;
      U_CHAR tmp_char[MIDASI_MAX];
-     int ret;                          /* for EDRdic '94.Mar */
 
      fscanf(fp, "%d\n", &TBL_NUM);
 
      rensetu_tbl = (RENSETU_PAIR *)my_alloc(sizeof(RENSETU_PAIR) * TBL_NUM);
 
      for ( i=0; i<TBL_NUM; i++ ) {
-/*	  while ( fgetc(fp) != '\n' );	  */
 	  fscanf(fp, "%d", &(rensetu_tbl[i].i_pos));
 	  fscanf(fp, "%d", &(rensetu_tbl[i].j_pos));
 
-          ret = fscanf(fp, "%d", &(rensetu_tbl[i].hinsi));
-          if( ret != 0 ) {
-	      fscanf(fp, "%d", &(rensetu_tbl[i].bunrui));
-	      fscanf(fp, "%d", &(rensetu_tbl[i].type));
-	      fscanf(fp, "%d", &(rensetu_tbl[i].form));
-	      fscanf(fp, "%s\n", tmp_char);
-	      if ( tmp_char[0] == '*' )
-		rensetu_tbl[i].goi = NULL;
-	      else {
-	        rensetu_tbl[i].goi = (U_CHAR *)my_alloc(sizeof(U_CHAR) * 
-						   MIDASI_MAX );
-	        strcpy(rensetu_tbl[i].goi, tmp_char);
-	      }
-	  }
-          else{                       /* for EDRdic '94.Mar */
-              rensetu_tbl[i].hinsi = -1 ;
-              fscanf(fp, "%s\n", tmp_char);
-
-              rensetu_tbl[i].goi = (U_CHAR *)my_alloc(sizeof(U_CHAR) *
-                                                      MIDASI_MAX );
+          fscanf(fp, "%d", &(rensetu_tbl[i].hinsi));
+          fscanf(fp, "%d", &(rensetu_tbl[i].bunrui));
+          fscanf(fp, "%d", &(rensetu_tbl[i].type));
+          fscanf(fp, "%d", &(rensetu_tbl[i].form));
+          fscanf(fp, "%s\n", tmp_char);
+          if ( tmp_char[0] == '*' )
+              rensetu_tbl[i].goi = NULL;
+          else {
+              rensetu_tbl[i].goi = (U_CHAR *)my_alloc(sizeof(U_CHAR) * MIDASI_MAX );
               strcpy(rensetu_tbl[i].goi, tmp_char);
+              /* 連接テーブルは基本形 */
           }
      }
-}
-
-void check_edrtable(MRPH *mrph_p, CELL *x) /* for EDRdic '94.Mar */
-{
-     int i;
-
-     for ( i=0; i<TBL_NUM; i++ ) {
-          if ( rensetu_tbl[i].hinsi == -1 &&
-               strcmp(_Atom(x), rensetu_tbl[i].goi) == 0 ) {
-               mrph_p->con_tbl = i;
-               return;
-          }
-     }
-     error(OtherError, "No morpheme in EDR-table !!", EOA);
 }
 
 void check_table(MRPH *mrph_p)
 {
-     int i;
+    int i;
 
-     for ( i=0; i<TBL_NUM; i++ ) {
-	  if ( mrph_p->hinsi    == rensetu_tbl[i].hinsi &&
-	       mrph_p->bunrui   == rensetu_tbl[i].bunrui &&
-	       mrph_p->katuyou1 == rensetu_tbl[i].type &&
-	       ( rensetu_tbl[i].goi == NULL || 
-		 strcmp(mrph_p->midasi, rensetu_tbl[i].goi) == 0 ) ) {
-	       mrph_p->con_tbl = i;
-	       return;
-	  }
-     }
-     error(OtherError, "No morpheme in table !!", EOA);
+    for (i = 0; i < TBL_NUM; i++) {
+        if (rensetu_tbl[i].hinsi == mrph_p->hinsi &&
+            rensetu_tbl[i].bunrui == mrph_p->bunrui &&
+            rensetu_tbl[i].type == mrph_p->katuyou1 &&
+            (rensetu_tbl[i].goi == NULL || 
+             /* 連接テーブルは基本形 */
+             strcmp(rensetu_tbl[i].goi, mrph_p->midasi2) == 0)) {
+            mrph_p->con_tbl = i;
+            return;
+        }
+    }
+    error(OtherError, "No morpheme in table !!", EOA);
 }
 
 void check_table_for_rengo(MRPH *mrph_p)
 {
-     int i;
+    /* 連語用：形態素との違いは，語が一致すること，指定なければ -1 */
+    int i;
 
-     for ( i=0; i<TBL_NUM; i++ ) {
-	 if (rensetu_tbl[i].hinsi == atoi(RENGO_ID) &&
-	     rensetu_tbl[i].type == mrph_p->katuyou1 &&
-	     strcmp(rensetu_tbl[i].goi , mrph_p->midasi) == 0) {
-	     mrph_p->con_tbl = i;
-	     return;
-	 }
-     }
-     mrph_p->con_tbl = -1;
+    for (i = 0; i < TBL_NUM; i++) {
+        if (rensetu_tbl[i].hinsi == RENGO_ID &&
+            rensetu_tbl[i].type == mrph_p->katuyou1 &&
+            /* 連接テーブルは基本形 */
+            strcmp(rensetu_tbl[i].goi , mrph_p->midasi2) == 0) {
+            mrph_p->con_tbl = i;
+            if (mrph_p->katuyou1) mrph_p->con_tbl += (mrph_p->katuyou2 - 1);
+            return;
+        }
+    }
+    mrph_p->con_tbl = -1;
 }
 
 int check_table_for_undef(int hinsi, int bunrui)
@@ -198,7 +171,6 @@ int check_table_for_undef(int hinsi, int bunrui)
        }
      return -1;
 }
-
 
 
 /*

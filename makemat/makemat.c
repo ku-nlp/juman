@@ -4,6 +4,20 @@
 ==============================================================================
 */
 
+/*
+  1. rensetu_tblを作る．
+     - まずJUMAN.connect.cで語彙指定のものを取り出し，活用語であればすべての活用を展開
+     - 次に，品詞（細分類）レベルで，活用語であればすべての活用を展開
+      -> jumandic.tabの各行（3カラム以降の情報）
+
+  2. rensetu_tbl x rensetu_tbl のmtrixについて，JUMAN.connect.cの情報をうめる
+
+  3. 上記matrixで同じ行，列を圧縮
+      -> jumandic.mat
+     rensetu_tblの各位置が，圧縮されたmatricの行，列のどの位置かを記録
+      -> jumandic.tabの各行の1つめ，2つめの数字
+*/
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -440,7 +454,7 @@ int pair_match2(RENSETU_PAIR2 *pair, RENSETU_PAIR *tbl)
      if ( pair->goi && ( ! tbl->goi || strcmp(pair->goi, tbl->goi) ) )
        return 0;
 
-     if ( pair->hinsi == 0 && tbl->hinsi == atoi(RENGO_ID))
+     if ( pair->hinsi == 0 && tbl->hinsi == RENGO_ID)
        return 0; /* 正規表現は連語には通用しない */
 
      return 1;

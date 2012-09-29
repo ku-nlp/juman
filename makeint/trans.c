@@ -1,7 +1,8 @@
 /*
 ==============================================================================
 	trans.c
-		1990/11/12/Mon Yutaka MYOKI(Nagao Lab., KUEE)
+                                 1990/11/12/Mon Yutaka MYOKI(Nagao Lab., KUEE)
+                                        Last Update: 2012/9/28 Sadao Kurohashi
 ==============================================================================
 */
 
@@ -11,7 +12,7 @@
 
 #include 	"makeint.h"
 
-#define         MRPH_BUF_MAX   1000
+#define         MRPH_BUF_MAX   2000
 #define         KEITAISO_NUM_MAX  20
 /*
 ------------------------------------------------------------------------------
@@ -36,7 +37,6 @@ extern int	LineNoForError;
 ------------------------------------------------------------------------------
 */
 
-static 	MRPH 		mrph;
 static  MRPH            mrph_buffer[MRPH_BUF_MAX];
 static  int             mrph_buffer_num;
 
@@ -46,6 +46,24 @@ enum	ErrorCode	{NotList, IllegalForm, ConflictGobi,
 			   NoKatuyou,IllegalWeight,
 			   LongRengo,ShortRengo,
                            NoKatuyoukei,HankakuChr};
+
+U_CHAR *Japanese_Hiragana[][5] = {
+    {"ぁ", "ぃ", "ぅ", "ぇ", "ぉ"},        
+    {"あ", "い", "う", "え", "お"},
+    {"か", "き", "く", "け", "こ"},
+    {"が", "ぎ", "ぐ", "げ", "ご"},
+    {"さ", "し", "す", "せ", "そ"},
+    {"ざ", "じ", "ず", "ぜ", "ぞ"},
+    {"た", "ち", "つ", "て", "と"},
+    {"だ", "ぢ", "づ", "で", "ど"},
+    {"な", "に", "ぬ", "ね", "の"},
+    {"は", "ひ", "ふ", "へ", "ほ"},
+    {"ば", "び", "ぶ", "べ", "ぼ"},
+    {"ぱ", "ぴ", "ぷ", "ぺ", "ぽ"},
+    {"ま", "み", "む", "め", "も"},
+    {"ら", "り", "る", "れ", "ろ"},
+    {NULL}
+};
 
 /*
 ------------------------------------------------------------------------------
@@ -75,53 +93,44 @@ static void output_mrph(FILE *fp, MRPH *mrph_p)
 {
     long       imiptr;
 
-    /*登録データのフォーマット
-      [品詞，細分類，活用型，活用形，重み，アドレス，意味(後回し)，読み] */
-	
+    fprintf(fp, "%s\t", mrph_p->midasi);
     numeral_encode(fp, mrph_p->hinsi);
     numeral_encode(fp, mrph_p->bunrui);
     numeral_encode(fp, mrph_p->katuyou1);
     numeral_encode(fp, mrph_p->katuyou2);
     numeral_encode(fp, mrph_p->weight);
-    numeral_encode2(fp, mrph_p->con_tbl);
-    hiragana_encode(fp, mrph_p->yomi);
+    numeral_encode(fp, mrph_p->con_tbl);
+    fprintf(fp, "%s ", mrph_p->yomi);
 
-    /* 意味情報の書き込み */
-    if (!Null(mrph_p->imi))
-	imi_print(fp, mrph_p->imi);
+    if (strcmp(mrph_p->midasi, mrph_p->midasi2)) {
+        fprintf(fp, "%s ", mrph_p->midasi2);
+    } else {
+        fprintf(fp, " ");
+    }
+
+    imi_print(fp, mrph_p->imi);
 }
 
 static void numeral_encode(FILE *fp, int num)
 {
-    if (num == atoi(RENGO_ID)) fputc(0xff, fp);
-    else if (num < 0xf0-0x20) fputc(num+0x20, fp);
-    else {
-	fputc(num/(0xf0-0x20)+0xf0, fp);
-	fputc(num%(0xf0-0x20)+0x20, fp);
-    }
-}
-
-static void numeral_encode2(FILE *fp, int num)
-{
+    /* -1〜数万を，+1して2バイトに
+       いずれのバイトも0x20以上に */
     fputc((num+1)/(0x100-0x20)+0x20, fp);
     fputc((num+1)%(0x100-0x20)+0x20, fp);
-}
-
-static void hiragana_encode(FILE *fp, unsigned char *str)
-{
-    if (*str != '@') /* 空列でない場合 */
-	fprintf(fp, "%s", str);
-    fputc(0x20, fp);
 }
 
 static void imi_print(FILE *fp, CELL *cell)
 {
     char buf[BUFSIZE];
 
-    buf[0] = '\0';
-    _imi_print(buf, cell);
-    numeral_encode(fp, strlen(buf));
-    fprintf(fp, "%s", buf);
+    if (Null(cell)) {
+        numeral_encode(fp, 0);
+    } else {
+        buf[0] = '\0';
+        _imi_print(buf, cell);
+        numeral_encode(fp, strlen(buf));
+        fprintf(fp, "%s", buf);
+    }
 }
 
 static void _imi_print(char *buf, CELL *cell)
@@ -165,30 +174,13 @@ static void print_mrph(MRPH *mrph_p) /* by yamaji */
     if (mrph_buffer_num == MRPH_BUF_MAX) error_in_trans(LongRengo , NULL);
 }
 
-static void print_mrph_loop(MRPH *mrph_p) /* by yamaji */
-{
-     int i;
-     MRPH mrph_t;
-
-     for ( i=1; Form[mrph_p->katuyou1][i].name; i++ ) {
-	  if ( strlen(Form[mrph_p->katuyou1][i].gobi) ) {
-	      mrph_t = *mrph_p;
-	      mrph_t.katuyou2 = i;
-	      strcpy(mrph_t.midasi , Form[mrph_p->katuyou1][i].gobi);
-	      strcpy(mrph_t.yomi   , Form[mrph_p->katuyou1][i].gobi_yomi);
-	      mrph_t.con_tbl += (i - 1);
-	      print_mrph(&mrph_t);
-	  }
-     }
-}
-
 /*
 ------------------------------------------------------------------------------
 	PROCEDURE:
 	<error_in_trans>: local error processing
 ------------------------------------------------------------------------------
 */
-
+    
 static void error_in_trans(int n, void *c)
 {
      fprintf(stderr, "\n%s: syntax error between line %d and %d.\n",
@@ -369,22 +361,6 @@ static int katuyou2(CELL *x , int type)
     return get_form_id(_Atom(car(cdr(y))) , type);
 }
 
-/* for EDRdic '94.Mar */
-/*
-------------------------------------------------------------------------------
-        FUNCTION:
-        <edrconnect>: sub-routine of <trans>
-------------------------------------------------------------------------------
-*/
-
-static CELL *edrconnect(CELL *x)
-{
-     CELL       *y;
-
-     y = assoc(tmp_atom((U_CHAR *)"連接属性"), x);
-     return car(cdr(y));
-}
-
 /*
 ------------------------------------------------------------------------------
 	FUNCTION:
@@ -409,13 +385,13 @@ static CELL *imi(CELL *x)
 
 static void trim_yomi_gobi(MRPH *mrph_p)
 {
-     U_CHAR	*str = (U_CHAR *)"基本形";
-     int	i;
+    U_CHAR	*str = (U_CHAR *)"基本形";
+    int	i;
 
-     for (i = 1; strcmp(Form[mrph_p->katuyou1][i].name, str); i++);
+    for (i = 1; strcmp(Form[mrph_p->katuyou1][i].name, str); i++);
 
-     mrph_p->yomi[strlen(mrph_p->yomi) - 
-		  strlen(Form[mrph_p->katuyou1][i].gobi_yomi)]='\0';
+    mrph_p->yomi[strlen(mrph_p->yomi) - 
+                 strlen(Form[mrph_p->katuyou1][i].gobi_yomi)]='\0';
 }
 
 static void trim_midasi_gobi(MRPH *mrph_p)
@@ -426,10 +402,65 @@ static void trim_midasi_gobi(MRPH *mrph_p)
     for (i = 1; strcmp(Form[mrph_p->katuyou1][i].name, str); i++);
     
     if (compare_end_str(mrph_p->midasi, Form[mrph_p->katuyou1][i].gobi))
-      mrph_p->midasi[strlen(mrph_p->midasi) - 
-		    strlen(Form[mrph_p->katuyou1][i].gobi)]='\0';
+        mrph_p->midasi[strlen(mrph_p->midasi) - 
+                       strlen(Form[mrph_p->katuyou1][i].gobi)]='\0';
     else
-      error_in_trans(ConflictGobi, mrph_p->midasi);
+        error_in_trans(ConflictGobi, mrph_p->midasi);
+}
+
+void change_gobi(U_CHAR *midasi, int katuyou1, int katuyou2)
+{
+    U_CHAR *str = (U_CHAR *)"基本形";
+    int i;
+
+    for (i = 1; strcmp(Form[katuyou1][i].name, str); i++);
+    midasi[strlen(midasi) - strlen(Form[katuyou1][i].gobi)] = '\0';
+
+    if (Form[katuyou1][katuyou2].gobi[0] == '-') {
+        /* すご -eえ -> すげえ */
+        change_kana(midasi + strlen(midasi) - 3, Form[katuyou1][katuyou2].gobi[1]);
+        strcat(midasi, Form[katuyou1][katuyou2].gobi + 2);
+    } else {
+        strcat(midasi, Form[katuyou1][katuyou2].gobi);
+    }
+}
+
+void change_gobi_yomi(U_CHAR *yomi, int katuyou1, int katuyou2)
+{
+    U_CHAR *str = (U_CHAR *)"基本形";
+    int i;
+
+    for (i = 1; strcmp(Form[katuyou1][i].name, str); i++);
+    yomi[strlen(yomi) - strlen(Form[katuyou1][i].gobi_yomi)] = '\0';
+
+    if (Form[katuyou1][katuyou2].gobi_yomi[0] == '-') {
+        /* すご -eえ -> すげえ */
+        change_kana(yomi + strlen(yomi) - 3, Form[katuyou1][katuyou2].gobi_yomi[1]);
+        strcat(yomi, Form[katuyou1][katuyou2].gobi_yomi + 2);
+    } else {
+        strcat(yomi, Form[katuyou1][katuyou2].gobi_yomi);
+    }
+}
+
+void change_kana(U_CHAR *kana, char vowel)
+{
+    /* ご e -> げ */
+    int i, j;
+
+    for (i = 0; Japanese_Hiragana[i][0]; i++) {
+        for (j = 0; j < 5; j++) {
+            if (!strcmp(kana, Japanese_Hiragana[i][j])) {
+                switch(vowel) {
+                case 'a': strcpy(kana, Japanese_Hiragana[i][0]); break;
+                case 'i': strcpy(kana, Japanese_Hiragana[i][1]); break;
+                case 'u': strcpy(kana, Japanese_Hiragana[i][2]); break;
+                case 'e': strcpy(kana, Japanese_Hiragana[i][3]); break;
+                case 'o': strcpy(kana, Japanese_Hiragana[i][4]); break;
+                }
+                return;
+            }
+        }
+    }
 }
 
 /*
@@ -464,15 +495,19 @@ void trans(FILE *fp_in, FILE *fp_out)
     CELL	*cell,*cell1;
     int         keitaiso_num;
     int         keitaiso_p[KEITAISO_NUM_MAX],keitaiso_c[KEITAISO_NUM_MAX];
+    		/* keitaiso_p[], keitaiso_c[]は各連語の構成要素がbufferの何番目から
+                   入っているか．keitaiso_p[]は固定，keitaiso_c[]は組合せ時に利用 */
     int         i,f;
     float	float_weight;
     int 	int_weight;
     MRPH        *mrph_p;
+    MRPH        mrph_t;
     U_CHAR      str_midasi[MIDASI_MAX*10];
+    U_CHAR      str_midasi2[MIDASI_MAX*10];
     U_CHAR      str_yomi[YOMI_MAX*10];
     int         rengo_con_tbl;
 
-/*    fprintf(fp_out, I_FILE_ID);*/
+    /* fprintf(fp_out, I_FILE_ID); */
     
     LineNo = 1;
     while (! s_feof(fp_in)) {
@@ -484,11 +519,15 @@ void trans(FILE *fp_in, FILE *fp_out)
 	if (Atomp(cell)) error_in_trans(NotList, cell);
 	if (!Atomp(car(cell))) error_in_trans(IllegalForm, car(cell));
 	
-	if (get_hinsi_id(_Atom(car(cell))) == atoi(RENGO_ID)) {
-            /* 連語の場合 */
+        /* 連語の場合 */
+	if (get_hinsi_id(_Atom(car(cell))) == RENGO_ID) {
 	    keitaiso_num = mrph_buffer_num = 0;
 	    cell1 = car(cdr(cell));
-	    while (!Null(car(cell1))) {  /* 形態素情報を全て読み込む */
+            /* 要素（形態素）情報を全て読み込む
+               ※ 活用語：末尾以外は活用固定で一つ
+                          末尾は固定の場合は一つ，自由の場合は展開
+            */
+	    while (!Null(car(cell1))) {  
 		keitaiso_p[keitaiso_num] = mrph_buffer_num;
 		_trans(car(cell1) , TRUE);
 		if (++keitaiso_num >= KEITAISO_NUM_MAX)
@@ -513,80 +552,66 @@ void trans(FILE *fp_in, FILE *fp_out)
 	    for (i = 0; i < keitaiso_num; i++) keitaiso_c[i] = keitaiso_p[i];
 	    f = 1;
 	    while (f) {
-		str_midasi[0] = str_yomi[0] = '\0';
+		str_midasi[0] = str_midasi2[0] = str_yomi[0] = '\0';
 		for (i = 0 ; i < keitaiso_num ; i++) {
 		    mrph_p = &mrph_buffer[keitaiso_c[i]];
-		    if (strcmp(mrph_p->midasi , "@")) {
-			strcat(str_midasi , mrph_p->midasi);
-			strcat(str_yomi , mrph_p->yomi);
-		    } /* 語幹なしなら何もつけない */
-		    if (Class[mrph_p->hinsi][mrph_p->bunrui].kt) { /* 活用有 */
-			if (mrph_p->katuyou2 == 0) {
-			    if (i < keitaiso_num-1)
-				error_in_trans(NoKatuyoukei , mrph_p->midasi);
-			} else {
-			    strcat(str_midasi , Form[mrph_p->katuyou1]
-				   [mrph_p->katuyou2].gobi);
-			    strcat(str_yomi ,   Form[mrph_p->katuyou1]
-				   [mrph_p->katuyou2].gobi_yomi);
-			}
-		    }
+                    strcat(str_midasi, mrph_p->midasi);
+                    if (i == (keitaiso_num - 1)) {
+                        strcat(str_midasi2, mrph_p->midasi2);
+                    } else {
+                        strcat(str_midasi2, mrph_p->midasi);
+                    }
+                    strcat(str_yomi, mrph_p->yomi);
 		    if (strlen(str_midasi) > MIDASI_MAX)
 			error_in_trans(LongMidasi, str_midasi);
+		    if (strlen(str_midasi2) > MIDASI_MAX)
+			error_in_trans(LongMidasi, str_midasi2);
 		    if (strlen(str_yomi) > YOMI_MAX)
 			error_in_trans(LongYomi, str_yomi);
 		}
 
-		/* 連語として連接規則が記述されているか調べる */
-		mrph_p = &mrph_buffer[keitaiso_c[keitaiso_num-1]];
-		mrph.katuyou1 = mrph_p->katuyou1;
-		strcpy(mrph.midasi , str_midasi);
-		if (Class[mrph_p->hinsi][mrph_p->bunrui].kt != 0 &&
-		    mrph_p->katuyou2 == 0) {
-		    for (i = 1;
-			 strcmp(Form[mrph_p->katuyou1][i].name,"基本形");i++);
-		    strcat(mrph.midasi , Form[mrph_p->katuyou1][i].gobi);
-		}
-		check_table_for_rengo(&mrph);
+		mrph_t.hinsi = RENGO_ID;
+		mrph_t.bunrui = keitaiso_num;		/* bunruiの場所に要素数 */
+		mrph_t.katuyou1 = mrph_buffer[keitaiso_c[keitaiso_num-1]].katuyou1;
+		mrph_t.katuyou2 = mrph_buffer[keitaiso_c[keitaiso_num-1]].katuyou2;
+		mrph_t.weight = int_weight;
+		strcpy(mrph_t.midasi, str_midasi);
+		strcpy(mrph_t.midasi2, str_midasi2);
+		strcpy(mrph_t.yomi, str_yomi);
+		/* 連語として連接されているか調べる
+                   使うのは katuyou1 と midasi2
+                   連接規則がなければ -1 */
+		check_table_for_rengo(&mrph_t);
 
-		fprintf(fp_out, "%s\t", str_midasi);
-		numeral_encode(fp_out, atoi(RENGO_ID));
-		numeral_encode(fp_out, keitaiso_num);
-		numeral_encode(fp_out, 0);
-		numeral_encode(fp_out, 0);
-		numeral_encode(fp_out, int_weight);
-		numeral_encode2(fp_out, mrph.con_tbl);
-		hiragana_encode(fp_out, str_yomi);
+                /* 出力：連語全体 */
+                output_mrph(fp_out, &mrph_t);
 
-		/* 中身の形態素情報を出力する */
-		for (i = 0 ; i < keitaiso_num ; i++) {
-		    if (!strcmp(mrph_buffer[keitaiso_c[i]].midasi, "@"))
-			fprintf(fp_out, "  ");
-		    else
-			fprintf(fp_out, " %s ",
-				mrph_buffer[keitaiso_c[i]].midasi);
-		    output_mrph(fp_out , &mrph_buffer[keitaiso_c[i]]);
-		}
+                /* 出力：各形態素 */
+		for (i = 0 ; i < keitaiso_num ; i++)
+		    output_mrph(fp_out, &mrph_buffer[keitaiso_c[i]]);
 		fprintf(fp_out, "\n");
 		
-		i = 0;
-		while (1) { /* 次の組み合わせ方で連語を構成する */
+                /* 構成要素の組合せを変更（すべての組合せを作り出す） */
+		i = keitaiso_num - 1;
+		while (1) {
 		    if (++keitaiso_c[i] == keitaiso_p[i+1]) {
 			keitaiso_c[i] = keitaiso_p[i];
-			if (++i == keitaiso_num) {f = 0; break;}
+			if (--i == -1) {f = 0; break;}
 		    } else break;
 		}
 	    }
-	} else {
-            /* 形態素の場合 */
+	} 
+
+        /* 形態素の場合 */
+        else {
 	    mrph_buffer_num = 0;
 	    _trans(cell , FALSE);
 	    for (i = 0 ; i < mrph_buffer_num ; i++) {
-		fprintf(fp_out, "%s\t", mrph_buffer[i].midasi);
-		output_mrph(fp_out , &mrph_buffer[i]);
+		output_mrph(fp_out, &mrph_buffer[i]);
 		fprintf(fp_out, "\n");
 	    }
 	}
+
 	lisp_alloc_pop();
     }
 }
@@ -595,8 +620,9 @@ static void _trans(CELL *cell , int rengo_p)
 {
     CELL   *main_loop, *main_block, *sub_loop, *sub_block;
     MRPH   *mrph_p;
+    MRPH   mrph_t;
 
-    mrph_p = &mrph;
+    mrph_p = &mrph_t;
     init_mrph(mrph_p);
 
     mrph_p->hinsi = get_hinsi_id(_Atom(car(cell)));	/* 形態品詞 */
@@ -628,22 +654,21 @@ static void _trans(CELL *cell , int rengo_p)
 static void __trans(CELL *block, MRPH *mrph_p, int rengo_p)
 {
     CELL 	*loop, *midasi_cell;
+    MRPH 	mrph_t;
     U_CHAR 	*midasi_cp = NULL;
     float	float_weight;
-    int 	int_weight;
-    CELL        *connect_cell;                    /* EDRdic '94.Mar */
+    int 	int_weight, i;
 
     strcpy(mrph_p->yomi, yomi(block))  ;		/* 読み     */
     mrph_p->imi = imi(block);				/* 意味情報 */
     if (Class[mrph_p->hinsi][mrph_p->bunrui].kt) {
 	mrph_p->katuyou1 = katuyou1(block);		/* 活用型   */
-	if (rengo_p) mrph_p->katuyou2 = katuyou2(block , mrph_p->katuyou1);
-	else mrph_p->katuyou2 = 0;	             	/* 活用 */
-    } else
+	mrph_p->katuyou2 =              		/* 活用 */
+            (rengo_p) ? katuyou2(block , mrph_p->katuyou1) : 0;
+    } else {
 	mrph_p->katuyou1 = 0;
-    
-    if (Class[mrph_p->hinsi][mrph_p->bunrui].kt)
-	trim_yomi_gobi(mrph_p);
+        mrph_p->katuyou2 = 0;
+    }
 
     loop = midasi_list(block);				/* 見出し語 */
     while (!Null(midasi_cell = car(loop))) {
@@ -658,51 +683,62 @@ static void __trans(CELL *block, MRPH *mrph_p, int rengo_p)
 	else if (Atomp(car(midasi_cell))) {
 	    midasi_cp = _Atom(car(midasi_cell));
 
-	    if (Null(cdr(midasi_cell)))
+	    if (Null(cdr(midasi_cell))) {
 		mrph_p->weight = MRPH_DEFAULT_WEIGHT;
-	    else if (Atomp(car(cdr(midasi_cell)))) {
+            } else if (Atomp(car(cdr(midasi_cell)))) {
 		if (sscanf((char *)_Atom(car(cdr(midasi_cell))),"%f",
-			   &float_weight) == 0)
+			   &float_weight) == 0) {
 		    error_in_trans(IllegalForm, midasi_cell);
+                }
 		int_weight = (int)(float_weight * MRPH_DEFAULT_WEIGHT + 0.1);
-		if (int_weight < 0 || int_weight > 256)
+		if (int_weight < 0 || int_weight > 256) {
 		    error_in_trans(IllegalWeight, midasi_cell);
+                }
 		mrph_p->weight = (U_CHAR)int_weight;
-	    }
-	    else 
+	    } else {
 		error_in_trans(IllegalForm, midasi_cell);
+            }
 	} else {
 	    error_in_trans(IllegalForm, midasi_cell);	      
 	}  
 
-	if (hankaku_check(midasi_cp)) error_in_trans(HankakuChr, midasi_cp);
+	if (hankaku_check(midasi_cp)) 
+            error_in_trans(HankakuChr, midasi_cp);
 	if (strlen(midasi_cp) > MIDASI_MAX)
 	    error_in_trans(LongMidasi, midasi_cp);
 	strcpy(mrph_p->midasi, midasi_cp);
+	strcpy(mrph_p->midasi2, midasi_cp);
 
-	if ( Null(connect_cell = edrconnect(block)) ){
-            check_table(mrph_p);                            /* 連接情報 */
-        }
-        else {                                        /* for EDRdic '94.Mar */
-            check_edrtable(mrph_p, connect_cell);
-        }
+        /* 連接情報(活用する場合，ここは基本形，後で補正) */
+        check_table(mrph_p);
 
+        /* 活用語 */
 	if (Class[mrph_p->hinsi][mrph_p->bunrui].kt) {
-	    trim_midasi_gobi(mrph_p);
-	    if ( strlen(mrph_p->midasi) )
-		print_mrph(mrph_p);
-	    else {
-		if (rengo_p) {
-		    strcpy(mrph_p->midasi , "@");
-		    strcpy(mrph_p->yomi   , "@");
-		    print_mrph(mrph_p);
-		} else
-		    print_mrph_loop(mrph_p);
-		/* 語幹が無くなる場合は全ての活用形を登録 */
+            /* 活用固定の場合（連語の中，連語の最後の一部） */
+            if (mrph_p->katuyou2 != 0)  {
+                change_gobi(mrph_p->midasi, mrph_p->katuyou1, mrph_p->katuyou2);
+                change_gobi_yomi(mrph_p->yomi, mrph_p->katuyou1, mrph_p->katuyou2);
+                mrph_p->con_tbl += (mrph_p->katuyou2 - 1);
+                print_mrph(mrph_p);
+            }
+            /* 普通は活用を展開 */
+            else {
+                for (i = 1; Form[mrph_p->katuyou1][i].name; i++) {
+                    mrph_t = *mrph_p;
+                    mrph_t.katuyou2 = i;
+                    change_gobi(mrph_t.midasi, mrph_p->katuyou1, i);
+                    change_gobi_yomi(mrph_t.yomi, mrph_p->katuyou1, i);
+                    mrph_t.con_tbl += (i - 1);
+                    /* 「する」の語幹はNULLなので登録しない，「静かだ」の語幹は登録する */
+                    if (strlen(mrph_t.midasi)) print_mrph(&mrph_t);
+                }
 	    }
-	} else
-	    print_mrph(mrph_p);
-	
+	}
+        /* 非活用語 */
+        else {
+            print_mrph(mrph_p);
+	}
+
 	loop = cdr(loop);
     }
 }

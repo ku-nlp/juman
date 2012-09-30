@@ -408,41 +408,7 @@ static void trim_midasi_gobi(MRPH *mrph_p)
         error_in_trans(ConflictGobi, mrph_p->midasi);
 }
 
-void change_gobi(U_CHAR *midasi, int katuyou1, int katuyou2)
-{
-    U_CHAR *str = (U_CHAR *)"基本形";
-    int i;
-
-    for (i = 1; strcmp(Form[katuyou1][i].name, str); i++);
-    midasi[strlen(midasi) - strlen(Form[katuyou1][i].gobi)] = '\0';
-
-    if (Form[katuyou1][katuyou2].gobi[0] == '-') {
-        /* すご -eえ -> すげえ */
-        change_kana(midasi + strlen(midasi) - 3, Form[katuyou1][katuyou2].gobi[1]);
-        strcat(midasi, Form[katuyou1][katuyou2].gobi + 2);
-    } else {
-        strcat(midasi, Form[katuyou1][katuyou2].gobi);
-    }
-}
-
-void change_gobi_yomi(U_CHAR *yomi, int katuyou1, int katuyou2)
-{
-    U_CHAR *str = (U_CHAR *)"基本形";
-    int i;
-
-    for (i = 1; strcmp(Form[katuyou1][i].name, str); i++);
-    yomi[strlen(yomi) - strlen(Form[katuyou1][i].gobi_yomi)] = '\0';
-
-    if (Form[katuyou1][katuyou2].gobi_yomi[0] == '-') {
-        /* すご -eえ -> すげえ */
-        change_kana(yomi + strlen(yomi) - 3, Form[katuyou1][katuyou2].gobi_yomi[1]);
-        strcat(yomi, Form[katuyou1][katuyou2].gobi_yomi + 2);
-    } else {
-        strcat(yomi, Form[katuyou1][katuyou2].gobi_yomi);
-    }
-}
-
-void change_kana(U_CHAR *kana, char vowel)
+static void change_kana(U_CHAR *kana, char vowel)
 {
     /* ご e -> げ */
     int i, j;
@@ -460,6 +426,40 @@ void change_kana(U_CHAR *kana, char vowel)
                 return;
             }
         }
+    }
+}
+
+static void change_gobi(U_CHAR *midasi, int katuyou1, int katuyou2)
+{
+    U_CHAR *str = (U_CHAR *)"基本形";
+    int i;
+
+    for (i = 1; strcmp(Form[katuyou1][i].name, str); i++);
+    midasi[strlen(midasi) - strlen(Form[katuyou1][i].gobi)] = '\0';
+
+    if (Form[katuyou1][katuyou2].gobi[0] == '-') {
+        /* すご -eえ -> すげえ */
+        change_kana(midasi + strlen(midasi) - 3, Form[katuyou1][katuyou2].gobi[1]);
+        strcat(midasi, Form[katuyou1][katuyou2].gobi + 2);
+    } else {
+        strcat(midasi, Form[katuyou1][katuyou2].gobi);
+    }
+}
+
+static void change_gobi_yomi(U_CHAR *yomi, int katuyou1, int katuyou2)
+{
+    U_CHAR *str = (U_CHAR *)"基本形";
+    int i;
+
+    for (i = 1; strcmp(Form[katuyou1][i].name, str); i++);
+    yomi[strlen(yomi) - strlen(Form[katuyou1][i].gobi_yomi)] = '\0';
+
+    if (Form[katuyou1][katuyou2].gobi_yomi[0] == '-') {
+        /* すご -eえ -> すげえ */
+        change_kana(yomi + strlen(yomi) - 3, Form[katuyou1][katuyou2].gobi_yomi[1]);
+        strcat(yomi, Form[katuyou1][katuyou2].gobi_yomi + 2);
+    } else {
+        strcat(yomi, Form[katuyou1][katuyou2].gobi_yomi);
     }
 }
 
@@ -578,10 +578,11 @@ void trans(FILE *fp_in, FILE *fp_out)
 		strcpy(mrph_t.midasi, str_midasi);
 		strcpy(mrph_t.midasi2, str_midasi2);
 		strcpy(mrph_t.yomi, str_yomi);
-		/* 連語として連接されているか調べる
+		/* 連語として連接規則があるかどうか調べる
                    使うのは katuyou1 と midasi2
                    連接規則がなければ -1 */
 		check_table_for_rengo(&mrph_t);
+                mrph_t.imi = NIL;	/* 連語は意味情報なし */
 
                 /* 出力：連語全体 */
                 output_mrph(fp_out, &mrph_t);

@@ -385,6 +385,18 @@ typedef struct _connect_cost {
     char opt;
 } CONNECT_COST;
 
+#define MAX_NODE_POS_NUM 10
+typedef struct _char_node {
+    struct _char_node *next;
+    char chr[7];
+    char type;
+    size_t da_node_pos[MAX_NODE_POS_NUM];
+    char node_type[MAX_NODE_POS_NUM];
+    char deleted_bytes[MAX_NODE_POS_NUM];
+    char *p_buffer[MAX_NODE_POS_NUM];
+    size_t da_node_pos_num;
+} CHAR_NODE;
+
 /*
 ------------------------------------------------------------------------------
  additional type definition  written by K. Yanagi  >>>changed by T.Nakamura<<<

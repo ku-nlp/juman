@@ -96,6 +96,7 @@
 
 #include	<juman.h>
 #include	<const.h>
+#include	"darts_for_juman.h"
 
 /*
 ------------------------------------------------------------------------------
@@ -150,7 +151,7 @@ extern FILE		*Jumanrc_Fileptr;
 int              	LineNo;
 int     		LineNoForError;       /* k.n */
 
-char			pat_buffer[50000];
+char			pat_buffer[500000];
 
 /*
 ------------------------------------------------------------------------------
@@ -174,6 +175,11 @@ int		LongSoundDel_Opt;
 U_CHAR	        String[LENMAX];
 U_CHAR	        NormalizedString[LENMAX];
 U_CHAR	        ProlongDeletedString[LENMAX];
+int		CharLatticeUsedFlag;
+CHAR_NODE	CharLattice[MAX_PATHES];
+CHAR_NODE	CharRootNode;
+size_t		CharNum;
+int		MostDistantPosition;
 int             String2PDS[LENMAX];
 int             PDS2String[LENMAX];
 int		Unkword_Pat_Num;
@@ -226,10 +232,9 @@ int	juman_close(void);
 void	realloc_mrph_buffer(void);
 void	realloc_process_buffer(void);
 void    read_class_cost(CELL *cell); /* k.n */
-static BOOL    katuyou_process(int position, int *k, MRPH *mrph, int *length, char opt);
-int     search_all(int position);
-int     take_data(int pos, char **pbuf, char opt);
-char *	_take_data(char *s, MRPH *mrph, char opt);
+int     search_all(int position, int count);
+int     take_data(int pos, int pos_in_char, char **pbuf, char opt);
+char *	_take_data(char *s, MRPH *mrph, int deleted_bytes, char *opt);
 int 	numeral_decode(char **str);
 void 	string_decode(char **str, char *out);
 void    check_rc(void);
@@ -393,6 +398,7 @@ BOOL juman_init_rc(FILE *fp)
 		    cell2 = cdr(cell2);
 		      
 		    /* 辞書のオープン */
+                    push_darts_file(dic_file_name);
 		    sprintf(full_file_name, "%s%s", dic_file_name, PATFILE);
 		    strcat(dic_file_name, DICFILE);
 		    DicFile.dic[num] = my_fopen(dic_file_name , "r");
@@ -401,8 +407,8 @@ BOOL juman_init_rc(FILE *fp)
                         num--;
                         continue;
                     }
-		    pat_init_tree_top(&DicFile.tree_top[num]);
-		    com_l(full_file_name, &DicFile.tree_top[num]);
+		    /* pat_init_tree_top(&DicFile.tree_top[num]);
+                       com_l(full_file_name, &DicFile.tree_top[num]); */
 		}
 	    }
 	    DicFile.number = num;
@@ -521,6 +527,8 @@ BOOL juman_close(void)
   for(i = 0 ; i < DicFile.number ; i++)
     fclose(DicFile.dic[i]);
 
+  close_darts();
+
   free(rensetu_tbl);
   free(rensetu_mtr);
 
@@ -636,76 +644,195 @@ static BOOL katuyou_process(int position, int *k, MRPH *mrph, int *length, char 
 
 /*
 ------------------------------------------------------------------------------
+	PROCEDURE: <register_nodes_by_deletion>
+------------------------------------------------------------------------------
+*/
+void register_nodes_by_deletion(char *src_buf, char *pat_buf, char node_type, char deleted_bytes) {
+    int length;
+    char *start_buf = src_buf, *current_pat_buf;
+    deleted_bytes++;
+
+    while (*src_buf) {
+        if (*src_buf == '\n') {
+            current_pat_buf = pat_buf + strlen(pat_buf); /* 次のノードの最初 */
+            length = src_buf - start_buf + 1;
+            strncat(pat_buf, start_buf, length); /* 次のノードをコピー */
+            *current_pat_buf = node_type + PAT_BUF_INFO_BASE; /* node_typeの書き換え */
+            *(current_pat_buf + 1) = deleted_bytes + PAT_BUF_INFO_BASE; /* 削除バイト数 (取り出すときに1引く必要がある) */
+            *(current_pat_buf + length) = '\0';
+            start_buf = src_buf + 1;
+        }
+        src_buf++;
+    }
+}
+
+/*
+------------------------------------------------------------------------------
+	PROCEDURE: <da_search_one_step>
+------------------------------------------------------------------------------
+*/
+void da_search_one_step(int dic_no, int left_position, int right_position, char *pat_buf) {
+    int i, status;
+    size_t current_da_node_pos;
+    CHAR_NODE *left_char_node, *right_char_node;
+    char *current_pat_buf, current_node_type;
+
+#ifdef DEBUG
+    printf(";; S from node=%d, chr=%d, most_distant=%d\n", left_position, right_position, MostDistantPosition);
+#endif
+
+    if (left_position < 0) {
+        left_char_node = &CharRootNode;
+    }
+    else
+        left_char_node = &(CharLattice[left_position]);
+
+    while (left_char_node) {
+        for (i = 0; i < left_char_node->da_node_pos_num; i++) { /* 現在位置のtrieのノード群から */
+            right_char_node = &(CharLattice[right_position]);
+            while (right_char_node) { /* 次の文字の集合 */
+                if (right_char_node->chr[0] == '\0') { /* 削除ノード */
+                    if (left_position >= 0) {
+                        // printf(";; D from node=%d, chr=%d\n", left_position, right_position + 1);
+                        right_char_node->node_type[right_char_node->da_node_pos_num] = left_char_node->node_type[i] | right_char_node->type;
+                        right_char_node->deleted_bytes[right_char_node->da_node_pos_num] = left_char_node->deleted_bytes[i] + strlen(CharLattice[right_position].chr);
+                        if (left_char_node->p_buffer[i]) {
+                            if (right_char_node->p_buffer[right_char_node->da_node_pos_num] == NULL) {
+                                right_char_node->p_buffer[right_char_node->da_node_pos_num] = (char *)malloc(50000);
+                                right_char_node->p_buffer[right_char_node->da_node_pos_num][0] = '\0';
+                            }
+                            strcat(right_char_node->p_buffer[right_char_node->da_node_pos_num], left_char_node->p_buffer[i]);
+
+                            /* 各ノードのp_bufferの先頭(node_type)は未更新 -> pat_bufに入れるときに書き換える */
+                            register_nodes_by_deletion(left_char_node->p_buffer[i], pat_buf, 
+                                                       right_char_node->node_type[right_char_node->da_node_pos_num], 
+                                                       right_char_node->deleted_bytes[right_char_node->da_node_pos_num]);
+#ifdef DEBUG
+                            printf("*** D p_buf=%d p_buffer=%d at %d,", strlen(pat_buf), strlen(right_char_node->p_buffer[right_char_node->da_node_pos_num]), right_position);
+                            int j;
+                            for (j = 0; j < right_char_node->da_node_pos_num; j++)
+                                printf("%d,", right_char_node->da_node_pos[j]);
+                            printf("%d\n", left_char_node->da_node_pos[i]);
+#endif
+                        }
+                        right_char_node->da_node_pos[right_char_node->da_node_pos_num++] = left_char_node->da_node_pos[i];
+                        if (MostDistantPosition < right_position)
+                            MostDistantPosition = right_position;
+                    }
+                }
+                else { /* 通常ノード */
+                    if (!(right_char_node->type & OPT_DEVOICE || right_char_node->type & OPT_PROLONG_REPLACE) || 
+                        (right_char_node->type & OPT_DEVOICE && left_position < 0) || /* 連濁ノードは先頭である必要がある */
+                        (right_char_node->type & OPT_PROLONG_REPLACE && left_position >= 0)) { /* 長音置換ノードは先頭以外である必要がある */
+                        current_node_type = left_char_node->node_type[i] | right_char_node->type;
+                        current_da_node_pos = left_char_node->da_node_pos[i];
+#ifdef DEBUG
+                        printf(";; T <%s> from %d ", right_char_node->chr, current_da_node_pos);
+#endif
+                        current_pat_buf = pat_buf + strlen(pat_buf);
+                        status = da_traverse(dic_no, right_char_node->chr, &current_da_node_pos, 0, strlen(right_char_node->chr), 
+                                             current_node_type, left_char_node->deleted_bytes[i], pat_buf);
+                        if (status > 0) { /* マッチしたら結果に登録するとともに、次回のノード開始位置とする */
+                            if (right_char_node->p_buffer[right_char_node->da_node_pos_num] == NULL) {
+                                right_char_node->p_buffer[right_char_node->da_node_pos_num] = (char *)malloc(50000);
+                                right_char_node->p_buffer[right_char_node->da_node_pos_num][0] = '\0';
+                            }
+                            strcat(right_char_node->p_buffer[right_char_node->da_node_pos_num], current_pat_buf);
+#ifdef DEBUG
+                            printf("OK (position=%d, value exists(p_buffer=%d).)", current_da_node_pos, strlen(right_char_node->p_buffer[right_char_node->da_node_pos_num]));
+#endif
+                        }
+                        else if (status == -1) {
+#ifdef DEBUG
+                            printf("OK (position=%d, cont..)", current_da_node_pos);
+#endif
+                            ;
+                        }
+                        if (status > 0 || status == -1) { /* マッチした場合と、ここではマッチしていないが、続きがある場合 */
+                            right_char_node->node_type[right_char_node->da_node_pos_num] = current_node_type; /* ノードタイプの伝播 */
+                            right_char_node->deleted_bytes[right_char_node->da_node_pos_num] = left_char_node->deleted_bytes[i]; /* 削除文字数の伝播 */
+                            right_char_node->da_node_pos[right_char_node->da_node_pos_num++] = current_da_node_pos;
+                            if (MostDistantPosition < right_position)
+                                MostDistantPosition = right_position;
+                        }
+#ifdef DEBUG
+                        printf("\n");
+#endif
+                    }
+                }
+                if (right_char_node->da_node_pos_num >= MAX_NODE_POS_NUM) {
+#ifdef DEBUG
+                    fprintf(stderr, ";; exceeds MAX_NODE_POS_NUM in %s\n", String);
+#endif
+                    right_char_node->da_node_pos_num = MAX_NODE_POS_NUM - 1;
+                }
+                right_char_node = right_char_node->next;
+            }
+        }
+        left_char_node = left_char_node->next;
+    }
+}
+
+/*
+------------------------------------------------------------------------------
+	PROCEDURE: <da_search_from_position>
+------------------------------------------------------------------------------
+*/
+void da_search_from_position(int dic_no, int position, char *pat_buf)
+{
+    int i, j;
+    CHAR_NODE *char_node;
+
+#ifdef DEBUG
+    printf(";; SS from start_position=%d\n", position);
+#endif
+
+    /* initialization */
+    MostDistantPosition = position - 1;
+    for (i = position; i < CharNum; i++) {
+        char_node = &(CharLattice[i]);
+        while (char_node) {
+            for (j = 0; j < char_node->da_node_pos_num; j++) {
+                if (char_node->p_buffer[j])
+                    free(char_node->p_buffer[j]);
+                char_node->p_buffer[j] = NULL;
+            }
+            char_node->da_node_pos_num = 0;
+            char_node = char_node->next;
+        }
+    }
+
+    /* search double array by traverse */
+    da_search_one_step(dic_no, -1, position, pat_buf); // the second -1 means the search from the root of double array
+    for (i = position + 1; i < CharNum; i++) {
+        if (MostDistantPosition < i - 1)
+            break;
+        da_search_one_step(dic_no, i - 1, i, pat_buf);
+    }
+}
+
+/*
+------------------------------------------------------------------------------
 	PROCEDURE: <search_all>       >>> changed by T.Nakamura <<<
 ------------------------------------------------------------------------------
 */
-int search_all(int position)
+int search_all(int position, int position_in_char)
 {
-    MRPH        mrph;
     int         dic_no;
-    int         jmp ;
-    int		i, j;
-    int		deleted_length, del_or_rep_position = 0;
-    int         code;
     char	*pbuf;
-    U_CHAR      buf[LENMAX];
 
     for(dic_no = 0 ; dic_no < DicFile.number ; dic_no++) {
 	changeDictionary(dic_no);
 
-	/* パトリシア木から形態素を検索 */
+	/* TRIE(double array)から形態素を検索 */
 	pat_buffer[0] = '\0';
-	pat_search(db, String + position, &DicFile.tree_top[dic_no], pat_buffer);
+        if (CharLatticeUsedFlag) /* traverse on character lattice (if input is a lattice) */
+            da_search_from_position(dic_no, position_in_char, pat_buffer);
+        else /* normal search of double array (for linear input) */
+            da_search(dic_no, String + position, pat_buffer);
 	pbuf = pat_buffer;
 	while (*pbuf != '\0') {
-	    if (take_data(position, &pbuf, 0) == FALSE) return FALSE;
-	}
-
-	if ((LongSoundRep_Opt || LowercaseRep_Opt) && /* 非正規表現用の検索(小書き文字・長音記号化) */
-	    strncmp(String + position, NormalizedString + position, NORMALIZED_LENGTH * BYTES4CHAR) &&
-	    strncmp(String + position, DEF_PROLONG_SYMBOL1, BYTES4CHAR) &&
-	    strncmp(String + position, DEF_PROLONG_SYMBOL2, BYTES4CHAR)) {
-	    pat_buffer[0] = '\0';
-	    pat_search(db, NormalizedString + position, &DicFile.tree_top[dic_no], pat_buffer);
-	    pbuf = pat_buffer;
-	    while (*pbuf != '\0') {
-		if (take_data(position, &pbuf, OPT_NORMALIZE) == FALSE) return FALSE;
-	    }
-	}
-
-	if ((LongSoundDel_Opt || LowercaseDel_Opt) && /* 小書き文字・長音記号挿入用の検索 */
-	    String2PDS[position] >= 0 && 
-	    strncmp(String + position, ProlongDeletedString + String2PDS[position], NORMALIZED_LENGTH * BYTES4CHAR)) {
-	    pat_buffer[0] = '\0';
-	    pat_search(db, ProlongDeletedString + String2PDS[position], &DicFile.tree_top[dic_no], pat_buffer);
-	    pbuf = pat_buffer;
-	    while (*pbuf != '\0') {
-		if (take_data(position, &pbuf, OPT_PROLONG_DEL) == FALSE) return FALSE;
-	    }
-	}
-
-	if (Rendaku_Opt) { /* 濁音化した形態素の検索 */
-	    code = check_code(String, position);
-	    if (position >= BYTES4CHAR && 
-		(code == HIRAGANA || 
-		 code == KATAKANA && 
-		 check_code(String, position - BYTES4CHAR) != KATAKANA &&
-		 check_code(String, position - BYTES4CHAR) != CHOON)) {
-		pat_buffer[0] = '\0';
-
-		for (i = VOICED_CONSONANT_S; i < VOICED_CONSONANT_E; i++) {
-		    if (!strncmp(String + position, dakuon[i], BYTES4CHAR)) {
-			strncpy(String + position, seion[i], BYTES4CHAR); /* 清音化 */
-			pat_search(db, String + position, &DicFile.tree_top[dic_no], pat_buffer);
-			strncpy(String + position, dakuon[i], BYTES4CHAR); /* 清音化した音を元に戻す */
-			pbuf = pat_buffer;
-			while (*pbuf != '\0') {
-			    if (take_data(position, &pbuf, OPT_DEVOICE) == FALSE) return FALSE;
-			}
-			break;
-		    }
-		}
-	    }
+	    if (take_data(position, position_in_char, &pbuf, 0) == FALSE) return FALSE;
 	}
     }
 
@@ -841,7 +968,7 @@ int recognize_onomatopoeia(int pos)
         PROCEDURE: <take_data>                  >>> Changed by yamaji <<<
 ------------------------------------------------------------------------------
 */
-int take_data(int pos, char **pbuf, char opt)
+int take_data(int pos, int pos_in_char, char **pbuf, char opt)
 {
     unsigned char    *s;
     int     i, k, f, component_num;
@@ -849,10 +976,12 @@ int take_data(int pos, char **pbuf, char opt)
     MRPH    mrph, c_mrph_buf[RENGO_BUFSIZE];
     MRPH    *c_mrph_p;
     int	    con_tbl_bak, pnum_bak, c_weight;
-    int	    new_mrph_num;
+    int	    new_mrph_num, deleted_bytes;
 
     s = *pbuf;
-    s = _take_data(s, &mrph, opt);
+    opt = *s++ - PAT_BUF_INFO_BASE;
+    deleted_bytes = *s++ - 1 - PAT_BUF_INFO_BASE;
+    s = _take_data(s, &mrph, deleted_bytes, &opt);
 
     /* 連語の場合 */
     if (mrph.hinsi == RENGO_ID) {
@@ -864,8 +993,8 @@ int take_data(int pos, char **pbuf, char opt)
 
         /* まず連語全体をバッファに読み込む */
 	for (i = 0; i < component_num; i++) { 
-	    s = _take_data(s, &c_mrph_buf[i], opt);
-	    if (opt) c_mrph_buf[i].weight = STOP_MRPH_WEIGHT;
+	    s = _take_data(s, &c_mrph_buf[i], 0, &opt);
+	    if (opt != OPT_NORMAL) c_mrph_buf[i].weight = STOP_MRPH_WEIGHT;
 	}
 
         /* 前と連接すれば，順に各要素をm_buffer,p_bufferに入れる
@@ -967,17 +1096,25 @@ int take_data(int pos, char **pbuf, char opt)
 	    return TRUE;
 	}
 
-        if (!(opt & OPT_NORMALIZE || opt & OPT_PROLONG_DEL) ||
-            /* 正規化ノードは2字以上("ヵ"は例外)、かつ、length内に非正規表記を含む場合のみ作成 */
-            (opt & OPT_NORMALIZE) && 
-            (strlen(mrph.midasi) > BYTES4CHAR || !strncmp(mrph.midasi, uppercase[NORMALIZED_LOWERCASE_KA], BYTES4CHAR)) &&
-            strncmp(String + pos, NormalizedString + pos, strlen(mrph.midasi)) ||
-            /* 長音削除ノードは文字長が異なる場合のみ作成 */
-            (opt & OPT_PROLONG_DEL) && mrph.length != PDS2String[String2PDS[pos] + mrph.length] - pos) {
+        /* 連濁に関する制限 */
+        if (opt & OPT_DEVOICE) {
+            int code = check_code(String, pos);
+            if (/* 連濁は文の先頭は不可 */
+                pos < BYTES4CHAR || 
+                /* カタカナ複合語の連濁は認めない */
+                code == KATAKANA &&
+                (check_code(String, pos - BYTES4CHAR) == KATAKANA ||
+                 check_code(String, pos - BYTES4CHAR) == CHOON)) {
+                s++; /* 項目間の\n */
+                *pbuf = s;
+                return TRUE;
+            }
+        }
 
+        if (!(opt & OPT_NORMALIZE) ||
+            /* 正規化ノードは2字以上("ヵ"は例外)の場合のみ作成 */
+            (strlen(mrph.midasi) > BYTES4CHAR || !strncmp(mrph.midasi, uppercase[NORMALIZED_LOWERCASE_KA], BYTES4CHAR))) {
             m_buffer[m_buffer_num] = mrph;
-            if (opt & OPT_PROLONG_DEL) 
-                m_buffer[m_buffer_num].length = PDS2String[String2PDS[pos] + mrph.length] - pos;		
             check_connect(pos, m_buffer_num, opt);
             new_mrph_num = m_buffer_num;
             if (++m_buffer_num == mrph_buffer_max)
@@ -1004,7 +1141,7 @@ int take_data(int pos, char **pbuf, char opt)
 ------------------------------------------------------------------------------
 */
 
-char *_take_data(char *s, MRPH *mrph, char opt)
+char *_take_data(char *s, MRPH *mrph, int deleted_bytes, char *opt)
 {
     int		i, imi_length;
     char	c, *rep;
@@ -1029,67 +1166,19 @@ char *_take_data(char *s, MRPH *mrph, char opt)
     } else {
         strcpy(mrph->imis, NILSYMBOL);
     }
-    
 
-    if (opt & OPT_DEVOICE) {
-
-	/* 濁音化の処理はしない形態素の重みをSTOP_MRPH_WEIGHTにする */
-	if (mrph->katuyou2 || /* 語幹のない語 */
- 	    mrph->length == BYTES4CHAR && !Class[mrph->hinsi][mrph->bunrui].kt || /* 1文字の形態素 */
-	    !(rep = strstr(mrph->imis, DEF_RENDAKU_REP)) || 
-	    *(rep+BYTES4CHAR*4) == ':' && check_code(rep, BYTES4CHAR*4+1) == KATAKANA) { /* 非和語 */
-	    mrph->weight = STOP_MRPH_WEIGHT;
-	}
-	else {
-	    if (mrph->hinsi == rendaku_hinsi1) { /* 動詞 */
-		mrph->weight += strncmp(mrph->midasi, DEF_RENDAKU_MIDASI_KA, BYTES4CHAR) ? VERB_VOICED_COST : VERB_GA_VOICED_COST;
-	    }
-	    else if (mrph->hinsi == rendaku_hinsi2 && (mrph->bunrui == rendaku_bunrui2_1 || mrph->bunrui == rendaku_bunrui2_2)) { /* 名詞 */
-		mrph->weight += strncmp(mrph->midasi, DEF_RENDAKU_MIDASI_KA, BYTES4CHAR) ? NOUN_VOICED_COST : NOUN_GA_VOICED_COST;
-	    }
-	    else if (mrph->hinsi == rendaku_hinsi3) { /* 形容詞 */
-		mrph->weight += ADJECTIVE_VOICED_COST;
-	    }
-	    /* その他の品詞でも濁音可という意味素があれば解析できるようにする */
-	    else if (strstr(mrph->imis, DEF_RENDAKU_OK_FEATURE)) {
-		mrph->weight += OTHER_VOICED_COST;
-	    }
-	    else {
-		mrph->weight = STOP_MRPH_WEIGHT;
-	    }
-	}
-
-	/* ライマンの法則に該当し濁音可という意味情報のない形態素の連濁は認めない */
-	if (mrph->weight != STOP_MRPH_WEIGHT) {
-	    for (i = VOICED_CONSONANT_S; i < VOICED_CONSONANT_E; i++) {
-		if (strstr(mrph->midasi + BYTES4CHAR, dakuon[i])) break;
-	    }
-	    if (i < VOICED_CONSONANT_E && !strstr(mrph->imis, DEF_RENDAKU_OK_FEATURE)) 
-		mrph->weight = STOP_MRPH_WEIGHT;
-	}
-
-	/* 読み、意味情報を修正 */
-	if (mrph->weight != STOP_MRPH_WEIGHT) {
-	    for (i = VOICED_CONSONANT_S; i < VOICED_CONSONANT_E; i++) {
-		if (!strncmp(mrph->yomi, seion[i], BYTES4CHAR)) {
-		    strncpy(mrph->yomi, dakuon[(i/2)*2], BYTES4CHAR);
-		    break;
-		}
-	    }
-	    
-	    if (imi_length == 0) {
-		strcpy(mrph->imis, "\"");
-	    }
-	    else {
-		mrph->imis[strlen(mrph->imis) - 1] = ' ';
-	    }
-	    strcat(mrph->imis, DEF_RENDAKU_IMIS);
-	    strcat(mrph->imis, "\"");
-	}
+    /* 連濁処理 */
+    if (imi_length > 0 && mrph->imis[imi_length - 2] == 'D') {
+        mrph->imis[imi_length - 2] = '"'; /* 末尾のDを削除 */
+        mrph->imis[imi_length - 1] = '\0';
+        if (*opt != OPT_NORMAL)
+            mrph->weight = STOP_MRPH_WEIGHT;
+        else
+            *opt = OPT_DEVOICE;
     }
 
     /* 正規化したものにペナルティ(小書き文字・長音記号置換された表現用) */
-    if (opt & OPT_NORMALIZE) {
+    if ((*opt & OPT_NORMALIZE) && mrph->weight != STOP_MRPH_WEIGHT) {
 	mrph->weight += NORMALIZED_COST;
 	if (imi_length == 0) {
 	    strcpy(mrph->imis, "\"");
@@ -1099,10 +1188,11 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 	}
 	strcat(mrph->imis, DEF_ABNORMAL_IMIS);
 	strcat(mrph->imis, "\"");
+        imi_length = strlen(mrph->imis);
     }
 
     /* 長音挿入したものにペナルティ */
-    if (opt & OPT_PROLONG_DEL) {
+    if ((*opt & OPT_PROLONG_DEL) && mrph->weight != STOP_MRPH_WEIGHT) {
 	/* 動詞、名詞、接頭辞、格助詞、1文字の接続助詞・副助詞は長音削除を認めない */
 	if ((mrph->hinsi == prolong_ng_hinsi1 || /* 動詞 */
 	     mrph->hinsi == prolong_ng_hinsi2 || /* 名詞 */
@@ -1129,6 +1219,7 @@ char *_take_data(char *s, MRPH *mrph, char opt)
 	}
     }
 
+    mrph->length += deleted_bytes; /* 削除分を足す */
     return(s);
 }
 
@@ -2277,6 +2368,21 @@ int check_connect(int pos, int m_num, char opt)
     return TRUE;
 }
 
+CHAR_NODE *make_new_node(CHAR_NODE **current_char_node_ptr, char *chr, int type)
+{
+    int i;
+    CHAR_NODE *new_char_node = (CHAR_NODE *)malloc(sizeof(CHAR_NODE));
+    strcpy(new_char_node->chr, chr);
+    new_char_node->type = type;
+    new_char_node->da_node_pos_num = 0;
+    for (i = 0; i < MAX_NODE_POS_NUM; i++)
+        new_char_node->p_buffer[i] = NULL;
+    (*current_char_node_ptr)->next = new_char_node;
+    *current_char_node_ptr = new_char_node;
+    CharLatticeUsedFlag = TRUE;
+    return new_char_node;
+}
+
 /*
 ------------------------------------------------------------------------------
   PROCEDURE: <juman_sent> 一文を形態素解析する    by T.Utsuro
@@ -2289,7 +2395,9 @@ int juman_sent(void)
     int        pre_m_buffer_num;
     int        pre_p_buffer_num;
     int        pos, next_pos = 0, deleted_num;
-    int	       p_start = 0;
+    int	       p_start = 0, count;
+    int        code;
+    CHAR_NODE  *current_char_node, *new_char_node;
 
     if (mrph_buffer_max == 0) {
 	m_buffer = (MRPH *)my_alloc(sizeof(MRPH)*BUFFER_BLOCK_SIZE);
@@ -2330,19 +2438,34 @@ int juman_sent(void)
 	deleted_num = 0;
 	for (pos = 0; pos < length; pos++) String2PDS[pos] = -2;
     }
+
+    /* initialization for root node (starting node for looking up double array) */
+    CharRootNode.next = NULL;
+    CharRootNode.da_node_pos[0] = 0;
+    CharRootNode.deleted_bytes[0] = 0;
+    CharRootNode.p_buffer[0] = NULL;
+    CharRootNode.da_node_pos_num = 1;
+
+    CharLatticeUsedFlag = FALSE;
+    CharNum = 0;
     for (pos = 0; pos < length; pos+=next_pos) {
+        current_char_node = &CharLattice[CharNum];
 	if (String[pos]&0x80) { /* 全角の場合 */
 	    /* 長音記号による置換 */
 	    if (LongSoundRep_Opt &&
 		(!strncmp(String + pos, DEF_PROLONG_SYMBOL1, BYTES4CHAR) ||
 		 !strncmp(String + pos, DEF_PROLONG_SYMBOL2, BYTES4CHAR) && 
 		 (!String[pos + BYTES4CHAR] || check_code(String, pos + BYTES4CHAR) == KIGOU || check_code(String, pos + BYTES4CHAR) == HIRAGANA)) &&
-		(pos - BYTES4CHAR >= 0 && /* 2文字目以降、かつ、次の文字が"ー","〜"でない */
-		 strncmp(String + pos + BYTES4CHAR, DEF_PROLONG_SYMBOL1, BYTES4CHAR) &&
-		 strncmp(String + pos + BYTES4CHAR, DEF_PROLONG_SYMBOL2, BYTES4CHAR))) {
+                (pos >= BYTES4CHAR) /* 2文字目以降 */
+		/* 次の文字が"ー","〜"でない */
+		/*  strncmp(String + pos + BYTES4CHAR, DEF_PROLONG_SYMBOL1, BYTES4CHAR) && */
+		/*  strncmp(String + pos + BYTES4CHAR, DEF_PROLONG_SYMBOL2, BYTES4CHAR)) */
+                ) {
 		for (i = 0; *pre_prolonged[i]; i++) {
 		    if (!strncmp(String + pos - BYTES4CHAR, pre_prolonged[i], BYTES4CHAR)) {
 			strncpy(NormalizedString + pos, prolonged2chr[i], BYTES4CHAR);
+                        new_char_node = make_new_node(&current_char_node, prolonged2chr[i], OPT_NORMALIZE | OPT_PROLONG_REPLACE);
+                        break;
 		    }
 		}
 	    }
@@ -2353,9 +2476,28 @@ int juman_sent(void)
 			for (j = 0; j < BYTES4CHAR; j++) {
 			    NormalizedString[pos+j] = uppercase[i][j];
 			}
+                        new_char_node = make_new_node(&current_char_node, uppercase[i], OPT_NORMALIZE);
+                        break;
 		    }
 		}
 	    }
+
+            /* 濁音化した文字の場合に、清音も文字を追加 (辞書展開によりオフに) */
+            if (Rendaku_Opt) {
+                code = check_code(String, pos);
+                if (pos >= BYTES4CHAR && 
+                    (code == HIRAGANA || 
+                     (code == KATAKANA && 
+                      check_code(String, pos - BYTES4CHAR) != KATAKANA &&
+                      check_code(String, pos - BYTES4CHAR) != CHOON))) {
+                    for (i = VOICED_CONSONANT_S; i < VOICED_CONSONANT_E; i++) {
+                        if (!strncmp(String + pos, dakuon[i], BYTES4CHAR)) {
+                            new_char_node = make_new_node(&current_char_node, seion[i], OPT_DEVOICE);
+                            break;
+                        }
+                    }
+                }
+            }
 #ifdef IO_ENCODING_SJIS
             next_pos = 2;
 #else
@@ -2364,6 +2506,9 @@ int juman_sent(void)
 	} else {
 	    next_pos = 1;
 	}
+        strncpy(CharLattice[CharNum].chr, String + pos, next_pos);
+        CharLattice[CharNum].chr[next_pos] = '\0';
+        CharLattice[CharNum].type = OPT_NORMAL;
 
 	/* 長音挿入 */
 	if ((LongSoundDel_Opt || LowercaseDel_Opt) && next_pos == BYTES4CHAR) {
@@ -2381,6 +2526,7 @@ int juman_sent(void)
 		 (post_code == 0 || post_code == KIGOU))) {
 		deleted_num++;
 		String2PDS[pos] = -1;
+                new_char_node = make_new_node(&current_char_node, "", OPT_PROLONG_DEL);
 	    }
 	    else if (LowercaseDel_Opt && pre_code > 0) {
 		/* 小書き文字による長音化 */
@@ -2394,6 +2540,7 @@ int juman_sent(void)
 			    String2PDS[pos - BYTES4CHAR] == -1 && !strncmp(String + pos - BYTES4CHAR, String + pos, BYTES4CHAR)) {
 			    deleted_num++;
 			    String2PDS[pos] = -1;
+                            new_char_node = make_new_node(&current_char_node, "", OPT_PROLONG_DEL);
 			    break;
 			}
 		    }
@@ -2407,12 +2554,16 @@ int juman_sent(void)
 		PDS2String[pos - deleted_num * BYTES4CHAR] = pos; /* 作成した文字列からStringへのマップ */
 	    }
 	}
+        current_char_node->next = NULL;
+        CharNum++;
     }
+
     if (LongSoundDel_Opt || LowercaseDel_Opt) {
 	String2PDS[pos] = pos - deleted_num * BYTES4CHAR; /* Stringから作成した文字列へのマップ */
 	PDS2String[pos - deleted_num * BYTES4CHAR] = pos; /* 作成した文字列からStringへのマップ */
     }
 
+    count = 0;
     for (pos = 0; pos < length; pos+=next_pos) {
 
 	p_start = pos_match_process(pos, p_start);
@@ -2422,7 +2573,7 @@ int juman_sent(void)
 	    pre_p_buffer_num = p_buffer_num;
 	
 	    if (String[pos]&0x80) { /* 全角の場合，辞書をひく */
-		if (search_all(pos) == FALSE) return FALSE;
+		if (search_all(pos, count) == FALSE) return FALSE;
 	    }
 
 	    if (undef_word(pos) == FALSE) return FALSE;
@@ -2433,6 +2584,7 @@ int juman_sent(void)
 #else
 	next_pos = utf8_bytes(String + pos);
 #endif
+        count++;
     }
     
     /* 文末処理 */

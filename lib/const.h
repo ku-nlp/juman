@@ -13,9 +13,11 @@
 
 /* 定数 */
 #define STOP_MRPH_WEIGHT       255 /* このWeigthのときは形態素候補から除く */
-#define OPT_NORMALIZE          1
-#define OPT_DEVOICE            2
-#define OPT_PROLONG_DEL        4
+#define OPT_NORMAL             1
+#define OPT_NORMALIZE          2
+#define OPT_DEVOICE            4
+#define OPT_PROLONG_DEL        8
+#define OPT_PROLONG_REPLACE    16
 #define NORMALIZED_LENGTH      8   /* 非正規表記の処理で考慮する最大形態素長 */
 
 /* 連濁処理等で使用する品詞や表記情報 */

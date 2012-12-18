@@ -109,9 +109,9 @@ int main(int argc, char *argv[])
 	if (strcmp(prebuf, buf)) {
 	    strcpy(prebuf, buf);
 	    size = strlen(buf);
-	    buf[size - 1] = '\0';
+	    /* buf[size - 1] = '\0'; */
 	    fputs(buf, stdout);
-	    fputc('\0', stdout);
+	    /* fputc('\0', stdout); */
 	}
     }
     fclose(fp);

@@ -237,11 +237,11 @@ void option_proc(int argc, char **argv)
     Show_Opt_jumanrc = 0;
     Show_Opt_tag[0] = '\0';
     Show_Opt_debug = 0;
-    Rendaku_Opt = 1;
+    Rendaku_Opt = 0;
     LowercaseRep_Opt = 1;
     LowercaseDel_Opt = 1;
     Repetition_Opt = 1;
-    Onomatopoeia_Opt = 1;
+    Onomatopoeia_Opt = 0;
     LongSoundRep_Opt = 1;
     LongSoundDel_Opt = 1;
 
@@ -360,7 +360,7 @@ static void set_juman_server(server)
 void juman_help()
 {
     fprintf(stderr, "usage: juman -[b|B|m|p|P] -[f|c|e|E] [-S] [-N port] [-C host[:port]] [-i string] [-r rc_file]\n");
-    fprintf(stderr, "             [-u [rendaku|lowercase|long-sound|onomatopoeia]]\n");
+    fprintf(stderr, "             [-u [lowercase|long-sound|onomatopoeia]]\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "             -b : show best path\n");
     fprintf(stderr, "             -B : show best path including homographs (default)\n");

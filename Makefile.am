@@ -1,4 +1,4 @@
-SUBDIRS = lib makeint makemat makepat juman dic autodic wikipediadic doc
+SUBDIRS = darts lib makeint makemat makepat juman dic autodic wikipediadic doc
 
 jumanrcdir=$(sysconfdir)
 nodist_jumanrc_DATA = jumanrc

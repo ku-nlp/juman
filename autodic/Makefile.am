@@ -3,13 +3,14 @@ MAKEINT = ../makeint/makeint
 MAKEMAT = ../makemat/makemat
 MAKEPAT = ../makepat/makepat
 DICSORT = ../makepat/dicsort
+MKDARTS = ../darts/mkdarts
 
 GRM_FILES = ../dic/JUMAN.grammar ../dic/JUMAN.kankei ../dic/JUMAN.katuyou
 TBL_FILES = ../dic/jumandic.mat ../dic/jumandic.tab
 INT_FILES := $(patsubst %.dic,%.int,$(wildcard *.dic))
 
 dicdir = $(pkgdatadir)/autodic
-nodist_dic_DATA = jumandic.dat jumandic.pat
+nodist_dic_DATA = jumandic.dat jumandic.da
 EXTRA_DIST = Auto.dic
 
 .dic.int: $(MAKEINT)
@@ -20,10 +21,11 @@ clean:
 
 $(INT_FILES): $(GRM_FILES) $(TBL_FILES) $(MAKEINT)
 
-jumandic.dat: $(INT_FILES) $(DICSORT)
-	cat $(INT_FILES) > jumandic.txt
-	$(DICSORT) jumandic.txt > $@
-	rm -f jumandic.txt
+jumandic.txt: $(INT_FILES)
+	cat $(INT_FILES) > $@
 
-jumandic.pat: jumandic.dat $(MAKEPAT)
-	$(MAKEPAT)
+jumandic.dat: jumandic.txt $(DICSORT)
+	$(DICSORT) jumandic.txt > $@
+
+jumandic.da: jumandic.dat $(MKDARTS)
+	$(MKDARTS) jumandic.dat $@

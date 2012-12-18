@@ -14,6 +14,7 @@
 #include <string>
 #include <map>
 #include <sstream>
+#include <algorithm>
 #include <fcntl.h>
 
 int progress_bar(size_t current, size_t total) {
@@ -40,22 +41,21 @@ int progress_bar(size_t current, size_t total) {
 template <class Iterator>
 inline size_t tokenizeTSV(char *str,
                           Iterator out, size_t max) {
-// inline size_t tokenizeCSV(char *str, char** out, size_t max) {
   char *eos = str + std::strlen(str);
   char *start = 0;
   char *end = 0;
   size_t n = 0;
 
   for (; str < eos; ++str) {
-    // skip white spaces
-    // while (*str == ' ' || *str == '\t') ++str;
-    start = str;
-    str = std::find(str, eos, '\t');
-    end = str;
-    if (max-- > 1) *end = '\0';
-    *out++ = start;
-    ++n;
-    if (max == 0) break;
+      // skip white spaces
+      // while (*str == ' ' || *str == '\t') ++str;
+      start = str;
+      str = std::find(str, eos, '\t');
+      end = str;
+      if (max-- > 1) *end = '\0';
+      *out++ = start;
+      ++n;
+      if (max == 0) break;
   }
 
   return n;
@@ -76,8 +76,8 @@ unsigned int get_feature2id(std::map<char *, unsigned int> &feature2id, unsigned
 
 int main(int argc, char **argv) {
   if (argc < 3) {
-    std::cerr << "Usage: " << argv[0] << " File Index" << std::endl;
-    return -1;
+      std::cerr << "Usage: " << argv[0] << " File Index" << std::endl;
+      return -1;
   }
 
   std::string file  = argv[argc-2];
@@ -89,14 +89,14 @@ int main(int argc, char **argv) {
   std::istream *is;
 
   if (file == "-") {
-    is = &std::cin;
+      is = &std::cin;
   } else {
-    is = new std::ifstream(file.c_str());
+      is = new std::ifstream(file.c_str());
   }
 
   if (!*is) {
-    std::cerr << "Cannot Open: " << file << std::endl;
-    return -1;
+      std::cerr << "Cannot Open: " << file << std::endl;
+      return -1;
   }
 
   std::string line;

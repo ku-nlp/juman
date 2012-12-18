@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 #include "config.h"
 #include "darts_for_juman.h"
 #include "darts.h"

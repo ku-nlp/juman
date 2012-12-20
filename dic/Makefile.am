@@ -7,22 +7,26 @@ MKDARTS = ../darts/mkdarts
 
 GRM_FILES = JUMAN.grammar JUMAN.kankei JUMAN.katuyou
 TBL_FILES = jumandic.mat jumandic.tab
-DIC_FILES = $(sort $(wildcard *.dic) Rendaku.dic)
+GENERATED_DIC_FILES = Rendaku.dic Onomatopoeia.dic
+DIC_FILES = $(sort $(wildcard *.dic) $(GENERATED_DIC_FILES))
 INT_FILES = $(patsubst %.dic,%.int,$(DIC_FILES))
 
 dicdir = $(pkgdatadir)/dic
 nodist_dic_DATA = JUMAN.connect $(TBL_FILES) jumandic.dat jumandic.da
 dist_dic_DATA = $(GRM_FILES)
-EXTRA_DIST = JUMAN.connect.c *.dic
+EXTRA_DIST = JUMAN.connect.c *.dic rendaku.perl onomatopoeia.perl onomatopoeia.pattern
 
 Rendaku.dic: ContentW.dic
 	tac $< | perl rendaku.perl | tac > $@
+
+Onomatopoeia.dic: onomatopoeia.pattern
+	perl onomatopoeia.perl < $< > $@
 
 .dic.int: $(MAKEINT)
 	$(MAKEINT) $<
 
 clean:
-	rm -f jumandic.* *.int JUMAN.connect Rendaku.dic
+	rm -f jumandic.* *.int JUMAN.connect $(GENERATED_DIC_FILES)
 
 JUMAN.connect: JUMAN.connect.c
 	@CPP@ -P $< | LANG=C sed "s/\(\#pragma\)/\;\1/" > $@

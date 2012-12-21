@@ -1271,7 +1271,7 @@ int undef_word(int pos)
        平仮名，漢字，半角空白，記号 → 一文字
        半角(空白以外)，片仮名(「ー」も)，アルファベット(「．」も) → 連続 */
 
-#ifdef IO_ENCODING_SJIS
+#if defined(IO_ENCODING_EUC) || defined(IO_ENCODING_SJIS)
     cur_bytes = String[pos]&0x80 ? 2 : 1;
 #else
     cur_bytes = utf8_bytes(String + pos);
@@ -1289,7 +1289,7 @@ int undef_word(int pos)
 
 	    end += cur_bytes;
 	    next_code = check_code(String, end);
-#ifdef IO_ENCODING_SJIS
+#if defined(IO_ENCODING_EUC) || defined(IO_ENCODING_SJIS)
             cur_bytes = String[end]&0x80 ? 2 : 1;
 #else
 	    cur_bytes = utf8_bytes(String + end);
@@ -2498,7 +2498,7 @@ int juman_sent(void)
                     }
                 }
             }
-#ifdef IO_ENCODING_SJIS
+#if defined(IO_ENCODING_EUC) || defined(IO_ENCODING_SJIS)
             next_pos = 2;
 #else
 	    next_pos = utf8_bytes(String + pos);
@@ -2579,7 +2579,7 @@ int juman_sent(void)
 	    if (undef_word(pos) == FALSE) return FALSE;
 	}
 
-#ifdef IO_ENCODING_SJIS
+#if defined(IO_ENCODING_EUC) || defined(IO_ENCODING_SJIS)
         next_pos = String[pos]&0x80 ? 2 : 1;
 #else
 	next_pos = utf8_bytes(String + pos);

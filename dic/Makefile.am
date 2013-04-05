@@ -12,7 +12,7 @@ DIC_FILES = $(sort $(wildcard *.dic) $(GENERATED_DIC_FILES))
 INT_FILES = $(patsubst %.dic,%.int,$(DIC_FILES))
 
 dicdir = $(pkgdatadir)/dic
-nodist_dic_DATA = JUMAN.connect $(TBL_FILES) jumandic.dat jumandic.da
+nodist_dic_DATA = JUMAN.connect $(TBL_FILES) jumandic.dat jumandic.da jumandic.bin
 dist_dic_DATA = $(GRM_FILES)
 EXTRA_DIST = JUMAN.connect.c *.dic rendaku.perl onomatopoeia.perl onomatopoeia.pattern
 
@@ -45,4 +45,4 @@ jumandic.dat: jumandic.txt $(DICSORT)
 	$(DICSORT) jumandic.txt > $@
 
 jumandic.da: jumandic.dat $(MKDARTS)
-	$(MKDARTS) jumandic.dat $@
+	$(MKDARTS) jumandic.dat $@ jumandic.bin

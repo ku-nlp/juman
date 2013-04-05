@@ -10,7 +10,7 @@ TBL_FILES = ../dic/jumandic.mat ../dic/jumandic.tab
 INT_FILES := $(patsubst %.dic,%.int,$(wildcard *.dic))
 
 dicdir = $(pkgdatadir)/wikipediadic
-nodist_dic_DATA = jumandic.dat jumandic.da
+nodist_dic_DATA = jumandic.dat jumandic.da jumandic.bin
 EXTRA_DIST = Wikipedia.dic
 
 .dic.int: $(MAKEINT)
@@ -28,4 +28,4 @@ jumandic.dat: jumandic.txt $(DICSORT)
 	$(DICSORT) jumandic.txt > $@
 
 jumandic.da: jumandic.dat $(MKDARTS)
-	$(MKDARTS) jumandic.dat $@
+	$(MKDARTS) jumandic.dat $@ jumandic.bin

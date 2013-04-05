@@ -75,13 +75,14 @@ unsigned int get_feature2id(std::map<char *, unsigned int> &feature2id, unsigned
 }
 
 int main(int argc, char **argv) {
-  if (argc < 3) {
-      std::cerr << "Usage: " << argv[0] << " File Index" << std::endl;
+  if (argc < 4) {
+      std::cerr << "Usage: " << argv[0] << " File Index Bin" << std::endl;
       return -1;
   }
 
-  std::string file  = argv[argc-2];
-  std::string index = argv[argc-1];
+  std::string file  = argv[argc-3];
+  std::string index = argv[argc-2];
+  std::string bin = argv[argc-1];
 
   Darts::DoubleArray da;
 
@@ -116,27 +117,38 @@ int main(int argc, char **argv) {
 
   // std::sort(dic.begin(), dic.end());
 
-  size_t bsize = 0;
+  unsigned int bsize = 0;
   size_t idx = 0;
   unsigned int start_feature2id_count = 0;
   std::string prev;
   std::vector<const char *> str;
   std::vector<size_t> len;
   std::vector<Darts::DoubleArray::result_type> val;
+  std::ofstream bs(bin.c_str(), std::ios::binary | std::ios::out);
+  unsigned int bs_address = 0;
 
   for (size_t i = 0; i < dic.size(); ++i) {
       if (i != 0 && prev != dic[i].first) {
           str.push_back(dic[idx].first.c_str());
           len.push_back(dic[idx].first.size());
-          val.push_back(bsize + (start_feature2id_count << 8));
-          bsize = 1;
+          val.push_back(bs_address); // value is the beginning address of this entry
+
+          bs.write(reinterpret_cast<const char *>(&bsize), sizeof(unsigned int)); // the number of entries
+          bs_address += sizeof(unsigned int);
+          for (unsigned int j = 0; j < bsize; j++) {
+              unsigned int val_size = id2feature[start_feature2id_count + j].size();
+              bs.write(reinterpret_cast<const char *>(&val_size), sizeof(unsigned int)); // size of an entry
+              bs.write(reinterpret_cast<const char *>(id2feature[start_feature2id_count + j].c_str()), val_size); // entry itself
+              bs_address += sizeof(unsigned int) + val_size;
+          }
+
           idx = i;
           start_feature2id_count = feature2id_count;
+          bsize = 1;
       } else {
           ++bsize;
       }
 
-      unsigned int feature_id = feature2id_count;
       id2feature[feature2id_count] = dic[i].first + "\t" + dic[i].second;
       feature2id_count++;
 
@@ -144,7 +156,15 @@ int main(int argc, char **argv) {
   }
   str.push_back(dic[idx].first.c_str());
   len.push_back(dic[idx].first.size());
-  val.push_back(bsize + (start_feature2id_count << 8));
+  val.push_back(bs_address);
+
+  bs.write(reinterpret_cast<const char *>(&bsize), sizeof(unsigned int));
+  for (unsigned int j = 0; j < bsize; j++) {
+      unsigned int val_size = id2feature[start_feature2id_count + j].size();
+      bs.write(reinterpret_cast<const char *>(&val_size), sizeof(unsigned int));
+      bs.write(reinterpret_cast<const char *>(id2feature[start_feature2id_count + j].c_str()), val_size);
+  }
+  bs.close();
 
   if (da.build(str.size(), &str[0],
                &len[0], &val[0], &progress_bar) != 0

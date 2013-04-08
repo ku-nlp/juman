@@ -269,7 +269,6 @@ static U_CHAR *midasi(CELL *x)
 	  error_in_trans(IllegalForm, y);
 
      s = (U_CHAR *)_Atom(car(cdr(y)));
-     if (hankaku_check(s)) error_in_trans(HankakuChr, s);
 
      if (strlen(s) > MIDASI_MAX)
 	  error_in_trans(LongMidasi, s);
@@ -313,7 +312,6 @@ static U_CHAR *yomi(CELL *x)
 	  error_in_trans(IllegalForm, y);
 
      s = (U_CHAR *)_Atom(car(cdr(y)));
-     if (hankaku_check(s)) error_in_trans(HankakuChr, s);
 
      if (strlen(s) > YOMI_MAX)
 	  error_in_trans(LongYomi, s);
@@ -703,8 +701,6 @@ static void __trans(CELL *block, MRPH *mrph_p, int rengo_p)
 	    error_in_trans(IllegalForm, midasi_cell);	      
 	}  
 
-	if (hankaku_check(midasi_cp)) 
-            error_in_trans(HankakuChr, midasi_cp);
 	if (strlen(midasi_cp) > MIDASI_MAX)
 	    error_in_trans(LongMidasi, midasi_cp);
 	strcpy(mrph_p->midasi, midasi_cp);

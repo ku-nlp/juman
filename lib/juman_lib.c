@@ -1380,8 +1380,9 @@ int check_unicode_char_type(int code)
     else if (code == 0xff0e) {
 	return PRIOD;
     }
-    /* FIGURE (only ０-９) */
-    else if (code > 0xff0f && code < 0xff1a) {
+    /* FIGURE (０-９, 0-9) */
+    else if ((code > 0xff0f && code < 0xff1a) || 
+             (code > 0x2f && code < 0x3a)) {
 	return SUJI;
     }
     /* ALPHABET (A-Z, a-z, ウムラウトなど, Ａ-Ｚ, ａ-ｚ) */
@@ -2280,6 +2281,10 @@ int check_connect(int pos, int m_num, char opt)
 		best_score_num = chk_con_num;
 	    }
 	    chk_con_num++;
+            if (chk_con_num >= MAX_PATHES_WK) {
+                /* chk_connect[] holds only MAX_PATHES_WK */
+                break;
+            }
 	}
 
 	/* デバグ用コスト表示 */
@@ -2572,10 +2577,7 @@ int juman_sent(void)
 	    pre_m_buffer_num = m_buffer_num;
 	    pre_p_buffer_num = p_buffer_num;
 	
-	    if (String[pos]&0x80) { /* 全角の場合，辞書をひく */
-		if (search_all(pos, count) == FALSE) return FALSE;
-	    }
-
+            if (search_all(pos, count) == FALSE) return FALSE;
 	    if (undef_word(pos) == FALSE) return FALSE;
 	}
 

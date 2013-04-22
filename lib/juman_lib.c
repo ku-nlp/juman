@@ -174,14 +174,11 @@ int		LongSoundDel_Opt;
 
 U_CHAR	        String[LENMAX];
 U_CHAR	        NormalizedString[LENMAX];
-U_CHAR	        ProlongDeletedString[LENMAX];
 int		CharLatticeUsedFlag;
 CHAR_NODE	CharLattice[MAX_PATHES];
 CHAR_NODE	CharRootNode;
 size_t		CharNum;
 int		MostDistantPosition;
-int             String2PDS[LENMAX];
-int             PDS2String[LENMAX];
 int		Unkword_Pat_Num;
 int             m_buffer_num;
 int             Jiritsu_buffer[CLASSIFY_NO + 1];
@@ -627,12 +624,8 @@ static BOOL katuyou_process(int position, int *k, MRPH *mrph, int *length, char 
     int deleted_length, del_rep_position = 0;
 
      while (Form[mrph->katuyou1][*k].name) {
-	 if (compare_top_str1(Form[mrph->katuyou1][*k].gobi, /* 通常時 */
-			      String + position + mrph->length) ||
-	     ((opt & OPT_NORMALIZE) && /* 非正規表現用 */
-	      compare_top_str1(Form[mrph->katuyou1][*k].gobi, NormalizedString + position + mrph->length)) ||
-	     ((opt & OPT_PROLONG_DEL) && /* 長音挿入用 */
-	      compare_top_str1(Form[mrph->katuyou1][*k].gobi, ProlongDeletedString + String2PDS[position] + mrph->length))) {
+	 if (compare_top_str1(Form[mrph->katuyou1][*k].gobi, 
+			      String + position + mrph->length)) {
 	     *length = mrph->length + strlen(Form[mrph->katuyou1][*k].gobi);
 	     return TRUE;
 	 } else {
@@ -2358,9 +2351,13 @@ int check_connect(int pos, int m_num, char opt)
     p_buffer[p_buffer_num].path[0] = chk_connect[best_score_num].pre_p;
     pathes = 1;
     haba_score = best_score + cost_omomi.cost_haba;
-    for (j = 0; j < chk_con_num; j++) /* それ以外のパスも追加 */
-      if (chk_connect[j].score <= haba_score && j != best_score_num)
-	p_buffer[p_buffer_num].path[pathes++] = chk_connect[j].pre_p;
+    for (j = 0; j < chk_con_num; j++) { /* それ以外のパスも追加 */
+        if (chk_connect[j].score <= haba_score && j != best_score_num) {
+            if (pathes >= MAX_PATHES - 1) /* path holds only MAX_PATHES */
+                break;
+            p_buffer[p_buffer_num].path[pathes++] = chk_connect[j].pre_p;
+        }
+    }
     p_buffer[p_buffer_num].path[pathes] = -1;
 
     p_buffer[p_buffer_num].score = best_score+class_score;
@@ -2399,9 +2396,10 @@ int juman_sent(void)
     int        pos_end, length;
     int        pre_m_buffer_num;
     int        pre_p_buffer_num;
-    int        pos, next_pos = 0, deleted_num;
+    int        pos, next_pos = 0, pre_byte_length = 0, deleted_num;
     int	       p_start = 0, count;
     int        code;
+    int        next_pre_is_deleted, pre_is_deleted = 0; /* 直前の文字が削除文字(長音, 小文字) */
     CHAR_NODE  *current_char_node, *new_char_node;
 
     if (mrph_buffer_max == 0) {
@@ -2437,13 +2435,6 @@ int juman_sent(void)
     m_buffer_num = 1;
     p_buffer_num = 1;
 
-    /* 非正規表現・長音挿入表現検索用の文字列を生成 */
-    if (LongSoundRep_Opt || LowercaseRep_Opt) strcpy(NormalizedString, String); /* 非正規表記への対応 */
-    if (LongSoundDel_Opt || LowercaseDel_Opt) {
-	deleted_num = 0;
-	for (pos = 0; pos < length; pos++) String2PDS[pos] = -2;
-    }
-
     /* initialization for root node (starting node for looking up double array) */
     CharRootNode.next = NULL;
     CharRootNode.da_node_pos[0] = 0;
@@ -2461,14 +2452,13 @@ int juman_sent(void)
 		(!strncmp(String + pos, DEF_PROLONG_SYMBOL1, BYTES4CHAR) ||
 		 !strncmp(String + pos, DEF_PROLONG_SYMBOL2, BYTES4CHAR) && 
 		 (!String[pos + BYTES4CHAR] || check_code(String, pos + BYTES4CHAR) == KIGOU || check_code(String, pos + BYTES4CHAR) == HIRAGANA)) &&
-                (pos >= BYTES4CHAR) /* 2文字目以降 */
+                (pos > 0) /* 2文字目以降 */
 		/* 次の文字が"ー","〜"でない */
 		/*  strncmp(String + pos + BYTES4CHAR, DEF_PROLONG_SYMBOL1, BYTES4CHAR) && */
 		/*  strncmp(String + pos + BYTES4CHAR, DEF_PROLONG_SYMBOL2, BYTES4CHAR)) */
                 ) {
 		for (i = 0; *pre_prolonged[i]; i++) {
-		    if (!strncmp(String + pos - BYTES4CHAR, pre_prolonged[i], BYTES4CHAR)) {
-			strncpy(NormalizedString + pos, prolonged2chr[i], BYTES4CHAR);
+		    if (!strncmp(String + pos - pre_byte_length, pre_prolonged[i], pre_byte_length)) {
                         new_char_node = make_new_node(&current_char_node, prolonged2chr[i], OPT_NORMALIZE | OPT_PROLONG_REPLACE);
                         break;
 		    }
@@ -2478,9 +2468,6 @@ int juman_sent(void)
 	    else if (LowercaseRep_Opt) {
 		for (i = NORMALIZED_LOWERCASE_S; i < NORMALIZED_LOWERCASE_E; i++) {
 		    if (!strncmp(String + pos, lowercase[i], BYTES4CHAR)) {
-			for (j = 0; j < BYTES4CHAR; j++) {
-			    NormalizedString[pos+j] = uppercase[i][j];
-			}
                         new_char_node = make_new_node(&current_char_node, uppercase[i], OPT_NORMALIZE);
                         break;
 		    }
@@ -2490,11 +2477,11 @@ int juman_sent(void)
             /* 濁音化した文字の場合に、清音も文字を追加 (辞書展開によりオフに) */
             if (Rendaku_Opt) {
                 code = check_code(String, pos);
-                if (pos >= BYTES4CHAR && 
+                if (pos > 0 && 
                     (code == HIRAGANA || 
                      (code == KATAKANA && 
-                      check_code(String, pos - BYTES4CHAR) != KATAKANA &&
-                      check_code(String, pos - BYTES4CHAR) != CHOON))) {
+                      check_code(String, pos - pre_byte_length) != KATAKANA &&
+                      check_code(String, pos - pre_byte_length) != CHOON))) {
                     for (i = VOICED_CONSONANT_S; i < VOICED_CONSONANT_E; i++) {
                         if (!strncmp(String + pos, dakuon[i], BYTES4CHAR)) {
                             new_char_node = make_new_node(&current_char_node, seion[i], OPT_DEVOICE);
@@ -2514,23 +2501,24 @@ int juman_sent(void)
         strncpy(CharLattice[CharNum].chr, String + pos, next_pos);
         CharLattice[CharNum].chr[next_pos] = '\0';
         CharLattice[CharNum].type = OPT_NORMAL;
+        next_pre_is_deleted = 0;
 
 	/* 長音挿入 */
 	if ((LongSoundDel_Opt || LowercaseDel_Opt) && next_pos == BYTES4CHAR) {
-	    pre_code = (BYTES4CHAR <= pos) ? check_code(String, pos - BYTES4CHAR) : -1;
-	    post_code = check_code(String, pos + BYTES4CHAR); /* 文末の場合は0 */
+	    pre_code = (pos > 0) ? check_code(String, pos - pre_byte_length) : -1;
+	    post_code = check_code(String, pos + next_pos); /* 文末の場合は0 */
 	    if (LongSoundDel_Opt && pre_code > 0 &&
 		/* 直前が削除された長音記号、平仮名、または、漢字かつ直後が平仮名 */
-		((String2PDS[pos - BYTES4CHAR] == -1 ||
+		((pre_is_deleted ||
 		  pre_code == HIRAGANA || pre_code == KANJI && post_code == HIRAGANA) &&
 		 /* "ー"または"〜" */
 		 (!strncmp(String + pos, DEF_PROLONG_SYMBOL1, BYTES4CHAR) ||
 		  !strncmp(String + pos, DEF_PROLONG_SYMBOL2, BYTES4CHAR))) ||
 		/* 直前が長音記号で、現在文字が"っ"、かつ、直後が文末、または、記号の場合も削除 */
-		(String2PDS[pos - BYTES4CHAR] == -1 && !strncmp(String + pos, DEF_PROLONG_SYMBOL3, BYTES4CHAR) &&
+		(pre_is_deleted && !strncmp(String + pos, DEF_PROLONG_SYMBOL3, BYTES4CHAR) &&
 		 (post_code == 0 || post_code == KIGOU))) {
 		deleted_num++;
-		String2PDS[pos] = -1;
+                next_pre_is_deleted = 1;
                 new_char_node = make_new_node(&current_char_node, "", OPT_PROLONG_DEL);
 	    }
 	    else if (LowercaseDel_Opt && pre_code > 0) {
@@ -2538,34 +2526,24 @@ int juman_sent(void)
 		for (i = DELETE_LOWERCASE_S; i < DELETE_LOWERCASE_E; i++) {
 		    if (!strncmp(String + pos, lowercase[i], BYTES4CHAR)) {
 			for (j = pre_lower_start[i]; j < pre_lower_end[i]; j++) {
-			    if (!strncmp(String + pos - BYTES4CHAR, pre_lower[j], BYTES4CHAR)) break;			    
+			    if (!strncmp(String + pos - pre_byte_length, pre_lower[j], pre_byte_length)) break;			    
 			}
 			/* 直前の文字が対応する平仮名、または、削除された同一の小書き文字の場合は削除 */
 			if (j < pre_lower_end[i] ||
-			    String2PDS[pos - BYTES4CHAR] == -1 && !strncmp(String + pos - BYTES4CHAR, String + pos, BYTES4CHAR)) {
+			    pre_is_deleted && !strncmp(String + pos - pre_byte_length, String + pos, pre_byte_length)) {
 			    deleted_num++;
-			    String2PDS[pos] = -1;
+                            next_pre_is_deleted = 1;
                             new_char_node = make_new_node(&current_char_node, "", OPT_PROLONG_DEL);
 			    break;
 			}
 		    }
 		}
 	    }
-
-	    if (String2PDS[pos] != -1) {
-		for (i = 0; i < next_pos; i++) ProlongDeletedString[pos - deleted_num * BYTES4CHAR + i] = String[pos + i];
-		ProlongDeletedString[pos - deleted_num * BYTES4CHAR + next_pos] = '\0'; /* 小書き文字・長音記号を除いた文字列を作成 */
-		String2PDS[pos] = pos - deleted_num * BYTES4CHAR; /* Stringから作成した文字列へのマップ */
-		PDS2String[pos - deleted_num * BYTES4CHAR] = pos; /* 作成した文字列からStringへのマップ */
-	    }
 	}
+        pre_is_deleted = next_pre_is_deleted;
+        pre_byte_length = next_pos;
         current_char_node->next = NULL;
         CharNum++;
-    }
-
-    if (LongSoundDel_Opt || LowercaseDel_Opt) {
-	String2PDS[pos] = pos - deleted_num * BYTES4CHAR; /* Stringから作成した文字列へのマップ */
-	PDS2String[pos - deleted_num * BYTES4CHAR] = pos; /* 作成した文字列からStringへのマップ */
     }
 
     count = 0;

@@ -512,6 +512,9 @@ void set_jumanrc_fileptr(char *option_rcfile, int look_rcdefault_p, int exit_rc_
     */
 
     char *user_home_ptr, *getenv(), filename[FILENAME_MAX];
+#ifdef _WIN32
+    char ExecFilePath[MAX_PATH + 1], ExecFileDrive[MAX_PATH + 1], ExecFileDir[MAX_PATH + 1];
+#endif
 
     if (option_rcfile) {
 	if ((Jumanrc_Fileptr = fopen(option_rcfile, "r")) == NULL) {
@@ -523,7 +526,9 @@ void set_jumanrc_fileptr(char *option_rcfile, int look_rcdefault_p, int exit_rc_
 #ifdef WIN_AZURE
 	GetPrivateProfileString("juman","dicfile", WIN_AZURE_DICFILE_DEFAULT,filename,sizeof(filename),"juman.ini");
 #else
-	GetPrivateProfileString("juman","dicfile","C:\\juman\\dic",filename,sizeof(filename),"juman.ini");
+        GetModuleFileName(NULL, ExecFilePath, MAX_PATH); /* 実行ファイルのfullpathを取得 */
+        _splitpath(ExecFilePath, ExecFileDrive, ExecFileDir, NULL, NULL); /* 実行ファイルのfullpathからdrive名、ディレクトリを取得 */
+        sprintf(filename, "%s%s\\%s", ExecFileDrive, ExecFileDir, WIN_AZURE_DICFILE_DEFAULT);
 #endif
 	if ((endchar(filename)) != '\\') strcat(filename, "\\");
 	strcat(filename,"jumanrc");
@@ -569,6 +574,9 @@ void set_jumanrc_fileptr(char *option_rcfile, int look_rcdefault_p, int exit_rc_
 void set_jumangram_dirname()
 {
     CELL *cell1,*cell2;
+#ifdef _WIN32
+    char ExecFilePath[MAX_PATH + 1], ExecFileDrive[MAX_PATH + 1], ExecFileDir[MAX_PATH + 1];
+#endif
     Jumangram_Dirname[0]='\0';
 
 #ifdef  _WIN32
@@ -577,7 +585,9 @@ void set_jumangram_dirname()
 #ifdef WIN_AZURE
     GetPrivateProfileString("juman","dicfile",WIN_AZURE_DICFILE_DEFAULT,Jumangram_Dirname,sizeof(Jumangram_Dirname),"juman.ini");
 #else
-    GetPrivateProfileString("juman","dicfile","",Jumangram_Dirname,sizeof(Jumangram_Dirname),"juman.ini");
+    GetModuleFileName(NULL, ExecFilePath, MAX_PATH); /* 実行ファイルのfullpathを取得 */
+    _splitpath(ExecFilePath, ExecFileDrive, ExecFileDir, NULL, NULL); /* 実行ファイルのfullpathからdrive名、ディレクトリを取得 */
+    sprintf(Jumangram_Dirname, "%s%s\\%s", ExecFileDrive, ExecFileDir, WIN_AZURE_DICFILE_DEFAULT);
 #endif
     if (Jumangram_Dirname[0]) {
 	return;

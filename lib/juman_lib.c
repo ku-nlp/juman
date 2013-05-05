@@ -313,7 +313,10 @@ BOOL juman_init_rc(FILE *fp)
     int  num, win32_decided = 0;
     char dic_file_name[BUFSIZE], full_file_name[BUFSIZE];
     CELL *cell1, *cell2;
-    
+#ifdef _WIN32
+    char ExecFilePath[MAX_PATH + 1], ExecFileDrive[MAX_PATH + 1], ExecFileDir[MAX_PATH + 1];
+#endif
+
     LineNo = 0 ;
     
     /* DEFAULT VALUE*/
@@ -333,7 +336,9 @@ BOOL juman_init_rc(FILE *fp)
 #ifdef WIN_AZURE
     GetPrivateProfileString("juman","dicfile",WIN_AZURE_DICFILE_DEFAULT,Jumangram_Dirname,sizeof(Jumangram_Dirname),"juman.ini");
 #else
-    GetPrivateProfileString("juman","dicfile","",Jumangram_Dirname,sizeof(Jumangram_Dirname),"juman.ini");
+    GetModuleFileName(NULL, ExecFilePath, MAX_PATH); /* 実行ファイルのfullpathを取得 */
+    _splitpath(ExecFilePath, ExecFileDrive, ExecFileDir, NULL, NULL); /* 実行ファイルのfullpathからdrive名、ディレクトリを取得 */
+    sprintf(Jumangram_Dirname, "%s%s\\%s", ExecFileDrive, ExecFileDir, WIN_AZURE_DICFILE_DEFAULT);
 #endif
     if (Jumangram_Dirname[0]) {
 	grammar(NULL);
@@ -351,7 +356,7 @@ BOOL juman_init_rc(FILE *fp)
 	GetPrivateProfileString("juman","wikipediadicfile",WIN_AZURE_WIKIPEDIADICFILE_DEFAULT,dic_file_name,sizeof(dic_file_name),"juman.ini");
 	push_dic_file_for_win(dic_file_name, num++);
 #else
-	GetPrivateProfileString("juman","dicfile","",dic_file_name,sizeof(dic_file_name),"juman.ini");
+        strcpy(dic_file_name, Jumangram_Dirname);
 	push_dic_file_for_win(dic_file_name, num++);
 #endif
 	DicFile.number = num;

@@ -21,6 +21,7 @@
 #define NORMALIZED_LENGTH      8   /* 非正規表記の処理で考慮する最大形態素長 */
 
 /* 連濁処理等で使用する品詞や表記情報 */
+#define         DEF_REP                  "代表表記"
 #define         DEF_ONOMATOPOEIA_HINSI   "副詞"
 #define         DEF_ONOMATOPOEIA_IMIS    "自動認識"
 #define         DEF_RENDAKU_HINSI1       "動詞"
@@ -37,7 +38,6 @@
 #define         DEF_RENDAKU_BUNRUI4_4    "名詞性特殊接尾辞"
 #define         DEF_RENDAKU_OK_FEATURE   "濁音可"
 #define         DEF_RENDAKU_MIDASI_KA    "か"
-#define         DEF_RENDAKU_REP          "代表表記"
 #define         DEF_RENDAKU_IMIS         "濁音化"
 #define         DEF_PROLONG_IMIS         "長音挿入"
 #define         DEF_ABNORMAL_IMIS        "非標準表記"
@@ -215,3 +215,100 @@ char *mrph_pattern[]  = {
     "ＫＫッと    20", /* ピタッと */
     "\0"};
 #endif
+
+/* 半角カタカナと全角カタカナの対応表 (in Unicode) */
+#define KATAKANA_HAN2ZEN_UNICODE_NUM 63
+int katakana_han2zen_unicode_table[KATAKANA_HAN2ZEN_UNICODE_NUM][2] = {
+    {0xff61, 0x3002}, /* 。 */
+    {0xff62, 0x300c}, /* 「 */
+    {0xff63, 0x300d}, /* 」 */
+    {0xff64, 0x3001}, /* 、 */
+    {0xff65, 0x30fb}, /* ・ */
+    {0xff66, 0x30f2}, /* ヲ */
+    {0xff67, 0x30a1}, /* ァ */
+    {0xff68, 0x30a3}, /* ィ */
+    {0xff69, 0x30a5}, /* ゥ */
+    {0xff6a, 0x30a7}, /* ェ */
+    {0xff6b, 0x30a9}, /* ォ */
+    {0xff6c, 0x30e3}, /* ャ */
+    {0xff6d, 0x30e5}, /* ュ */
+    {0xff6e, 0x30e7}, /* ョ */
+    {0xff6f, 0x30c3}, /* ッ */
+    {0xff70, 0x30fc}, /* − */
+    {0xff71, 0x30a2}, /* ア */
+    {0xff72, 0x30a4}, /* イ */
+    {0xff73, 0x30a6}, /* ウ */
+    {0xff74, 0x30a8}, /* エ */
+    {0xff75, 0x30aa}, /* オ */
+    {0xff76, 0x30ab}, /* カ */
+    {0xff77, 0x30ad}, /* キ */
+    {0xff78, 0x30af}, /* ク */
+    {0xff79, 0x30b1}, /* ケ */
+    {0xff7a, 0x30b3}, /* コ */
+    {0xff7b, 0x30b5}, /* サ */
+    {0xff7c, 0x30b7}, /* シ */
+    {0xff7d, 0x30b9}, /* ス */
+    {0xff7e, 0x30bb}, /* セ */
+    {0xff7f, 0x30bd}, /* ソ */
+    {0xff80, 0x30bf}, /* タ */
+    {0xff81, 0x30c1}, /* チ */
+    {0xff82, 0x30c4}, /* ツ */
+    {0xff83, 0x30c6}, /* テ */
+    {0xff84, 0x30c8}, /* ト */
+    {0xff85, 0x30ca}, /* ナ */
+    {0xff86, 0x30cb}, /* ニ */
+    {0xff87, 0x30cc}, /* ヌ */
+    {0xff88, 0x30cd}, /* ネ */
+    {0xff89, 0x30ce}, /* ノ */
+    {0xff8a, 0x30cf}, /* ハ */
+    {0xff8b, 0x30d2}, /* ヒ */
+    {0xff8c, 0x30d5}, /* フ */
+    {0xff8d, 0x30d8}, /* ヘ */
+    {0xff8e, 0x30db}, /* ホ */
+    {0xff8f, 0x30de}, /* マ */
+    {0xff90, 0x30df}, /* ミ */
+    {0xff91, 0x30e0}, /* ム */
+    {0xff92, 0x30e1}, /* メ */
+    {0xff93, 0x30e2}, /* モ */
+    {0xff94, 0x30e4}, /* ヤ */
+    {0xff95, 0x30e6}, /* ユ */
+    {0xff96, 0x30e8}, /* ヨ */
+    {0xff97, 0x30e9}, /* ラ */
+    {0xff98, 0x30ea}, /* リ */
+    {0xff99, 0x30eb}, /* ル */
+    {0xff9a, 0x30ec}, /* レ */
+    {0xff9b, 0x30ed}, /* ロ */
+    {0xff9c, 0x30ef}, /* ワ */
+    {0xff9d, 0x30f3}, /* ン */
+    {0xff9e, 0x309b}, /* ゛ */
+    {0xff9f, 0x309c}, /* ゜ */
+};
+
+#define KATAKANA_VARIATION_ABSORB_LENGTH (4 * BYTES4CHAR) /* 4文字以上でカタカナ末尾の長音符を吸収 */
+#define KATAKANA_HIRAGANA_PROLONGED_SOUND_MARK_UNICODE 0x30fc
+
+/* カタカナに後続する場合に、KATAKANA_HIRAGANA_PROLONGED_SOUND_MARK_UNICODE に正規化する長音記号類似文字のリスト (in Unicode) */
+int prolong_characters_unicode_list[] = {
+    0x2d,   /* HYPHEN-MINUS: -; 0x+ff0dは0x2dに自動変換 */
+    0x7e,   /* TILDE: ~; 0xff5eは0x7eに自動変換 */
+    0x2010, /* HYPHEN: ‐ */
+    0x2011, /* NON-BREAKING HYPHEN: ‑ */
+    0x2012, /* FIGURE DASH: ‒ */
+    0x2013, /* EN DASH: – */
+    0x2014, /* EM DASH: — */
+    0x2015, /* HORIZONTAL BAR: ― */
+    0x2053, /* SWANG DASH: ⁓ */
+    0x2212, /* MINUS SIGN: − */
+    0x2500, /* BOX DRAWINGS LIGHT HORIZONTAL: ─ */
+    0x2501, /* BOX DRAWINGS HEAVY HORIZONTAL: ━ */
+    0x301c, /* WAVE DASH: 〜 */
+    0xff70, /* HALFWIDTH KATAKANA-HIRAGANA PROLONGED SOUND MARK: ｰ */
+    0 /* sentinel */
+};
+
+#define QUANTITY_STRING_FEATURE "数量表現:"
+#define QUANTITY_A_FEATURE "数量A:"
+#define QUANTITY_B_FEATURE "数量B:"
+#define QUANTITY_C_FEATURE "数量C:"
+#define DENOMINATOR_FEATURE "分母:"
+#define FRACTION_STRING "分の"	/* Noun.suusi.dic中の「分の」の数量表現に一致している必要がある */

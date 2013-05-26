@@ -173,12 +173,13 @@ int		LongSoundRep_Opt;
 int		LongSoundDel_Opt;
 
 U_CHAR	        String[LENMAX];
-U_CHAR	        NormalizedString[LENMAX];
+U_CHAR	        OriginalString[LENMAX];
 int		CharLatticeUsedFlag;
 CHAR_NODE	CharLattice[MAX_PATHES];
 CHAR_NODE	CharRootNode;
 size_t		CharNum;
 int		MostDistantPosition;
+int		StringPos2OriginalStringPos[LENMAX];
 int		Unkword_Pat_Num;
 int             m_buffer_num;
 int             Jiritsu_buffer[CLASSIFY_NO + 1];
@@ -544,6 +545,7 @@ BOOL juman_close(void)
 */
 void	realloc_mrph_buffer(void)
 {
+    printf("realloc_mrph_buffer: %d -> %d\n", mrph_buffer_max, mrph_buffer_max + BUFFER_BLOCK_SIZE);
     mrph_buffer_max += BUFFER_BLOCK_SIZE;
     m_buffer = (MRPH *)my_realloc(m_buffer, sizeof(MRPH)*mrph_buffer_max);
     m_check_buffer = (int *)my_realloc(m_check_buffer,
@@ -557,6 +559,7 @@ void	realloc_mrph_buffer(void)
 */
 void	realloc_process_buffer(void)
 {
+    printf("realloc_process_buffer: %d -> %d\n", process_buffer_max, process_buffer_max + BUFFER_BLOCK_SIZE);
     process_buffer_max += BUFFER_BLOCK_SIZE;
     p_buffer = (PROCESS_BUFFER *)my_realloc(p_buffer,
 				    sizeof(PROCESS_BUFFER)*process_buffer_max);
@@ -1254,6 +1257,50 @@ int trim_space(int pos)
     }
     return pos;
 }
+
+/*
+------------------------------------------------------------------------------
+  PROCEDURE: <make_repform_for_undef_word> 未定義語の代表表記を作成
+------------------------------------------------------------------------------
+*/
+
+void make_repform_for_undef_word(MRPH *m_ptr)
+{
+    int length = strlen(m_ptr->midasi);
+    U_CHAR orig_pre_str[IMI_MAX], orig_post_str[IMI_MAX], *cp, *cp2;
+    strcpy(orig_post_str, "\"");
+
+    if (*(m_ptr->imis)) {/* 意味情報がすでにある場合 */
+        if ((cp = strstr(m_ptr->imis, DEF_REP))) { /* 代表表記がすでにある場合 */
+            strncpy(orig_pre_str, m_ptr->imis, cp - m_ptr->imis);
+            orig_pre_str[cp - m_ptr->imis] = '\0';
+            if ((cp2 = strchr(cp, ' ')) || (cp2 = strchr(cp, '\"'))) /* 空白もしくは\"までsearch */
+                strcpy(orig_post_str, cp2);
+        }
+        else {
+            strcpy(orig_pre_str, m_ptr->imis);
+            orig_pre_str[strlen(orig_pre_str) - 1] = ' '; /* 末尾の \" を空白に変えておく */
+        }
+    }
+    else
+        strcpy(orig_pre_str, "\"");
+
+    /* 閾値以上の長さのカタカナの末尾が長音符のときは、それを削除して代表表記を作る */
+    if (length >= KATAKANA_VARIATION_ABSORB_LENGTH && 
+	!strcmp(m_ptr->midasi + length - BYTES4CHAR, DEF_PROLONG_SYMBOL1) && /* 末尾が長音符 */
+	strncmp(m_ptr->midasi + length - BYTES4CHAR - BYTES4CHAR, DEF_PROLONG_SYMBOL1, BYTES4CHAR)) { /* 長音符は一つだけ */
+        sprintf(m_ptr->imis, "%s%s:%.*s/%.*s%s", orig_pre_str, DEF_REP, length - BYTES4CHAR, m_ptr->midasi, (int)strlen(m_ptr->yomi) - BYTES4CHAR, m_ptr->yomi, orig_post_str);
+    }
+    else {
+        strcpy(m_ptr->imis, orig_pre_str);
+        strcat(m_ptr->imis, DEF_REP); /* 代表表記 */
+        strcat(m_ptr->imis, ":");
+        strcat(m_ptr->imis, m_ptr->midasi);
+        strcat(m_ptr->imis, "/");
+        strcat(m_ptr->imis, m_ptr->yomi);
+        strcat(m_ptr->imis, orig_post_str);
+    }
+}
     
 /*
 ------------------------------------------------------------------------------
@@ -1340,7 +1387,7 @@ int undef_word(int pos)
     }
     m_buffer[m_buffer_num].weight = MRPH_DEFAULT_WEIGHT;
     strcpy(m_buffer[m_buffer_num].midasi2, m_buffer[m_buffer_num].midasi);
-    strcpy(m_buffer[m_buffer_num].imis, NILSYMBOL);
+    make_repform_for_undef_word(&(m_buffer[m_buffer_num]));
 
     check_connect(pos, m_buffer_num, 0);
     if (++m_buffer_num == mrph_buffer_max)
@@ -1404,39 +1451,117 @@ int check_unicode_char_type(int code)
     }
 }
 
-/* check the code of a char */
-int check_utf8_char_type(unsigned char *ucp)
+void conv_from_unicode_to_utf8(int unicode, unsigned char *ucp)
 {
-    int code = 0;
-    int length = strlen(ucp);
-    int unicode;
+    if (unicode > 0xffff) { /* 4-6 bytes */
+        ucp[0] = '\0';
+    }
+    else if (unicode > 0x07ff) { /* 3 bytes */
+        ucp[0] = 0xe0 + (unicode >> 12);
+        ucp[1] = 0x80 + ((unicode >> 6) & 0x3f);
+        ucp[2] = 0x80 + (unicode & 0x3f);
+        ucp[3] = '\0';
+    }
+    else if (unicode > 0x007f) { /* 2 bytes */
+        ucp[0] = 0xc0 + (unicode >> 6);
+        ucp[1] = 0x80 + (unicode & 0x3f);
+        ucp[2] = '\0';
+    }
+    else { /* 1 byte */
+        ucp[0] = (char)unicode;
+        ucp[1] = '\0';
+    }
+}
 
+int conv_from_utf8_to_unicode(unsigned char *ucp)
+{
+    int unicode;
     unsigned char c = *ucp;
+
     if (c > 0xfb) { /* 6 bytes */
-	code = 0;
+	unicode = 0;
     }
     else if (c > 0xf7) { /* 5 bytes */
-	code = 0;
+	unicode = 0;
     }
     else if (c > 0xef) { /* 4 bytes */
-	code = 0;
+	unicode = 0;
     }
     else if (c > 0xdf) { /* 3 bytes */
-	unicode = (c & 0x0f) << 12;
-	c = *(ucp + 1);
-	unicode += (c & 0x3f) << 6;
-	c = *(ucp + 2);
-	unicode += c & 0x3f;
-	code = check_unicode_char_type(unicode);
+        unicode = (c & 0x0f) << 12;
+        c = *(ucp + 1);
+        unicode += (c & 0x3f) << 6;
+        c = *(ucp + 2);
+        unicode += c & 0x3f;
     }
     else if (c > 0x7f) { /* 2 bytes */
 	unicode = (c & 0x1f) << 6;
 	c = *(ucp + 1);
 	unicode += c & 0x3f;
-	code = check_unicode_char_type(unicode);
     }
     else { /* 1 byte */
-	code = check_unicode_char_type(c);
+        unicode = c;
+    }
+    return unicode;
+}
+
+/* convert zenkaku (alphabet, symbol, figure) to hankaku */
+int zen2han_for_unicode(int unicode)
+{
+    if (unicode > 0xff00 && unicode < 0xff5f)
+        return unicode - 0xffe0;
+    else
+        return unicode;
+}
+
+int katakana_normalize_for_unicode(int unicode, int post_unicode, int *orig_bytes)
+{
+    int voiced_offset = 0;
+    if (post_unicode == 0xff9e && /* 後が濁音 かつ */
+        ((unicode > 0xff75 && unicode < 0xff85) || /* カ〜ト */
+         (unicode > 0xff89 && unicode < 0xff8f))) /* ハ〜ホ */
+        voiced_offset = 1; /* 濁音は清音のコード + 1 */
+    else if (post_unicode == 0xff9f && /* 後が半濁音 かつ */
+             unicode > 0xff89 && unicode < 0xff8f) /* ハ〜ホ */
+        voiced_offset = 2; /* 半濁音は清音のコード + 2 */
+    if (voiced_offset)
+        *orig_bytes += BYTES4CHAR;
+
+    /* range of hankaku katakana */
+    if (unicode >= katakana_han2zen_unicode_table[0][0] && 
+        unicode <= katakana_han2zen_unicode_table[KATAKANA_HAN2ZEN_UNICODE_NUM - 1][0]) {
+        /* unicodeから、table始まりの0xff61を引いてindexを調べ、そこから変換先のunicodeを得る */
+        return katakana_han2zen_unicode_table[unicode - katakana_han2zen_unicode_table[0][0]][1] + voiced_offset;
+    }
+    return unicode;
+}
+
+int symbol_normalize_for_unicode(int unicode, int pre_unicode)
+{
+    int i;
+    int pre_type = check_unicode_char_type(pre_unicode);
+    if (pre_type == KATAKANA || pre_type == CHOON) { /* 直前がカタカナの場合 */
+        for (i = 0; prolong_characters_unicode_list[i]; i++) {
+            if (unicode == prolong_characters_unicode_list[i]) /* EM DASHなどを KATAKANA-HIRAGANA PROLONGED SOUND MARK に */
+                return KATAKANA_HIRAGANA_PROLONGED_SOUND_MARK_UNICODE;
+        }
+        return unicode;
+    }
+    else
+        return unicode;
+}
+
+/* check the code of a char */
+int check_utf8_char_type(unsigned char *ucp)
+{
+    int code;
+    int unicode = conv_from_utf8_to_unicode(ucp);
+
+    if (unicode == 0) { /* 4-6 bytes */
+	code = 0;
+    }
+    else { /* 1-3 bytes */
+	code = check_unicode_char_type(unicode);
     }
 
     return code;
@@ -1571,13 +1696,254 @@ void juman_init_etc(void)
 
 /*
 ------------------------------------------------------------------------------
+  PROCEDURE: <delete_imi_feature> 指定されたの意味情報を削除
+------------------------------------------------------------------------------
+*/
+
+int delete_imi_feature(U_CHAR *imis_ptr, U_CHAR *key)
+{
+    U_CHAR pre_str[IMI_MAX], post_str[IMI_MAX], target_str[IMI_MAX], *cp;
+
+    if (cp = strstr(imis_ptr, key)) {
+	pre_str[0] = '\0';
+        strncat(pre_str, imis_ptr, (cp > imis_ptr && *(cp - 1) == ' ') ? cp - imis_ptr - 1 : cp - imis_ptr); /* それまでの意味情報 (最後がスペースならその直前まで) */
+
+        cp += strlen("key");
+        sscanf(cp, "%[^ \"]", target_str);
+	post_str[0] = '\0';
+	strcat(post_str, cp + strlen(target_str)); /* ターゲットの後の意味情報 */
+
+        sprintf(imis_ptr, "%s%s", pre_str, post_str);
+        return TRUE;
+    }
+    else
+        return FALSE;
+}
+
+/*
+------------------------------------------------------------------------------
+  PROCEDURE: <delete_all_quantity_features> 数詞の意味情報(内部計算用)を削除
+------------------------------------------------------------------------------
+*/
+
+void delete_all_quantity_features(MRPH *m_ptr)
+{
+    delete_imi_feature(m_ptr->imis, QUANTITY_A_FEATURE);
+    delete_imi_feature(m_ptr->imis, QUANTITY_B_FEATURE);
+    delete_imi_feature(m_ptr->imis, QUANTITY_C_FEATURE);
+    delete_imi_feature(m_ptr->imis, QUANTITY_STRING_FEATURE);
+    delete_imi_feature(m_ptr->imis, DENOMINATOR_FEATURE);
+}
+
+/*
+------------------------------------------------------------------------------
+  PROCEDURE: <calculate_quantity_for_suusi_word> 数詞の数量を計算
+------------------------------------------------------------------------------
+*/
+
+int calculate_quantity_for_suusi_word(MRPH *pre_mrph_ptr, MRPH *post_mrph_ptr)
+{
+    U_CHAR *cp, *cp2, orig_pre_str[IMI_MAX], orig_post_str[IMI_MAX];
+    U_CHAR m1_quantity_str[IMI_MAX], m2_quantity_str[IMI_MAX], m1_pre[IMI_MAX], m1_post[IMI_MAX];
+    int quantity_int_b = 0, quantity_int_c = 0, m2_quantity_a_flag = 0, m2_quantity_b_flag = 0, m2_quantity_c_flag = 0, m1_quantity, m2_quantity;
+    int decimal_flag = 0, fraction_flag = 0, m1_quantity_str_length, dummy;
+    strcpy(orig_post_str, "\"");
+
+    if ((cp = strstr(post_mrph_ptr->imis, QUANTITY_C_FEATURE))) { /* 2つ目形態素: 数量C */
+        sscanf(cp + strlen(QUANTITY_C_FEATURE), "%[^ \"]", m2_quantity_str);
+        m2_quantity_c_flag = 1;
+    }
+    else if ((cp = strstr(post_mrph_ptr->imis, QUANTITY_B_FEATURE))) { /* 2つ目形態素: 数量B */
+        sscanf(cp + strlen(QUANTITY_B_FEATURE), "%[^ \"]", m2_quantity_str);
+        m2_quantity_b_flag = 1;
+    }
+    else if ((cp = strstr(post_mrph_ptr->imis, QUANTITY_A_FEATURE))) { /* 2つ目形態素: 数量A */
+        sscanf(cp + strlen(QUANTITY_A_FEATURE), "%[^ \"]", m2_quantity_str);
+        m2_quantity_a_flag = 1;
+    }
+    else if ((cp = strstr(post_mrph_ptr->imis, QUANTITY_STRING_FEATURE))) /* 2つ目形態素: 小数や分数 */
+        sscanf(cp + strlen(QUANTITY_STRING_FEATURE), "%[^ \"]", m2_quantity_str);
+    else
+        strcpy(m2_quantity_str, post_mrph_ptr->midasi); /* 見出し語 */
+    m2_quantity = atoi(m2_quantity_str);
+
+    if (cp = strstr(pre_mrph_ptr->imis, QUANTITY_C_FEATURE)) { /* 1つ目形態素(マージ先): 数量C */
+	sscanf(cp + strlen(QUANTITY_C_FEATURE), "%[^ \"]", m1_quantity_str);
+        quantity_int_c = atoi(m1_quantity_str);
+        m1_pre[0] = '\0';
+        strncat(m1_pre, pre_mrph_ptr->imis, (cp > pre_mrph_ptr->imis && *(cp - 1) == ' ') ? cp - pre_mrph_ptr->imis - 1 : cp - pre_mrph_ptr->imis); /* それまでの意味情報 (最後がスペースならその直前まで) */
+        m1_post[0] = '\0';
+        strcat(m1_post, cp + strlen(QUANTITY_C_FEATURE) + strlen(m1_quantity_str));
+
+        if (!strstr(pre_mrph_ptr->imis, QUANTITY_A_FEATURE) && !strstr(pre_mrph_ptr->imis, QUANTITY_B_FEATURE)) {
+            if (m2_quantity_b_flag) /* 2つ目形態素: 数量B */
+                sprintf(pre_mrph_ptr->imis, "%s %s%d %s%s%s", m1_pre, QUANTITY_C_FEATURE, quantity_int_c, QUANTITY_B_FEATURE, m2_quantity_str, m1_post);
+            else if (m2_quantity_a_flag) /* 2つ目形態素: 数量A */
+                sprintf(pre_mrph_ptr->imis, "%s %s%d %s%s%s", m1_pre, QUANTITY_C_FEATURE, quantity_int_c, QUANTITY_A_FEATURE, m2_quantity_str, m1_post);
+            else if (!m2_quantity_c_flag) { /* 2つ目形態素: 小数や分数 */
+                sprintf(pre_mrph_ptr->imis, "%s %s%d%s%s", m1_pre, QUANTITY_A_FEATURE, quantity_int_c, m2_quantity_str, m1_post);
+                delete_imi_feature(pre_mrph_ptr->imis, QUANTITY_C_FEATURE);
+                return -1;
+            }
+            return quantity_int_c + m2_quantity;
+        }
+        else {
+            if (m2_quantity_c_flag) /* 数量C を消す */
+                sprintf(pre_mrph_ptr->imis, "%s%s", m1_pre, m1_post);
+        }
+    }
+
+    if (cp = strstr(pre_mrph_ptr->imis, QUANTITY_B_FEATURE)) { /* 1つ目形態素(マージ先): 数量B */
+	sscanf(cp + strlen(QUANTITY_B_FEATURE), "%[^ \"]", m1_quantity_str);
+        quantity_int_b = atoi(m1_quantity_str);
+        m1_pre[0] = '\0';
+        strncat(m1_pre, pre_mrph_ptr->imis, (cp > pre_mrph_ptr->imis && *(cp - 1) == ' ') ? cp - pre_mrph_ptr->imis - 1 : cp - pre_mrph_ptr->imis); /* それまでの意味情報 (最後がスペースならその直前まで) */
+        m1_post[0] = '\0';
+        strcat(m1_post, cp + strlen(QUANTITY_B_FEATURE) + strlen(m1_quantity_str));
+
+        if (!strstr(pre_mrph_ptr->imis, QUANTITY_A_FEATURE)) {
+            if (m2_quantity_c_flag) {
+                quantity_int_c += quantity_int_b * m2_quantity;
+                sprintf(pre_mrph_ptr->imis, "%s %s%d%s", m1_pre, QUANTITY_C_FEATURE, quantity_int_c, m1_post);
+                quantity_int_b = m2_quantity = 0;
+            }
+            else if (m2_quantity_b_flag) {
+                quantity_int_b += m2_quantity;
+                sprintf(pre_mrph_ptr->imis, "%s %s%d%s", m1_pre, QUANTITY_B_FEATURE, quantity_int_b, m1_post);
+                m2_quantity = 0;
+            }
+            else if (m2_quantity_a_flag) /* 2つ目形態素: 数量A */
+                sprintf(pre_mrph_ptr->imis, "%s %s%d %s%s%s", m1_pre, QUANTITY_B_FEATURE, quantity_int_b, QUANTITY_A_FEATURE, m2_quantity_str, m1_post);
+            else { /* 2つ目形態素: 小数や分数 */
+                sprintf(pre_mrph_ptr->imis, "%s %s%d%s%s", m1_pre, QUANTITY_A_FEATURE, quantity_int_b + quantity_int_c, m2_quantity_str, m1_post);
+                delete_imi_feature(pre_mrph_ptr->imis, QUANTITY_B_FEATURE);
+                delete_imi_feature(pre_mrph_ptr->imis, QUANTITY_C_FEATURE);
+                return -1;
+            }
+            return quantity_int_c + quantity_int_b + m2_quantity;
+        }
+        else {
+            if (m2_quantity_b_flag || m2_quantity_c_flag) /* 数量B を消す */
+                sprintf(pre_mrph_ptr->imis, "%s%s", m1_pre, m1_post);
+        }
+    }
+
+    if (cp = strstr(pre_mrph_ptr->imis, QUANTITY_A_FEATURE)) { /* 1つ目形態素(マージ先): 数量A */
+	sscanf(cp + strlen(QUANTITY_A_FEATURE), "%[^ \"]", m1_quantity_str);
+        m1_quantity_str_length = strlen(m1_quantity_str);
+        m1_quantity = atoi(m1_quantity_str);
+	m1_post[0] = '\0';
+        if (m1_quantity_str_length > strlen(FRACTION_STRING) && 
+            !strcmp(m1_quantity_str + m1_quantity_str_length - strlen(FRACTION_STRING), FRACTION_STRING)) { /* 分数 (末尾が「分の」) */
+            fraction_flag = 1;
+            sprintf(m1_post, " %s%s", DENOMINATOR_FEATURE, m1_quantity_str);
+            m1_quantity_str[0] = '\0';
+            m1_quantity = 0;
+        }
+        else if (strstr(pre_mrph_ptr->imis, DENOMINATOR_FEATURE)) /* これまでが分数 */
+            fraction_flag = 1;
+        if (sscanf(m1_quantity_str, "%d%[^0-9]", &dummy, m1_pre) == 2) { /* 小数 */
+            decimal_flag = 1;
+            if (m2_quantity_b_flag || m2_quantity_c_flag) { /* error: 小数中に、十や万がある場合 */
+                delete_imi_feature(pre_mrph_ptr->imis, QUANTITY_A_FEATURE);            
+                return -1;
+            }
+        }
+
+	m1_pre[0] = '\0';
+	strncat(m1_pre, pre_mrph_ptr->imis, cp + strlen(QUANTITY_A_FEATURE) - 2 - pre_mrph_ptr->imis); /* マージ先の数量表現までの意味情報 */
+	strcat(m1_post, cp + strlen(QUANTITY_A_FEATURE) + m1_quantity_str_length); /* マージ先の数量表現の後の意味情報 */
+
+        if (m2_quantity_c_flag) { /* 2つ目形態素: 数量C */
+            quantity_int_b += m1_quantity;
+            quantity_int_c += quantity_int_b * m2_quantity;
+            sprintf(pre_mrph_ptr->imis, "%sC:%d%s", m1_pre, quantity_int_c, m1_post);
+            quantity_int_b = m2_quantity = 0;
+        }
+        else if (m2_quantity_b_flag) { /* 2つ目形態素: 数量B */
+            quantity_int_b += m1_quantity ? m1_quantity * m2_quantity : m2_quantity; /* 「分の」のときにm1_quantityを0にしている */
+            sprintf(pre_mrph_ptr->imis, "%sB:%d%s", m1_pre, quantity_int_b, m1_post);
+            m2_quantity = 0;
+        }
+        else if (m2_quantity_a_flag) { /* 2つ目形態素: 数量A */
+            sprintf(pre_mrph_ptr->imis, "%sA:%s%s%s", m1_pre, m1_quantity_str, m2_quantity_str, m1_post);
+            if (decimal_flag) /* これまでが小数なら -1 を返し、数値ではなく文字列から代表表記を作る */
+                return -1;
+            sprintf(m1_pre, "%s%s", m1_quantity_str, m2_quantity_str);
+            m2_quantity = atoi(m1_pre); /* 文字列連結により数量Aを更新 (return用) */
+        }
+        else { /* 2つ目形態素: 小数点や「分の」 */
+            if (decimal_flag) /* 「1.2分の」など、分子が小数の場合 */
+                sprintf(pre_mrph_ptr->imis, "%sA:%s%s%s", m1_pre, m1_quantity_str, m2_quantity_str, m1_post);
+            else
+                sprintf(pre_mrph_ptr->imis, "%sA:%d%s%s", m1_pre, quantity_int_b + quantity_int_c + atoi(m1_quantity_str), m2_quantity_str, m1_post);
+            delete_imi_feature(pre_mrph_ptr->imis, QUANTITY_B_FEATURE);
+            delete_imi_feature(pre_mrph_ptr->imis, QUANTITY_C_FEATURE);
+            return -1;
+        }
+        return quantity_int_c + quantity_int_b + m2_quantity;
+    }
+    else
+        return -1;
+}
+
+/*
+------------------------------------------------------------------------------
+  PROCEDURE: <make_repform_for_suusi_word> 数詞の代表表記を作成
+------------------------------------------------------------------------------
+*/
+
+int make_repform_for_suusi_word(MRPH *m_ptr, int quantity)
+{
+    U_CHAR *imis_ptr = m_ptr->imis, *cp, *cp2, *numerator_cp;
+    U_CHAR orig_pre_str[IMI_MAX], orig_post_str[IMI_MAX], quantity_str[IMI_MAX], numerator_str[IMI_MAX];
+    strcpy(orig_post_str, "\"");
+
+    if (*imis_ptr) {/* 意味情報がすでにある場合 */
+        if (cp = strstr(imis_ptr, DEF_REP)) { /* 代表表記がすでにある場合 */
+            strncpy(orig_pre_str, imis_ptr, cp - imis_ptr);
+            orig_pre_str[cp - imis_ptr] = '\0';
+            if ((cp2 = strchr(cp, ' ')) || (cp2 = strchr(cp, '\"'))) /* 空白もしくは\"までsearch */
+                strcpy(orig_post_str, cp2);
+        }
+        else {
+            strcpy(orig_pre_str, imis_ptr);
+            orig_pre_str[strlen(orig_pre_str) - 1] = ' '; /* 末尾の \" を空白に変えておく */
+        }
+    }
+    else
+        strcpy(orig_pre_str, "\"");
+
+    if ((numerator_cp = strstr(imis_ptr, DENOMINATOR_FEATURE)) && quantity >= 0) { /* 分数 */
+        sscanf(numerator_cp + strlen(DENOMINATOR_FEATURE), "%[^ \"]", numerator_str);
+        sprintf(imis_ptr, "%s%s:%s%d/%s%d%s", orig_pre_str, DEF_REP, numerator_str, quantity, numerator_str, quantity, orig_post_str);
+    }
+    else if (quantity >=0) /* 純粋な数量 */
+        sprintf(imis_ptr, "%s%s:%d/%d%s", orig_pre_str, DEF_REP, quantity, quantity, orig_post_str);
+    else if ((cp = strstr(imis_ptr, QUANTITY_A_FEATURE))) { /* 分数 or 小数 */
+        sscanf(cp + strlen(QUANTITY_A_FEATURE), "%[^ \"]", quantity_str);
+        if ((numerator_cp = strstr(imis_ptr, DENOMINATOR_FEATURE))) { /* 分数 */
+            sscanf(numerator_cp + strlen(DENOMINATOR_FEATURE), "%[^ \"]", numerator_str);
+            sprintf(imis_ptr, "%s%s:%s%s/%s%s%s", orig_pre_str, DEF_REP, numerator_str, quantity_str, numerator_str, quantity_str, orig_post_str);
+        }
+        else
+            sprintf(imis_ptr, "%s%s:%s/%s%s", orig_pre_str, DEF_REP, quantity_str, quantity_str, orig_post_str);
+    }
+    else {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/*
+------------------------------------------------------------------------------
   PROCEDURE: <suusi_word> 数詞処理
 ------------------------------------------------------------------------------
 */
     
 int 	suusi_word(int pos , int m_num)
 {
-    int i, j;
+    int i, j, quantity, repform_made_flag;
     MRPH *new_mrph , *pre_mrph;
 
     new_mrph = &m_buffer[m_num];
@@ -1590,18 +1956,25 @@ int 	suusi_word(int pos , int m_num)
 	    pre_mrph->bunrui == suusi_bunrui &&
 	    check_matrix(pre_mrph->con_tbl, new_mrph->con_tbl) != 0) {
 
-	    if (strlen(pre_mrph->midasi)+strlen(new_mrph->midasi) >= MIDASI_MAX || 
-		strlen(pre_mrph->yomi)+strlen(new_mrph->yomi) >= YOMI_MAX) {
+	    if (strlen(pre_mrph->midasi)+strlen(new_mrph->midasi) >= MIDASI_MAX - 1 || 
+		strlen(pre_mrph->yomi)+strlen(new_mrph->yomi) >= YOMI_MAX - 1) {
 		/* MIDASI_MAX、YOMI_MAXを越える数詞は分割するように変更 08/01/15 */
 		/* fprintf(stderr, "Too long suusi<%s>\n", String);
 		   return FALSE; */
 		return TRUE;
 	    }
 	    m_buffer[m_buffer_num] = *pre_mrph;
+            quantity = calculate_quantity_for_suusi_word(&(m_buffer[m_buffer_num]), new_mrph); /* 正規化のために数量を計算 */
+            if (make_repform_for_suusi_word(&(m_buffer[m_buffer_num]), quantity)) /* legalな数詞に代表表記を作成 */
+                repform_made_flag = 1;
+            else
+                repform_made_flag = 0;
 	    strcat(m_buffer[m_buffer_num].midasi, new_mrph->midasi);
 	    strcat(m_buffer[m_buffer_num].yomi, new_mrph->yomi);
 	    strcat(m_buffer[m_buffer_num].midasi2, new_mrph->midasi2);
 	    m_buffer[m_buffer_num].length += strlen(new_mrph->midasi);
+            if (!repform_made_flag) /* illegalな数詞に代表表記を作成 */
+                make_repform_for_undef_word(&(m_buffer[m_buffer_num]));
 	    /* コストは後ろ側の方を継承 */
 	    m_buffer[m_buffer_num].weight = new_mrph->weight;
 	    m_buffer[m_buffer_num].con_tbl = new_mrph->con_tbl;
@@ -1720,6 +2093,22 @@ int 	is_through(MRPH *mrph_p)
 	return FALSE;
 }
 
+void overwrite_original_string_for_midasi(int pos, int length)
+{
+    int cur_orig_bytes;
+    int end_pos = pos + length;
+    int orig_start_pos = StringPos2OriginalStringPos[pos];
+    int orig_end_pos;
+
+    if (strncmp(midasi1, OriginalString + orig_start_pos, length)) { /* OriginalStringと見出しが一致しない場合に、OriginalStringから見出しを作成 */
+        midasi1[0] = '\0';
+        for (; pos < end_pos; pos += utf8_bytes(String + pos))
+            orig_end_pos = StringPos2OriginalStringPos[pos]; /* OriginalString中における終了位置を探す */
+        orig_end_pos += utf8_bytes(OriginalString + orig_end_pos); /* 最後の文字のバイト数 */
+        strncat(midasi1, OriginalString + orig_start_pos, orig_end_pos - orig_start_pos);
+    }
+}
+
 char **OutputAV;
 int OutputAVnum;
 int OutputAVmax;
@@ -1741,11 +2130,16 @@ MRPH *prepare_path_mrph(int path_num , int para_flag)
     strcpy(midasi2, *mrph_p->midasi2 ? mrph_p->midasi2 : mrph_p->midasi);
     strcpy(yomi, mrph_p->yomi);
 
-    /* 連濁、小書き文字、長音記号処理用 */
-    if (strcmp(midasi1, "\\ ") && /* 空白は入力と異なるが、そのまま出力 */
-        strncmp(midasi1, String + p_buffer[path_num].start, mrph_p->length)) {
-	strncpy(midasi1, String + p_buffer[path_num].start, mrph_p->length);
-	midasi1[mrph_p->length] = '\0';
+    if (strcmp(midasi1, "\\ ")) {/* 空白は入力と異なるが、そのまま出力 */
+#if defined(IO_ENCODING_EUC) || defined(IO_ENCODING_SJIS)
+        /* 小書き文字、長音記号処理用 */
+        if (strncmp(midasi1, String + p_buffer[path_num].start, mrph_p->length)) {
+            strncpy(midasi1, String + p_buffer[path_num].start, mrph_p->length);
+            midasi1[mrph_p->length] = '\0';
+        }
+#else
+        overwrite_original_string_for_midasi(p_buffer[path_num].start, mrph_p->length);
+#endif
     }
 
     return mrph_p;
@@ -1792,6 +2186,7 @@ char *get_path_mrph(int path_num , int para_flag)
     switch (Show_Opt2) {
     case Op_E2:
 	len += strlen(mrph_p->imis) + 1;
+        delete_all_quantity_features(mrph_p);
 	ret = (char *)malloc(len);
 	sprintf(ret, "%s%s %s %s %s %d %s %d %s %d %s %d %s\n", kigou, midasi1, yomi, midasi2, 
 		Class[mrph_p->hinsi][0].id, mrph_p->hinsi, 
@@ -1922,6 +2317,7 @@ void print_path_mrph(FILE* output, int path_num , int para_flag)
 	   if (para_flag) fprintf(stdout , "@ ");
 	   */
 
+        delete_all_quantity_features(mrph_p);
 	my_fprintf(output, " %s\n", mrph_p->imis);
 	break;
     }
@@ -2390,6 +2786,58 @@ CHAR_NODE *make_new_node(CHAR_NODE **current_char_node_ptr, char *chr, int type)
     return new_char_node;
 }
 
+/* string normalization for utf8 */
+void normalize_string()
+{
+    int length, pos, new_pos, cur_bytes, unicode, converted_unicode, pre_unicode = 0, orig_bytes;
+    unsigned char utf8_char[4];
+
+    length = strlen(String);
+    strcpy(OriginalString, String); /* backup an original string to OriginalString */
+
+    String[0] = '\0';
+    for (pos = 0; pos < length; pos += cur_bytes) {
+        cur_bytes = utf8_bytes(OriginalString + pos);
+        new_pos = strlen(String);
+
+        if ((unicode = conv_from_utf8_to_unicode(OriginalString + pos)) > 0) { /* utf8 -> unicode */
+            converted_unicode = zen2han_for_unicode(unicode); /* 英数記号を半角に変換 */
+            if (converted_unicode != unicode) { /* 変換に成功したら */
+                StringPos2OriginalStringPos[new_pos] = pos;
+                String[new_pos] = (char)converted_unicode; /* 半角 ... 1バイト */
+                String[new_pos + 1] = '\0';
+                pre_unicode = converted_unicode;
+                continue;
+            }
+            converted_unicode = symbol_normalize_for_unicode(unicode, pre_unicode); /* シンボルの正規化 */
+            if (converted_unicode != unicode) { /* 変換に成功したら */
+                StringPos2OriginalStringPos[new_pos] = pos;
+                conv_from_unicode_to_utf8(converted_unicode, utf8_char); /* unicode -> utf8 */
+                strcat(String, utf8_char);
+                pre_unicode = converted_unicode;
+                continue;
+            }
+
+            /* カタカナの正規化 */
+            orig_bytes = cur_bytes;
+            converted_unicode = katakana_normalize_for_unicode(unicode, 
+                                                               (pos + cur_bytes < length) ? conv_from_utf8_to_unicode(OriginalString + pos + cur_bytes) : 0, &orig_bytes);
+            if (converted_unicode != unicode) { /* 変換に成功したら */
+                StringPos2OriginalStringPos[new_pos] = pos;
+                conv_from_unicode_to_utf8(converted_unicode, utf8_char); /* unicode -> utf8 */
+                strcat(String, utf8_char);
+                pre_unicode = converted_unicode;
+                pos += orig_bytes - cur_bytes; /* 2文字が1文字になる場合 */
+                continue;
+            }
+            
+        }
+        StringPos2OriginalStringPos[new_pos] = pos;
+        strncat(String, OriginalString + pos, cur_bytes);
+        pre_unicode = unicode;
+    }
+}
+
 /*
 ------------------------------------------------------------------------------
   PROCEDURE: <juman_sent> 一文を形態素解析する    by T.Utsuro
@@ -2419,6 +2867,11 @@ int juman_sent(void)
 	match_pbuf = (int *)my_alloc(sizeof(int)*BUFFER_BLOCK_SIZE);
 	process_buffer_max += BUFFER_BLOCK_SIZE;
     }
+
+    /* normalize (for utf8) */
+#if !defined(IO_ENCODING_EUC) && !defined(IO_ENCODING_SJIS)
+    normalize_string();
+#endif
 
     length = strlen(String);
 

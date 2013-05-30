@@ -545,7 +545,6 @@ BOOL juman_close(void)
 */
 void	realloc_mrph_buffer(void)
 {
-    printf("realloc_mrph_buffer: %d -> %d\n", mrph_buffer_max, mrph_buffer_max + BUFFER_BLOCK_SIZE);
     mrph_buffer_max += BUFFER_BLOCK_SIZE;
     m_buffer = (MRPH *)my_realloc(m_buffer, sizeof(MRPH)*mrph_buffer_max);
     m_check_buffer = (int *)my_realloc(m_check_buffer,
@@ -559,7 +558,6 @@ void	realloc_mrph_buffer(void)
 */
 void	realloc_process_buffer(void)
 {
-    printf("realloc_process_buffer: %d -> %d\n", process_buffer_max, process_buffer_max + BUFFER_BLOCK_SIZE);
     process_buffer_max += BUFFER_BLOCK_SIZE;
     p_buffer = (PROCESS_BUFFER *)my_realloc(p_buffer,
 				    sizeof(PROCESS_BUFFER)*process_buffer_max);

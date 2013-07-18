@@ -1219,6 +1219,10 @@ char *_take_data(char *s, MRPH *mrph, int deleted_bytes, char *opt)
     }
 
     mrph->length += deleted_bytes; /* 削除分を足す */
+    if (mrph->length >= MIDASI_MAX) { /* MIDASI_MAXを越えるmidasiは作成できない (あとでprepare_path_mrph()で書き換えるときに問題となる) */
+        mrph->weight = STOP_MRPH_WEIGHT;
+    }
+
     return(s);
 }
 

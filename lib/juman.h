@@ -220,6 +220,7 @@ enum		_ExitCode 	{ NormalExit,
 #define         Op_P		     	2
 #define         Op_BB		     	3
 #define         Op_PP		     	4
+#define         Op_G		     	5
 #define         Op_F		     	0
 #define         Op_E		     	1
 #define         Op_C		     	2

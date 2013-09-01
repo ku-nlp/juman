@@ -206,7 +206,11 @@ void juman_standalone(void)
 		break;
 	    }
 	}
+    if (Show_Opt2 != Op_G) {
 	fprintf(stdout, "EOS\n");
+    } else {
+	fprintf(stdout, "\n");
+    }
 	fflush(stdout);
     }
     juman_close();
@@ -252,6 +256,10 @@ void option_proc(int argc, char **argv)
 	}
 else {
 	    if ( argv[i][1] == 'b' ) Show_Opt1 = Op_B;
+        else if ( argv[i][1] == 'g' ) {
+            Show_Opt1 = Op_B;
+            Show_Opt2 = Op_G;
+        }
 	    else if ( argv[i][1] == 'm' ) Show_Opt1 = Op_M;
 	    else if ( argv[i][1] == 'p' ) Show_Opt1 = Op_P;
 	    else if ( argv[i][1] == 'B' ) Show_Opt1 = Op_BB;
@@ -359,11 +367,12 @@ static void set_juman_server(server)
 
 void juman_help()
 {
-    fprintf(stderr, "usage: juman -[b|B|m|p|P] -[f|c|e|E] [-S] [-N port] [-C host[:port]] [-i string] [-r rc_file]\n");
+    fprintf(stderr, "usage: juman -[b|B|g|m|p|P] -[f|c|e|E] [-S] [-N port] [-C host[:port]] [-i string] [-r rc_file]\n");
     fprintf(stderr, "             [-u [lowercase|long-sound|onomatopoeia]]\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "             -b : show best path\n");
     fprintf(stderr, "             -B : show best path including homographs (default)\n");
+    fprintf(stderr, "             -g : show best path (only dictionary forms) \n");
     fprintf(stderr, "             -m : show all morphemes\n");
     fprintf(stderr, "             -p : show all paths\n");
     fprintf(stderr, "             -P : show all paths by -B style\n");

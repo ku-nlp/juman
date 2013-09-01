@@ -1928,7 +1928,11 @@ void print_path_mrph(FILE* output, int path_num , int para_flag)
 
 	my_fprintf(output, " %s\n", mrph_p->imis);
 	break;
+    
+    case Op_G:
+	my_fprintf(output, "%s ", midasi2);
     }
+
 }
 
 void process_path_mrph(FILE* output, int path_num , int para_flag) {

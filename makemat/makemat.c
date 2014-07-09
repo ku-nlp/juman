@@ -24,9 +24,9 @@
 
 #include	"makemat.h"
 
-#define         KANKEI_MAX      100
-#define         REN_TBL_MAX     6000
-#define         REN_MTR_MAX     6000
+#define         KANKEI_MAX      200   /* 100 */
+#define         REN_TBL_MAX     10000 /* 6000 */
+#define         REN_MTR_MAX     10000 /* 6000 */
 
 /*
 ------------------------------------------------------------------------------

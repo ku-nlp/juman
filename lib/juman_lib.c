@@ -211,7 +211,7 @@ int *            path_buffer;
 int *		 match_pbuf;
 
 U_CHAR		kigou[MIDASI_MAX];   /* 先頭の記号(@) */
-U_CHAR		midasi1[MIDASI_MAX]; /* 活用 */
+U_CHAR		midasi1[LENMAX];     /* 活用 */
 U_CHAR		midasi2[MIDASI_MAX]; /* 原形 */
 U_CHAR		yomi[MIDASI_MAX];    /* 活用の読み */
 

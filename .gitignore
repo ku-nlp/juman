@@ -34,9 +34,10 @@
 *.mat
 INSTALL
 
-# generated binaries
+# generated binaries and headers
 compile
 juman/juman
+juman/version.h
 jumanrc
 darts/mkdarts
 makeint/makeint

@@ -14,6 +14,7 @@
 #include <config.h>
 #endif
 
+#include        "version.h"
 #include	<juman.h>
 
 /*
@@ -187,7 +188,7 @@ void juman_standalone(void)
 
 	if (Show_Opt_tag[0])
 	    if (!strncmp(String , Show_Opt_tag , strlen(Show_Opt_tag))) {
-		fprintf(stdout, "%s JUMAN:%s\n", String, VERSION);
+		fprintf(stdout, "%s JUMAN:%s (Revision.%s)\n", String, VERSION, REVISION_INFO);
 		continue;
 	    }
 
@@ -401,6 +402,6 @@ void juman_help()
 
 void juman_version()
 {
-    fprintf(stderr, "%s %s\n", PACKAGE_NAME, VERSION);
+    fprintf(stderr, "%s %s (Revision.%s)\n", PACKAGE_NAME, VERSION, REVISION_INFO);
     exit(0);
 }

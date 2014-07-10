@@ -3,9 +3,7 @@ AC_INIT(juman, m4_esyscmd([tr -d '\n' < VERSION]), nl-resource@nlp.ist.i.kyoto-u
 AC_PREREQ(2.53)
 # AC_REVISION($Revision: 1.16 $)
 AC_CONFIG_SRCDIR([juman/juman.c])
-DATE=`git log -1 --format=" (Revision.%h on %cd)" --date=short`
-# DATE=`LANG=C date +%Y%m%d`
-AM_INIT_AUTOMAKE(${PACKAGE_NAME}, ${PACKAGE_VERSION}${DATE})
+AM_INIT_AUTOMAKE(${PACKAGE_NAME}, ${PACKAGE_VERSION})
 AM_CONFIG_HEADER([config.h])
 
 # Checks for programs.

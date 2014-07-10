@@ -2,6 +2,7 @@ bin_PROGRAMS = juman
 prog_SOURCES = version.h
 # include_HEADERS = version.h
 EXTRA_DIST = version.h
+CLEANFILES = version.h
 
 INCLUDES = -I../lib
 

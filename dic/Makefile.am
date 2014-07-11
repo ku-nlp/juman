@@ -17,7 +17,7 @@ dist_dic_DATA = $(GRM_FILES)
 EXTRA_DIST = JUMAN.connect.c *.dic rendaku.perl onomatopoeia.perl onomatopoeia.pattern
 
 Rendaku.dic: ContentW.dic
-	tac $< | perl rendaku.perl | tac > $@
+	perl -e 'print reverse <>' $< | perl rendaku.perl | perl -e 'print reverse <>' > $@
 
 Onomatopoeia.dic: onomatopoeia.pattern
 	perl onomatopoeia.perl < $< > $@

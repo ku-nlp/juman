@@ -188,7 +188,7 @@ void juman_standalone(void)
 
 	if (Show_Opt_tag[0])
 	    if (!strncmp(String , Show_Opt_tag , strlen(Show_Opt_tag))) {
-		fprintf(stdout, "%s JUMAN:%s (Revision.%s)\n", String, VERSION, REVISION_INFO);
+		fprintf(stdout, "%s JUMAN:%s (Revision.%s)\n", String, REVISION_VERSION, REVISION_INFO);
 		continue;
 	    }
 
@@ -402,6 +402,6 @@ void juman_help()
 
 void juman_version()
 {
-    fprintf(stderr, "%s %s (Revision.%s)\n", PACKAGE_NAME, VERSION, REVISION_INFO);
+    fprintf(stderr, "%s %s (Revision.%s)\n", PACKAGE_NAME, REVISION_VERSION, REVISION_INFO);
     exit(0);
 }

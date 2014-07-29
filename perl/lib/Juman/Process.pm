@@ -231,7 +231,7 @@ sub pattern {
 sub which_command {
     my( $bin ) = @_;
     for my $p ( split( /:/, $ENV{PATH} ) ){
-	return "$p/$bin" if -x "$p/$bin";
+	return "$p/$bin" if -x "$p/$bin" and -f "$p/$bin";
     }
 }
 

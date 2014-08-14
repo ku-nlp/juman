@@ -1594,8 +1594,9 @@ int 	suusi_word(int pos , int m_num)
 	    pre_mrph->bunrui == suusi_bunrui &&
 	    check_matrix(pre_mrph->con_tbl, new_mrph->con_tbl) != 0) {
 
-	    if (strlen(pre_mrph->midasi)+strlen(new_mrph->midasi) >= MIDASI_MAX || 
-		strlen(pre_mrph->yomi)+strlen(new_mrph->yomi) >= YOMI_MAX) {
+	    if (strlen(pre_mrph->midasi)+strlen(new_mrph->midasi) >= SUUSI_MIDASI_MAX || 
+		strlen(pre_mrph->yomi)+strlen(new_mrph->yomi) >= SUUSI_YOMI_MAX) {
+        /* 零が連続した際に読みの候補数が爆発するため，より短い SUUSI_MIDASI_MAX, SUUSI_YOMI_MAX を設定 2014/08/14 */
 		/* MIDASI_MAX、YOMI_MAXを越える数詞は分割するように変更 08/01/15 */
 		/* fprintf(stderr, "Too long suusi<%s>\n", String);
 		   return FALSE; */

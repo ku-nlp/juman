@@ -117,6 +117,8 @@ typedef char *	caddr_t;
 #define 	MIDASI_MAX	129		/* maximum length of MIDASI */
 #define 	YOMI_MAX	129		/* maximum length of YOMI   */
 #define 	IMI_MAX		1024		/* maximum length of IMI    */
+#define 	SUUSI_MIDASI_MAX	60 /* maximum length of MIDASI */
+#define 	SUUSI_YOMI_MAX	60		/* maximum length of YOMI   */
 
 
 #define		ENV_JUMANPATH	"JUMANPATH"

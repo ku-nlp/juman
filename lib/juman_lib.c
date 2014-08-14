@@ -175,7 +175,7 @@ int		LongSoundDel_Opt;
 U_CHAR	        String[LENMAX];
 U_CHAR	        NormalizedString[LENMAX];
 int		CharLatticeUsedFlag;
-CHAR_NODE	CharLattice[MAX_PATHES];
+CHAR_NODE	CharLattice[MAX_LATTICES];
 CHAR_NODE	CharRootNode;
 size_t		CharNum;
 int		MostDistantPosition;

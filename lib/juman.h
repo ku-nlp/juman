@@ -233,6 +233,8 @@ enum		_ExitCode 	{ NormalExit,
 #define		MAX_PATHES		500
 #define		MAX_PATHES_WK		5000
 
+#define		MAX_LATTICES	16000	
+
 #define		CONNECT_MATRIX_MAX	1000
 
 #define		KUUHAKU            	0x20

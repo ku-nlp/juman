@@ -2410,7 +2410,7 @@ int juman_sent(void)
     int        pos_end, length;
     int        pre_m_buffer_num;
     int        pre_p_buffer_num;
-    int        pos, next_pos = 0, pre_byte_length = 0, deleted_num;
+    int        pos, next_pos = 0, pre_byte_length = 0, local_deleted_num = 0;
     int	       p_start = 0, count;
     int        code;
     int        next_pre_is_deleted, pre_is_deleted = 0; /* 直前の文字が削除文字(長音, 小文字) */
@@ -2521,7 +2521,7 @@ int juman_sent(void)
 	if ((LongSoundDel_Opt || LowercaseDel_Opt) && next_pos == BYTES4CHAR) {
 	    pre_code = (pos > 0) ? check_code(String, pos - pre_byte_length) : -1;
 	    post_code = check_code(String, pos + next_pos); /* 文末の場合は0 */
-	    if (LongSoundDel_Opt && pre_code > 0 &&
+	    if (LongSoundDel_Opt && pre_code > 0 && (WORD_LEN_MAX + local_deleted_num + 1) * BYTES4CHAR < MIDASI_MAX &&
 		/* 直前が削除された長音記号、平仮名、または、漢字かつ直後が平仮名 */
 		((pre_is_deleted ||
 		  pre_code == HIRAGANA || pre_code == KANJI && post_code == HIRAGANA) &&
@@ -2531,11 +2531,11 @@ int juman_sent(void)
 		/* 直前が長音記号で、現在文字が"っ"、かつ、直後が文末、または、記号の場合も削除 */
 		(pre_is_deleted && !strncmp(String + pos, DEF_PROLONG_SYMBOL3, BYTES4CHAR) &&
 		 (post_code == 0 || post_code == KIGOU))) {
-		deleted_num++;
+                local_deleted_num++;
                 next_pre_is_deleted = 1;
                 new_char_node = make_new_node(&current_char_node, "", OPT_PROLONG_DEL);
 	    }
-	    else if (LowercaseDel_Opt && pre_code > 0) {
+	    else if (LowercaseDel_Opt && pre_code > 0 && (WORD_LEN_MAX + local_deleted_num + 1) * BYTES4CHAR < MIDASI_MAX) {
 		/* 小書き文字による長音化 */
 		for (i = DELETE_LOWERCASE_S; i < DELETE_LOWERCASE_E; i++) {
 		    if (!strncmp(String + pos, lowercase[i], BYTES4CHAR)) {
@@ -2545,7 +2545,7 @@ int juman_sent(void)
 			/* 直前の文字が対応する平仮名、または、削除された同一の小書き文字の場合は削除 */
 			if (j < pre_lower_end[i] ||
 			    pre_is_deleted && !strncmp(String + pos - pre_byte_length, String + pos, pre_byte_length)) {
-			    deleted_num++;
+                            local_deleted_num++;
                             next_pre_is_deleted = 1;
                             new_char_node = make_new_node(&current_char_node, "", OPT_PROLONG_DEL);
 			    break;
@@ -2553,6 +2553,9 @@ int juman_sent(void)
 		    }
 		}
 	    }
+            else {
+                local_deleted_num = 0;
+            }
 	}
         pre_is_deleted = next_pre_is_deleted;
         pre_byte_length = next_pos;

@@ -177,7 +177,7 @@ sub open_local_socket {
     my( $this ) = @_;
 
     # juman/knp が server-client mode で動作しないようにしている．
-    local %ENV;
+    local %ENV = %ENV;
     delete $ENV{JUMANSERVER};
     delete $ENV{KNPSERVER};
 

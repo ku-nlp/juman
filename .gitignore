@@ -64,3 +64,8 @@ stamp-h?
 .libs/
 *.l[ao]
 *~
+
+# tags
+GPATH
+GRTAGS
+GTAGS

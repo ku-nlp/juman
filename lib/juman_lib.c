@@ -94,8 +94,8 @@
 #include <config.h>
 #endif
 
-#include	<juman.h>
-#include	<const.h>
+#include	"juman.h"
+#include	"const.h"
 #include	"darts_for_juman.h"
 
 /*

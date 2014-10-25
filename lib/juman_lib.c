@@ -1637,7 +1637,7 @@ int 	suusi_word(int pos , int m_num)
     
 int 	through_word(int pos , int m_num)
 {
-    int i, j, k, l, n, nn, sc, scmin;
+    int i, j, k, l, n, nn, sc, scmin, tmp_path;
     MRPH *now_mrph, *mrph_p;
 
     now_mrph = &m_buffer[m_num];
@@ -1700,6 +1700,17 @@ int 	through_word(int pos , int m_num)
 		    p_buffer[nn].path[k] = p_buffer[nn].path[k+1];
 		  j--;
 	      }
+
+            /* もっともコストが小さいpathを0番目にもってくる */
+	    for (j = 1 ; p_buffer[nn].path[j] != -1 ; j++) {
+                if (p_buffer[p_buffer[nn].path[j]].score == scmin) {
+                    tmp_path = p_buffer[nn].path[0];
+                    p_buffer[nn].path[0] = p_buffer[nn].path[j];
+                    p_buffer[nn].path[j] = tmp_path;
+                    break;
+                }
+            }
+
 	    p_buffer[nn].score = scmin+sc;
 	}
     }

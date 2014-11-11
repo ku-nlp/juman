@@ -2146,7 +2146,10 @@ int _print_homograph_path(FILE* output, int pbuf_start, int new_p)
     f = 0;
     now_pos = p_buffer[path_buffer[pbuf_start]].start;
     for (j = pbuf_start; path_buffer[j] >= 0; j++)
-	for (i = 0; (pt = p_buffer[path_buffer[j]].path[i]) != -1; i++)
+	for (i = 0; (pt = p_buffer[path_buffer[j]].path[i]) != -1; i++){
+        // bestよりコストが高いパスは探索しない(コスト幅を使ったときにスコアの低い変なパスを選ばないため)
+        if(p_buffer[pt].score > p_buffer[p_buffer[path_buffer[j]].path[0]].score)
+            break;
 	    /* 2文字語を探す */
 	    if (p_buffer[pt].start == now_pos-2*BYTES4CHAR) {
 		for (k = 0; (pt2 = p_buffer[pt].path[k]) != -1; k++)
@@ -2154,6 +2157,7 @@ int _print_homograph_path(FILE* output, int pbuf_start, int new_p)
 		    if (p_buffer[pt2].start <= now_pos-(2+2)*BYTES4CHAR &&
 			p_buffer[pt2].start >= now_pos-(2+4)*BYTES4CHAR) f = 1;
 	    }
+    }
 
     for (ll = 1; ll <= now_pos; ll++) { /* 半角文字のため，1byteごとに処理 */
 	len = ll;
@@ -2165,6 +2169,8 @@ int _print_homograph_path(FILE* output, int pbuf_start, int new_p)
 	l = new_p;
 	for (j = pbuf_start; path_buffer[j] >= 0; j++) {
 	    for (i = 0; (pt = p_buffer[path_buffer[j]].path[i]) != -1; i++) {
+        if(p_buffer[pt].score > p_buffer[p_buffer[path_buffer[j]].path[0]].score)
+            break;
 		if (p_buffer[pt].start == now_pos-len) {
 		    /* 同音異義語群を求める(但し重複しないようにする) */
 		    for (k = new_p; k < l; k++)

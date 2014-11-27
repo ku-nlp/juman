@@ -1,5 +1,6 @@
 # -*- perl -*-
 
+use utf8;
 use strict;
 use English qw/ $PERL_VERSION /;
 use Test;

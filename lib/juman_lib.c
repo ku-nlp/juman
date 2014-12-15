@@ -2538,7 +2538,7 @@ int juman_sent(void)
 	if ((LongSoundDel_Opt || LowercaseDel_Opt) && next_pos == BYTES4CHAR) {
 	    pre_code = (pos > 0) ? check_code(String, pos - pre_byte_length) : -1;
 	    post_code = check_code(String, pos + next_pos); /* 文末の場合は0 */
-	    if (LongSoundDel_Opt && pre_code > 0 && (WORD_LEN_MAX + local_deleted_num + 1) * BYTES4CHAR < MIDASI_MAX &&
+	    if (LongSoundDel_Opt && pre_code > 0 && (WORD_CHAR_NUM_MAX + local_deleted_num + 1) * BYTES4CHAR < MIDASI_MAX &&
 		/* 直前が削除された長音記号、平仮名、または、漢字かつ直後が平仮名 */
 		((pre_is_deleted ||
 		  pre_code == HIRAGANA || pre_code == KANJI && post_code == HIRAGANA) &&
@@ -2552,7 +2552,7 @@ int juman_sent(void)
                 next_pre_is_deleted = 1;
                 new_char_node = make_new_node(&current_char_node, "", OPT_PROLONG_DEL);
 	    }
-	    else if (LowercaseDel_Opt && pre_code > 0 && (WORD_LEN_MAX + local_deleted_num + 1) * BYTES4CHAR < MIDASI_MAX) {
+	    else if (LowercaseDel_Opt && pre_code > 0 && (WORD_CHAR_NUM_MAX + local_deleted_num + 1) * BYTES4CHAR < MIDASI_MAX) {
 		/* 小書き文字による長音化 */
 		for (i = DELETE_LOWERCASE_S; i < DELETE_LOWERCASE_E; i++) {
 		    if (!strncmp(String + pos, lowercase[i], BYTES4CHAR)) {

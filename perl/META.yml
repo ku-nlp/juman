@@ -5,6 +5,6 @@ version:      0.5.7
 version_from: lib/Juman.pm
 installdirs:  site
 requires:
-
+    Time::HiRes:    1.9726
 distribution_type: module
 generated_by: ExtUtils::MakeMaker version 6.17

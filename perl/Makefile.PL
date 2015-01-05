@@ -6,7 +6,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     'NAME'		=> 'juman-perl',
     'VERSION_FROM'	=> 'lib/Juman.pm',
-    'PREREQ_PM'		=> {}, # e.g., Module::Name => 1.1
+    'PREREQ_PM'		=> { Time::HiRes => 1.9726, }, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
       (ABSTRACT		=> 'segment Japanese sentences to morphemes with Juman',
        AUTHOR		=> 'TSUCHIYA Masatoshi <tsuchiya@pine.kuee.kyoto-u.ac.jp>') : ()),

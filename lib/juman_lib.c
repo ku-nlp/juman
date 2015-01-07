@@ -2479,14 +2479,14 @@ int juman_sent(void)
         current_char_node = &CharLattice[CharNum];
 	if (String[pos]&0x80) { /* 全角の場合 */
 	    /* 長音記号による置換 */
-	    if (LongSoundRep_Opt &&
-		(!strncmp(String + pos, DEF_PROLONG_SYMBOL1, BYTES4CHAR) ||
-		 !strncmp(String + pos, DEF_PROLONG_SYMBOL2, BYTES4CHAR) && 
-		 (!String[pos + BYTES4CHAR] || check_code(String, pos + BYTES4CHAR) == KIGOU || check_code(String, pos + BYTES4CHAR) == HIRAGANA)) &&
+        /* (String[pos]がーもしくは〜) && (posが文最後の文字列か次の文字が記号かひらがな) && 二文字目以降 */
+        if (LongSoundRep_Opt &&
+                (!strncmp(String + pos, DEF_PROLONG_SYMBOL1, BYTES4CHAR) || !strncmp(String + pos, DEF_PROLONG_SYMBOL2, BYTES4CHAR)) && 
+                (!String[pos + BYTES4CHAR] || check_code(String, pos + BYTES4CHAR) == KIGOU || check_code(String, pos + BYTES4CHAR) == HIRAGANA) &&
                 (pos > 0) /* 2文字目以降 */
-		/* 次の文字が"ー","〜"でない */
-		/*  strncmp(String + pos + BYTES4CHAR, DEF_PROLONG_SYMBOL1, BYTES4CHAR) && */
-		/*  strncmp(String + pos + BYTES4CHAR, DEF_PROLONG_SYMBOL2, BYTES4CHAR)) */
+                /* 次の文字が"ー","〜"でない */
+                /*  strncmp(String + pos + BYTES4CHAR, DEF_PROLONG_SYMBOL1, BYTES4CHAR) && */
+                /*  strncmp(String + pos + BYTES4CHAR, DEF_PROLONG_SYMBOL2, BYTES4CHAR)) */
                 ) {
 		for (i = 0; *pre_prolonged[i]; i++) {
 		    if (!strncmp(String + pos - pre_byte_length, pre_prolonged[i], pre_byte_length)) {

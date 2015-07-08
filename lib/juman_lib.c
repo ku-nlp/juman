@@ -171,9 +171,11 @@ int		LowercaseRep_Opt;
 int		LowercaseDel_Opt;
 int		LongSoundRep_Opt;
 int		LongSoundDel_Opt;
+int		UseGivenSegmentation_Opt;
 
 U_CHAR	        String[LENMAX];
 U_CHAR	        NormalizedString[LENMAX];
+int		String2Length[LENMAX];
 int		CharLatticeUsedFlag;
 CHAR_NODE	CharLattice[MAX_LATTICES];
 CHAR_NODE	CharRootNode;
@@ -981,6 +983,12 @@ int take_data(int pos, int pos_in_char, char **pbuf, char opt)
     deleted_bytes = *s++ - 1 - PAT_BUF_INFO_BASE;
     s = _take_data(s, &mrph, deleted_bytes, &opt);
 
+    if (UseGivenSegmentation_Opt && mrph.length != String2Length[pos]) {
+        s++; /* 項目間の\n */
+        *pbuf = s;
+        return TRUE;
+    }
+
     /* 連語の場合 */
     if (mrph.hinsi == RENGO_ID) {
 
@@ -1302,6 +1310,9 @@ int undef_word(int pos)
 	    else break;
 	}
     }
+
+    if (UseGivenSegmentation_Opt)
+        end = pos + String2Length[pos];
 
     switch (code) {
     case KUUHAKU:
@@ -2428,7 +2439,7 @@ int juman_sent(void)
     int        pre_m_buffer_num;
     int        pre_p_buffer_num;
     int        pos, next_pos = 0, pre_byte_length = 0, local_deleted_num = 0;
-    int	       p_start = 0, count;
+    int	       p_start = 0, count = 0;
     int        code;
     int        next_pre_is_deleted, pre_is_deleted = 0; /* 直前の文字が削除文字(長音, 小文字) */
     CHAR_NODE  *current_char_node, *new_char_node;
@@ -2444,6 +2455,22 @@ int juman_sent(void)
 	path_buffer = (int *)my_alloc(sizeof(int)*BUFFER_BLOCK_SIZE);
 	match_pbuf = (int *)my_alloc(sizeof(int)*BUFFER_BLOCK_SIZE);
 	process_buffer_max += BUFFER_BLOCK_SIZE;
+    }
+
+    /* 与えられた区切りを使う場合 */
+    if (UseGivenSegmentation_Opt) {
+        char *token;
+        char *dup_String = strdup(String);
+        length = strlen(dup_String);
+        String[0] = '\0';
+        for (pos = 0; pos < length; pos++) String2Length[pos] = 0;
+        token = strtok(dup_String, ":");
+        while (token) {
+            String2Length[count] = strlen(token);
+            count += strlen(token);
+            strcat(String, token);
+            token = strtok(NULL, ":");
+        }
     }
 
     length = strlen(String);
@@ -2588,9 +2615,11 @@ int juman_sent(void)
 	
 	    pre_m_buffer_num = m_buffer_num;
 	    pre_p_buffer_num = p_buffer_num;
-	
-            if (search_all(pos, count) == FALSE) return FALSE;
-	    if (undef_word(pos) == FALSE) return FALSE;
+
+            if (!UseGivenSegmentation_Opt || String2Length[pos]) {	
+                if (search_all(pos, count) == FALSE) return FALSE;
+                if (undef_word(pos) == FALSE) return FALSE;
+            }
 	}
 
 #if defined(IO_ENCODING_EUC) || defined(IO_ENCODING_SJIS)

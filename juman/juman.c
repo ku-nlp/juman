@@ -37,6 +37,7 @@ extern int		Repetition_Opt;
 extern int              Onomatopoeia_Opt;
 extern int		LongSoundRep_Opt;
 extern int		LongSoundDel_Opt;
+extern int		UseGivenSegmentation_Opt;
 extern int		Unkword_Pat_Num;
 
 extern FILE		*Jumanrc_Fileptr;
@@ -249,6 +250,7 @@ void option_proc(int argc, char **argv)
     Onomatopoeia_Opt = 0;
     LongSoundRep_Opt = 1;
     LongSoundDel_Opt = 1;
+    UseGivenSegmentation_Opt = 0;
 
     for ( i=1; i<argc; i++ ) {
 	if ( argv[i][0] != '-' ) {
@@ -292,6 +294,7 @@ else {
 	    else if ( argv[i][1] == 'v' ) juman_version();
 	    else if ( argv[i][1] == 'd' ) Show_Opt_debug = 1;
 	    else if ( argv[i][1] == 'D' ) Show_Opt_debug = 2;
+	    else if ( argv[i][1] == 's' ) UseGivenSegmentation_Opt = 1;
 	    else if ( argv[i][1] == 'u' ) { /* 未知語処理用のオプションの取扱い */
 	        if (i == argc - 1 || argv[i+1][0] == '-' ) { /* no argument */
 		    Rendaku_Opt = LowercaseRep_Opt = LowercaseDel_Opt = LongSoundRep_Opt = 
@@ -385,6 +388,7 @@ void juman_help()
     fprintf(stderr, "             -E : -e plus location and semantics data\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "             -u : disable unknown word processing\n");
+    fprintf(stderr, "             -s : use given segmentation\n");
     fprintf(stderr, "             -i : ignore an input line starting with 'string'\n");
     fprintf(stderr, "             -r : use 'rc_file' as '.jumanrc'\n");
     fprintf(stderr, "             -v : show version\n");

@@ -2471,6 +2471,7 @@ int juman_sent(void)
             strcat(String, token);
             token = strtok(NULL, ":");
         }
+        free(dup_String);
     }
 
     length = strlen(String);

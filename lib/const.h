@@ -18,6 +18,7 @@
 #define OPT_DEVOICE            4
 #define OPT_PROLONG_DEL        8
 #define OPT_PROLONG_REPLACE    16
+#define OPT_PROLONG_DEL_LAST   32  // 末尾への長音追加
 #define NORMALIZED_LENGTH      8   /* 非正規表記の処理で考慮する最大形態素長 */
 
 /* 連濁処理等で使用する品詞や表記情報 */

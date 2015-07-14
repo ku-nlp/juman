@@ -705,7 +705,7 @@ void da_search_one_step(int dic_no, int left_position, int right_position, char 
 
                             /* 各ノードのp_bufferの先頭(node_type)は未更新 -> pat_bufに入れるときに書き換える */
                             register_nodes_by_deletion(left_char_node->p_buffer[i], pat_buf, 
-                                                       right_char_node->node_type[right_char_node->da_node_pos_num], 
+                                                       right_char_node->node_type[right_char_node->da_node_pos_num] | OPT_PROLONG_DEL_LAST, 
                                                        right_char_node->deleted_bytes[right_char_node->da_node_pos_num]);
 #ifdef DEBUG
                             printf("*** D p_buf=%d p_buffer=%d at %d,", strlen(pat_buf), strlen(right_char_node->p_buffer[right_char_node->da_node_pos_num]), right_position);
@@ -1198,9 +1198,13 @@ char *_take_data(char *s, MRPH *mrph, int deleted_bytes, char *opt)
     }
 
     /* 長音挿入したものにペナルティ */
-    if ((*opt & OPT_PROLONG_DEL) && mrph->weight != STOP_MRPH_WEIGHT) {
-	/* 動詞、名詞、接頭辞、格助詞、1文字の接続助詞・副助詞は長音削除を認めない */
-	if ((mrph->hinsi == prolong_ng_hinsi1 || /* 動詞 */
+    if ((*opt & OPT_PROLONG_DEL) && mrph->weight != STOP_MRPH_WEIGHT ) {
+
+    if ((*opt & OPT_PROLONG_DEL_LAST) && mrph->hinsi == prolong_ng_hinsi2 && 
+            deleted_bytes ==3 &&  check_code(mrph->midasi, 0) == KATAKANA &&check_code(mrph->midasi, mrph->length -3) == KATAKANA) { 
+        ;// 末尾に一文字だけ長音を挿入している，元々末尾が長音でないカタカナ語は削除を認める
+    } /* 動詞、名詞、接頭辞、格助詞、1文字の接続助詞・副助詞は長音削除を認めない */ 
+    else if ((mrph->hinsi == prolong_ng_hinsi1 || /* 動詞 */
 	     mrph->hinsi == prolong_ng_hinsi2 || /* 名詞 */
 	     mrph->hinsi == prolong_ng_hinsi3 || /* 接頭辞 */
 	     mrph->hinsi == prolong_ng_hinsi4 && mrph->bunrui == prolong_ng_bunrui4_1 || /* 格助詞 */
@@ -2569,7 +2573,8 @@ int juman_sent(void)
 	    if (LongSoundDel_Opt && pre_code > 0 && (WORD_CHAR_NUM_MAX + local_deleted_num + 1) * BYTES4CHAR < MIDASI_MAX &&
 		/* 直前が削除された長音記号、平仮名、または、漢字かつ直後が平仮名 */
 		((pre_is_deleted ||
-		  pre_code == HIRAGANA || pre_code == KANJI && post_code == HIRAGANA) &&
+		  pre_code == HIRAGANA || pre_code == KATAKANA 
+          || pre_code == KANJI && post_code == HIRAGANA) &&
 		 /* "ー"または"〜" */
 		 (!strncmp(String + pos, DEF_PROLONG_SYMBOL1, BYTES4CHAR) ||
 		  !strncmp(String + pos, DEF_PROLONG_SYMBOL2, BYTES4CHAR))) ||

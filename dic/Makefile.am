@@ -44,5 +44,5 @@ jumandic.txt: $(INT_FILES)
 jumandic.dat: jumandic.txt $(DICSORT)
 	$(DICSORT) jumandic.txt > $@
 
-jumandic.da: jumandic.dat $(MKDARTS)
+jumandic.da jumandic.bin: jumandic.dat $(MKDARTS)
 	$(MKDARTS) jumandic.dat $@ jumandic.bin

@@ -2,7 +2,7 @@ SUBDIRS = darts lib makeint makemat makepat juman dic autodic wikipediadic doc
 
 jumanrcdir=$(sysconfdir)
 nodist_jumanrc_DATA = jumanrc
-dist_noinst_DATA = jumanrc.in
+dist_noinst_DATA = jumanrc.in .git/HEAD .git/index VERSION
 CLEANFILES = jumanrc
 EXTRA_DIST = perl
 

@@ -983,12 +983,6 @@ int take_data(int pos, int pos_in_char, char **pbuf, char opt)
     deleted_bytes = *s++ - 1 - PAT_BUF_INFO_BASE;
     s = _take_data(s, &mrph, deleted_bytes, &opt);
 
-    if (UseGivenSegmentation_Opt && mrph.length != String2Length[pos]) {
-        s++; /* 項目間の\n */
-        *pbuf = s;
-        return TRUE;
-    }
-
     /* 連語の場合 */
     if (mrph.hinsi == RENGO_ID) {
 
@@ -1010,6 +1004,13 @@ int take_data(int pos, int pos_in_char, char **pbuf, char opt)
         for (i = 0; i < component_num; i++) {
             m_buffer[m_buffer_num] = c_mrph_buf[i];
             c_mrph_p = &m_buffer[m_buffer_num];
+
+            /* 与えられたsegmentationと長さが一致しない場合 */
+            if (UseGivenSegmentation_Opt && c_mrph_p->length != String2Length[pos]) {
+                s++; /* 項目間の\n */
+                *pbuf = s;
+                return TRUE;
+            }
 
             /* 連語の先頭の要素 */
             if (i == 0) {
@@ -1094,6 +1095,10 @@ int take_data(int pos, int pos_in_char, char **pbuf, char opt)
 
     /* 形態素の場合 */
     else {
+        /* 与えられたsegmentationと長さが一致しない場合 */
+        if (UseGivenSegmentation_Opt && mrph.length != String2Length[pos]) {
+            mrph.weight = STOP_MRPH_WEIGHT;
+        }
 
 	/* 重みがSTOP_MRPH_WEIGHTとなっているノードは生成しない */
 	if (mrph.weight == STOP_MRPH_WEIGHT) {

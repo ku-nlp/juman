@@ -30,7 +30,8 @@ while (<STDIN>) {
     # (形容詞 ((読み かびんだ)(見出し語 過敏だ (過びんだ 1.6) (かびんだ 1.6))(活用型 ナ形容詞)(意味情報 "代表表記:過敏だ/かびんだ")))
     if (my ($prefix, $words, $suffix) = (/(\(\S+ .*\(見出し語 )(.*?)(\)\(.*)/)) {
 	my ($yomi) = ($prefix =~ /\(読み (.*?)\)/);
-	$check{$yomi} = 1;
+    my ($pos) = ($prefix =~ /\(([^ ]*) /);
+	$check{$yomi."/".$pos} = 1;
 	my $tmp_yomi = $yomi;
 	$tmp_yomi =~ s/だ$// if ($prefix =~ /\(形容詞/);
 	next if ($suffix !~ /代表表記/ || $suffix =~ /代表表記:\p{InKatakana}/ || length($yomi) == 1);
@@ -39,7 +40,9 @@ while (<STDIN>) {
 	next if ($suffix !~ /濁音可/ && $prefix !~ /^\([動名形]/);
 	next if ($suffix =~ /代表表記:来る\/くる/ || $suffix =~ /代表表記:する\/する/);
 	my ($first, $rest) = ($yomi =~ /^(.)(.*)/);
-	next if ($check{$sei2daku{$first} . $rest});
+    # 濁音化した読みが check に登録されていたら生成しない
+	next if ($check{$sei2daku{$first} . $rest."/".$pos});
+
 
 	$words =~ s/ (\d)/-$1/g;
 	my @words = split(' ', $words);

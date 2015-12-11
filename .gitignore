@@ -70,3 +70,6 @@ stamp-h?
 GPATH
 GRTAGS
 GTAGS
+
+#MacOS X
+.DS_Store

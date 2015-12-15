@@ -9,7 +9,7 @@
 std::vector<Darts::DoubleArray *> darts_files;
 std::vector<Mmap *> darts_dbs;
 
-#ifndef MAX_DIC_NUMBER 
+#ifndef MAX_DIC_NUMBER
 #define MAX_DIC_NUMBER 5 /* 同時に使える辞書の数の上限 (JUMAN) */
 #endif
 

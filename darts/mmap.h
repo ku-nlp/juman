@@ -37,14 +37,14 @@ int c_close(int fd) { return close(fd); }
 #endif
 
 class Mmap {
-    char *mem; // pointer to memory 
+    char *mem; // pointer to memory
     size_t length; // length of the file (mapped memory)
     int fd; // file descriptor
 #if defined(_WIN32) && !defined(__CYGWIN__)
     HANDLE hFile, hMapping;
 #endif
   public:
-    
+
     Mmap(): mem(NULL), fd(-1) {}
     ~Mmap() {
         close();

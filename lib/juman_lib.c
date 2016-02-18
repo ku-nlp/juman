@@ -182,6 +182,7 @@ CHAR_NODE	CharRootNode;
 size_t		CharNum;
 int		MostDistantPosition;
 int		Unkword_Pat_Num;
+int             pre_m_buffer_num;
 int             m_buffer_num;
 int             Jiritsu_buffer[CLASSIFY_NO + 1];
 int             undef_hinsi;
@@ -1100,6 +1101,7 @@ int take_data(int pos, int pos_in_char, char **pbuf, char opt)
             mrph.weight = STOP_MRPH_WEIGHT;
         }
 
+
 	/* 重みがSTOP_MRPH_WEIGHTとなっているノードは生成しない */
 	if (mrph.weight == STOP_MRPH_WEIGHT) {
             s++; /* 項目間の\n */
@@ -1205,9 +1207,33 @@ char *_take_data(char *s, MRPH *mrph, int deleted_bytes, char *opt)
     /* 長音挿入したものにペナルティ */
     if ((*opt & OPT_PROLONG_DEL) && mrph->weight != STOP_MRPH_WEIGHT ) {
 
+    /* 元々末尾が長音でないカタカナ語は 末尾の長音削除を認める */
     if ((*opt & OPT_PROLONG_DEL_LAST) && mrph->hinsi == prolong_ng_hinsi2 && 
-            deleted_bytes ==3 &&  check_code(mrph->midasi, 0) == KATAKANA &&check_code(mrph->midasi, mrph->length -3) == KATAKANA) { 
-        ;// 末尾に一文字だけ長音を挿入している，元々末尾が長音でないカタカナ語は削除を認める
+            deleted_bytes==3 && check_code(mrph->midasi, 0) == KATAKANA && check_code(mrph->midasi, mrph->length -3) == KATAKANA) { 
+        /* ただし，フィルターに対し，フィルター，フィルタの両方を出力することを避けるため，
+         * ・形態素の開始地点が同じ
+         * ・長さが同一, かつ原形の末尾が長音(長音削除を行っていない語)
+         * ・意味情報が同じ
+         * を満たす形態素がすでに m_buffer にある場合には，認めない 
+         */
+        int m;
+        /* 代表表記が漢字で始まる語は，長音削除を認めない 
+         * アリ(蟻)，スキ(隙)，カラ(殻), カバ(河馬), アワ(泡，粟) など */
+        char* rep_pos = strstr(mrph->imis,"代表表記:");
+        if( rep_pos && check_code((rep_pos + 13), 0) == KANJI ){
+            mrph->weight = STOP_MRPH_WEIGHT;
+        }else{
+            /* 文字ラティスで，長音削除ノードは通常ノードよりも後に追加されるため，OPT_PROLONG_DEL_LAST が設定された形態素を辞書から
+             * 引いた時に，長音削除前の形態素が既に引かれて m_buffer に登録されていないか調べる */
+            for(m = pre_m_buffer_num;m<m_buffer_num;m++){
+                if( m_buffer[m].length == mrph->length+3 && 
+                        check_code(m_buffer[m].midasi2, m_buffer[m].length -3) == CHOON &&
+                        strcmp(m_buffer[m].imis, mrph->imis) == 0 ){
+                    mrph->weight = STOP_MRPH_WEIGHT;
+                    break;
+                }
+            }
+        }
     } /* 動詞、名詞、接頭辞、格助詞、1文字の接続助詞・副助詞は長音削除を認めない */ 
     else if ((mrph->hinsi == prolong_ng_hinsi1 || /* 動詞 */
 	     mrph->hinsi == prolong_ng_hinsi2 || /* 名詞 */
@@ -2445,7 +2471,6 @@ int juman_sent(void)
 {
     int        i, j, pre_code, post_code;
     int        pos_end, length;
-    int        pre_m_buffer_num;
     int        pre_p_buffer_num;
     int        pos, next_pos = 0, pre_byte_length = 0, local_deleted_num = 0;
     int	       p_start = 0, count = 0;

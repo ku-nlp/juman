@@ -14,7 +14,7 @@ binmode STDIN, ":utf8";
 binmode STDOUT, ":utf8";
 
 my $OUTPUT_POS = '副詞';
-my $OUTPUT_IMI = '"自動認識"';
+my $OUTPUT_IMI = '"自動認識 スル接続可能"';
 
 my %CHARS;
 @{$CHARS{'Ｈ'}} = qw/あ い う え お か き く け こ さ し す せ そ た ち つ て と

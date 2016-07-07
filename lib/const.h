@@ -23,7 +23,7 @@
 
 /* 連濁処理等で使用する品詞や表記情報 */
 #define         DEF_ONOMATOPOEIA_HINSI   "副詞"
-#define         DEF_ONOMATOPOEIA_IMIS    "自動認識"
+#define         DEF_ONOMATOPOEIA_IMIS    "自動認識 スル接続可能"
 #define         DEF_RENDAKU_HINSI1       "動詞"
 #define         DEF_RENDAKU_RENYOU       "基本連用形"
 #define         DEF_RENDAKU_HINSI2       "名詞"

@@ -148,7 +148,7 @@ DIC_FILES               DicFile;
 COST_OMOMI       	cost_omomi;    
 char             	Jumangram_Dirname[FILENAME_MAX]; 
 extern FILE		*Jumanrc_Fileptr;
-int              	LineNo;
+int              	LineNo = 0;
 int     		LineNoForError;       /* k.n */
 
 char			pat_buffer[500000];

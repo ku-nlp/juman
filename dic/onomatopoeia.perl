@@ -14,7 +14,7 @@ binmode STDIN, ":utf8";
 binmode STDOUT, ":utf8";
 
 my $OUTPUT_POS = '副詞';
-my $OUTPUT_IMI = '"自動認識 スル接続可能"';
+my $OUTPUT_IMI = '自動認識 スル接続可能';
 
 my %CHARS;
 @{$CHARS{'Ｈ'}} = qw/あ い う え お か き く け こ さ し す せ そ た ち つ て と
@@ -62,6 +62,43 @@ sub produce_entries_recursively {
 	}
     }
     else {
-	printf "(%s ((読み %s)(見出し語 (%s %.1f))(意味情報 %s)))\n", $OUTPUT_POS, $entry, $entry, $cost, $OUTPUT_IMI;
+	printf "(%s ((読み %s)(見出し語 (%s %.1f))(意味情報 \"代表表記:%s %s\")))\n", $OUTPUT_POS, $entry, $entry, $cost, &generate_rep($entry), $OUTPUT_IMI;
+    }
+}
+
+# 代表表記生成
+sub generate_rep {
+    my ($entry) = @_;
+
+    # 見出しがひらがなの場合
+    if ($entry =~ /^[ぁ-ん]+$/) {
+	# 見出しをカタカナに変換し代表表記の前側を生成
+	my $katakana_entry;
+	# ＨＨっと に対する例外処理: 「っと」はカタカナ変換しない
+	if ($entry =~ /^(.+)(っと)$/) {
+	    my $suffix = $2;
+	    $katakana_entry = $1;
+	    $katakana_entry =~ tr/ぁ-ん/ァ-ン/;
+	    $katakana_entry .= $suffix;
+	}
+	else {
+	    $katakana_entry = $entry;
+	    $katakana_entry =~ tr/ぁ-ん/ァ-ン/;
+	}
+	return $katakana_entry . '/' . $entry;
+    }
+    # 見出しがカタカナで始まる場合 (カタカナ・ひらがな混じりがある: ピタっと, ピタッと)
+    elsif ($entry =~ /^[ァ-ン]/) {
+	# ＫＫッと に対する例外処理: 代表表記の前側として「ッ」は「っ」に変換
+	if ($entry =~ /^(.+)(ッと)$/) {
+	    $entry = $1 . 'っと';
+	}
+	# 見出しをひらがなに変換し代表表記の後側を生成
+	my $hiragana_entry = $entry;
+	$hiragana_entry =~ tr/ァ-ン/ぁ-ん/;
+	return $entry . '/' . $hiragana_entry;
+    }
+    else {
+	die "Invalid entry: $entry for generate_rep\n";
     }
 }

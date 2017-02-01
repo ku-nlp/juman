@@ -1634,6 +1634,10 @@ int 	suusi_word(int pos , int m_num)
     if (new_mrph->hinsi != suusi_hinsi || new_mrph->bunrui != suusi_bunrui)
         return TRUE;
 
+    /* 与えられたsegmentationと長さが一致していたら、数詞を延ばさない */
+    if (UseGivenSegmentation_Opt && new_mrph->length == String2Length[pos])
+        return TRUE;
+
     for (j = 0; (i = match_pbuf[j]) >= 0; j++) {
 	pre_mrph = &m_buffer[p_buffer[i].mrph_p];
 	if (pre_mrph->hinsi == suusi_hinsi &&

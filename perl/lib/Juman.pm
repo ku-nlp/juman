@@ -163,7 +163,7 @@ $ENCODING = 'utf8';
       server  => $ENV{JUMANSERVER} || '',	# Juman サーバーのホスト名
       port    => 32000,				# Juman サーバーのポート番号
       timeout => 30,				# Juman サーバーの応答の待ち時間
-      option  => '-e2 -B',
+      option  => '',
       rcfile  => (exists($ENV{HOME}) ? $ENV{HOME} : '') . '/.jumanrc',
       mclass  => $Juman::Result::DEFAULT{mclass},
       ignorepattern => '',
@@ -198,6 +198,11 @@ sub new {
 	carp "Rcfile option may not work with Juman server";
     }
 
+    # for jumanpp
+    if ($this->{OPTION}->{command} =~ /jumanpp/) {
+	delete $this->{OPTION}->{rcfile};
+    }
+    
     $this;
 }
 

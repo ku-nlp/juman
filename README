@@ -20,6 +20,7 @@ Files and directories
 
 Installation
 ------------
+	% ./autogen.sh (if you build JUMAN from git)
 	% ./configure
 	% make
 	% make install (by root)
